@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "outDir": "build",
+        "forceConsistentCasingInFileNames": true,
+        "noImplicitAny": false,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "pretty": true,
+        "removeComments": true,
+        "sourceMap": true,
+        "strictNullChecks": true
+    },
+    "atom": {
+        "rewriteTsconfig": true
+    }
+}
