@@ -2,7 +2,7 @@ import * as ts from "typescript";
 import {AddChangeCallback, ReactorCallback} from '../utils/language_service_reactor';
 import {TypeConstraints, CallConstraints} from '../utils/type_constraints';
 import {isCallTarget, traverse} from '../utils/nodes';
-import {isAny, isBoolean, isNumber, isString, isStructuredType} from '../utils/flags';
+import {isAny, isBoolean, isBooleanLike, isNumber, isNumberOrString, isString, isStructuredType} from '../utils/flags';
 
 export const infer: ReactorCallback = (fileNames, services, addChange) => {
   
@@ -48,19 +48,60 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
 
                 switch (binExpr.operatorToken.kind) {
                     case ts.SyntaxKind.PlusToken:
-                        if (leftConstraints && rightType) {
-                            if (isNumber(rightType)) {
-                                leftConstraints.isNumber();
-                            }
+                    case ts.SyntaxKind.PlusEqualsToken:
+                        if (leftConstraints && isNumberOrString(rightType)) {
+                            leftConstraints.isNumberOrString();
+                        }
+                        if (rightConstraints && isNumberOrString(leftType)) {
+                            rightConstraints.isNumberOrString();
+                        }
+                        break;
+                    case ts.SyntaxKind.MinusToken:
+                    case ts.SyntaxKind.MinusEqualsToken:
+                    case ts.SyntaxKind.AsteriskToken:
+                    case ts.SyntaxKind.AsteriskEqualsToken:
+                    case ts.SyntaxKind.AsteriskAsteriskToken:
+                    case ts.SyntaxKind.AsteriskAsteriskEqualsToken:
+                    case ts.SyntaxKind.SlashToken:
+                    case ts.SyntaxKind.SlashEqualsToken:
+                    case ts.SyntaxKind.PercentToken:
+                    case ts.SyntaxKind.PercentEqualsToken:
+                    case ts.SyntaxKind.LessThanToken:
+                    case ts.SyntaxKind.LessThanEqualsToken:
+                    case ts.SyntaxKind.GreaterThanToken:
+                    case ts.SyntaxKind.GreaterThanEqualsToken:
+                    case ts.SyntaxKind.LessThanLessThanToken:
+                    case ts.SyntaxKind.LessThanLessThanEqualsToken:
+                    case ts.SyntaxKind.GreaterThanGreaterThanToken:
+                    case ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken:
+                    case ts.SyntaxKind.AmpersandToken:
+                    case ts.SyntaxKind.AmpersandEqualsToken:
+                    case ts.SyntaxKind.BarToken:
+                    case ts.SyntaxKind.BarEqualsToken:
+                    case ts.SyntaxKind.CaretToken:
+                    case ts.SyntaxKind.CaretEqualsToken:
+                        if (leftConstraints) {
+                            leftConstraints.isNumber();
+                        }
+                        if (rightConstraints) {
+                            rightConstraints.isNumber();
                         }
                         break;
                     case ts.SyntaxKind.EqualsEqualsToken:
                     case ts.SyntaxKind.EqualsEqualsEqualsToken:
+                    case ts.SyntaxKind.ExclamationEqualsToken:
+                    case ts.SyntaxKind.ExclamationEqualsEqualsToken:
                         if (leftConstraints && rightType && !isAny(rightType)) {
-                            if (isNumber(rightType) || isString(rightType)) {
-                                leftConstraints.isType(rightType);
-                            }
+                            leftConstraints.isType(rightType);
                         }
+                        if (rightConstraints && leftType && !isAny(leftType)) {
+                            rightConstraints.isType(leftType);
+                        }
+                        // if (leftConstraints) {
+                        //     // if (isNumber(rightType) || isString(rightType)) {
+                        //     leftConstraints.isType(rightType);
+                        //     // }
+                        // }
                         break;
                     default:
                         // console.log(`OP: ${binExpr.operatorToken.kind}`);
@@ -86,21 +127,26 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
         const varDecl = <ts.ParameterDeclaration | ts.VariableDeclaration>decl;
         if (varDecl.type) {
             const start = varDecl.type.getStart();
-            // console.log(`REPLACING "${varDecl.type.getFullText()}" with "${resolved}"`);
+            // const start = varDecl.type.getFirstToken().getStart();
+            // const end = varDecl.type.getLastToken().getStart();
+            // console.log(`REPLACING "${varDecl.type.getFullText()}"
+            //     resolved: "${resolved}"
+            //      initial: "${initial}"
+            //    replacing: "${decl.getSourceFile().getFullText().slice(start, end)}"`);
+
             addChange(decl.getSourceFile().fileName, {
                 span: {
                     start: start,
                     length: varDecl.type.getEnd() - start
                 },
-                newText: ' ' + resolved
+                newText: resolved
             });
         } else {
-
             addChange(decl.getSourceFile().fileName, {
                 span: {
                     start: varDecl.name.getEnd(),
                     length: 0
-                    },
+                },
                 newText: ': ' + resolved
             });
         }

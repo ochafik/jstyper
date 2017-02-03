@@ -12,18 +12,22 @@ import {updateExports} from './passes/update_exports';
 const fileNames = process.argv.slice(2);
 const fileContents = new Map<string, string>();
 for (const fileName of fileNames) {
-  fileContents.set(fileName, fs.readFileSync(fileName).toString());
+  if (!fileName.endsWith('.js')) continue;
+
+  const tsFileName = fileName.slice(0, -3) + '.ts';
+  fileContents.set(tsFileName, fs.readFileSync(fileName).toString());
 }
 
 const reactor = new LanguageServiceReactor(fileContents, {
     allowJs: true,
     strictNullChecks: true,
+    removeComments: true,
 });
 
 reactor.react(updateImports);
 reactor.react(updateExports);
 
-const maxIterations = 3;
+const maxIterations = 5;
 for (let i = 0; i < maxIterations; i++) {
     console.warn(`Running incremental type inference (${i + 1} / ${maxIterations})...`);
     if (!reactor.react(infer)) {
@@ -36,5 +40,8 @@ reactor.react(updateVars);
 
 for (const [fileName, content] of reactor.fileContents) {
     console.warn(`${fileName}:`);
-    console.log(content);
+    console.warn(content);
+    if (content != fs.readFileSync(fileName).toString()) {
+        fs.writeFileSync(fileName, content);
+    }
 }

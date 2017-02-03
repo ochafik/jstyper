@@ -1,4 +1,5 @@
 import * as ts from "typescript";
+import {isAny, isBoolean, isBooleanLike, isNull, isNumber, isNumberOrString, isString, isStructuredType, isVoid} from '../utils/flags';
 
 export type Signature = {
   returnType?: ts.Type,
@@ -27,7 +28,6 @@ export class CallConstraints {
 
 export class TypeConstraints {
   private fields = new Map<string, TypeConstraints>();
-  private types: ts.Type[] = [];
   private callConstraints?: CallConstraints;
   private flags: ts.TypeFlags = 0;
 
@@ -45,13 +45,9 @@ export class TypeConstraints {
   }
 
   get isPureFunction(): boolean {
-    // if (this.callConstraints) {
-    //   console.log(`flags: ${this.flags}`);
-    // }
     return this.callConstraints != null &&
         (this.flags & ts.TypeFlags.Object) === ts.TypeFlags.Object &&
-        this.fields.size == 0 &&
-        this.types.length == 0;
+        this.fields.size == 0;
   }
 
   getFieldConstraints(name: string): TypeConstraints {
@@ -64,20 +60,16 @@ export class TypeConstraints {
   }
 
   isType(type: ts.Type) {
-    // type.
-    // if (type.flags & ts.TypeFlags.Any) {
-    //   return;
-    // }
     if (type.flags & ts.TypeFlags.NumberLiteral) {
       this.isNumber();
       return;
     }
     const sym = type.getSymbol();
-    if (sym && sym.getName() != '__type') {
-      // console.log(`SYMBOL(${this.checker.typeToString(type)}) = ${sym && this.checker.symbolToString(sym)}`);
-      this.types.push(type);
-      return;
-    }
+    // if (sym && sym.getName() != '__type') {
+    //   console.log(`SYMBOL(${this.checker.typeToString(type)}) = ${sym && this.checker.symbolToString(sym)}`);
+    //   this.types.push(type);
+    //   return;
+    // }
     for (const sig of type.getCallSignatures()) {
       const params = sig.getDeclaration().parameters;
       const callConstraints = this.getCallConstraints();
@@ -105,6 +97,9 @@ export class TypeConstraints {
   
   isNumber() {
     this.flags |= ts.TypeFlags.Number;
+  }
+  isNumberOrString() {
+    this.flags |= ts.TypeFlags.StringOrNumberLiteral;
   }
   isObject() {
     this.flags |= ts.TypeFlags.Object;
@@ -140,12 +135,12 @@ export class TypeConstraints {
     const members: string[] = [];
 
     for (const [name, constraints] of this.fields) {
-      if (constraints.isPureFunction) {
-        const [argList, retType] = constraints!.resolveCallableArgListAndReturnType()!;
-        members.push(`${name}(${argList}): ${retType}`);
-      } else {
+      // if (useMethodNotationForFunctionMembers && constraints.isPureFunction) {
+      //   const [argList, retType] = constraints!.resolveCallableArgListAndReturnType()!;
+      //   members.push(`${name}(${argList}): ${retType}`);
+      // } else {
         members.push(`${name}: ${constraints.resolve() || 'any'}`);
-      }
+      // }
     }
 
     // const signaturesSeen = new Set<string>();
@@ -159,20 +154,28 @@ export class TypeConstraints {
         union.push(`(${argList}) => ${retType}`);
       }
     }
-    for (const type of this.types) {
-      union.push(this.checker.typeToString(type));
-    }
-    const typesFlags = this.types.reduce((flags, type) => flags | type.flags, 0);
-    const missingFlags = this.flags & ~typesFlags;
-    if (missingFlags & (ts.TypeFlags.Number | ts.TypeFlags.NumberLiteral)) {
+
+    // for (const type of this.types) {
+    //   union.push(this.checker.typeToString(type));
+    // }
+
+    // const typesFlags = this.types.reduce((flags, type) => flags | type.flags, 0);
+    // const missingFlags = this.flags & ~typesFlags;
+    const flags = this.flags;
+    if (isNumberOrString(flags) && !isNumber(flags) && !isString(flags)) {
       union.push('number');
-    }
-    if (missingFlags & (ts.TypeFlags.String | ts.TypeFlags.StringLiteral)) {
       union.push('string');
+    } else {
+      if (isNumber(flags)) {
+        union.push('number');
+      }
+      if (isString(flags)) {
+        union.push('string');
+      }
     }
-    if (missingFlags & ts.TypeFlags.Null) {
+    if (isNull(flags)) {
       union.push('null');
-    } else if (missingFlags & ts.TypeFlags.BooleanLike) {
+    } else if (isBooleanLike(flags)) {
       union.push('boolean');
     }
     if (members.length > 0) {
@@ -180,7 +183,7 @@ export class TypeConstraints {
     }
 
     // Skip void if there's any other type.
-    if (union.length == 0 && (missingFlags & ts.TypeFlags.Void)) {
+    if (union.length == 0 && isVoid(flags)) {
       union.push('void');
     }
     const result = union.length == 0 ? null : union.join(' | ');
