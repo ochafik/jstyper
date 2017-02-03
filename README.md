@@ -18,6 +18,11 @@ function g(x, o) {
   }
   return o.name == 'default' ? x : 'y';
 }
+
+function gg(x, y) {
+  var v = gg(x, y);
+  return v;
+}
 ```
 
 output.ts:
@@ -32,6 +37,11 @@ function g(x: number, o: {addValue: boolean, value: number, name: string}): numb
     return f(x) + o.value;
   }
   return o.name == 'default' ? x : 'y';
+}
+
+function gg(x: number, o: {addValue: boolean, value: number, name: string}) {
+  var v: string | number = g(x, y);
+  return v;
 }
 ```
 
