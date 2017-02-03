@@ -45,13 +45,17 @@ export class TypeConstraints {
   }
 
   get isPureFunction(): boolean {
+    // if (this.callConstraints) {
+    //   console.log(`flags: ${this.flags}`);
+    // }
     return this.callConstraints != null &&
-        this.flags == 0 &&
+        (this.flags & ts.TypeFlags.Object) === ts.TypeFlags.Object &&
         this.fields.size == 0 &&
         this.types.length == 0;
   }
 
   getFieldConstraints(name: string): TypeConstraints {
+    this.isObject();
     let constraints = this.fields.get(name);
     if (!constraints) {
       this.fields.set(name, constraints = this.createConstraints());
@@ -92,6 +96,7 @@ export class TypeConstraints {
   }
   
   getCallConstraints(): CallConstraints {
+    this.isObject();
     if (!this.callConstraints) {
       this.callConstraints = new CallConstraints(() => this.createConstraints());
     }
@@ -100,6 +105,9 @@ export class TypeConstraints {
   
   isNumber() {
     this.flags |= ts.TypeFlags.Number;
+  }
+  isObject() {
+    this.flags |= ts.TypeFlags.Object;
   }
   isNullable() {
     this.flags |= ts.TypeFlags.Null;
@@ -156,8 +164,11 @@ export class TypeConstraints {
     }
     const typesFlags = this.types.reduce((flags, type) => flags | type.flags, 0);
     const missingFlags = this.flags & ~typesFlags;
-    if (missingFlags & ts.TypeFlags.Number) {
+    if (missingFlags & (ts.TypeFlags.Number | ts.TypeFlags.NumberLiteral)) {
       union.push('number');
+    }
+    if (missingFlags & (ts.TypeFlags.String | ts.TypeFlags.StringLiteral)) {
+      union.push('string');
     }
     if (missingFlags & ts.TypeFlags.Null) {
       union.push('null');

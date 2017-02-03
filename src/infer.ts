@@ -84,7 +84,7 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
       return t == null ? null : checker.symbolToString(t);
   }
 
-  function getConstraint(sym: ts.Symbol): TypeConstraints {
+  function getConstraints(sym: ts.Symbol): TypeConstraints {
     let constraints = allConstraints.get(sym);
     if (!constraints) {
         const decls = sym.getDeclarations();
@@ -98,66 +98,51 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
     return constraints;
   }
 
+  function getNodeConstraints(node: ts.Node): TypeConstraints | undefined {
+    if (node.kind === ts.SyntaxKind.PropertyAccessExpression) {
+        const access = <ts.PropertyAccessExpression>node;
+        const [type, sym] = typeAndSymbol(access.expression);
+        if (sym) {
+            return getConstraints(sym).getFieldConstraints(access.name.text);
+        }
+    } else if (node.kind === ts.SyntaxKind.CallExpression) {
+        let calleeConstraints = getNodeConstraints((<ts.CallExpression>node).expression);
+        if (calleeConstraints) {
+            return calleeConstraints.getCallConstraints().returnType;
+        }
+    } else if (node.kind === ts.SyntaxKind.Identifier) {
+        const [type, sym] = typeAndSymbol(node);
+        if (sym) {
+            return getConstraints(sym);
+        }
+    }
+    return undefined;
+  }
   /** visit nodes finding exported classes */    
   function visit(fileName: string, node: ts.Node) {
         // console.log(`[${fileName}] Node: ${node.kind}`);
 
         const ctxType = checker.getContextualType(<ts.Expression>node);
         if (ctxType) {//} && !isAny(ctxType)) {
-            const [nodeType, nodeSym] = typeAndSymbol(node);
-            if (nodeSym) {//&& isAny(nodeType)) {
-                // const paramType = checker.getTypeOfSymbolAtLocation(param, node);//param.declarations[0]);
-                // addConstraint(nodeSym, paramType);
-                // console.log(`CONTEXT TYPE FOR ${symbolToString(nodeSym)} = ${typeToString(ctxType)}`);
-                getConstraint(nodeSym).isType(ctxType);
+            const tc = getNodeConstraints(node);
+            if (tc) {
+                tc.isType(ctxType);
             }
         }
 
-        // Property access that is not a method call.
-        if (node.kind === ts.SyntaxKind.PropertyAccessExpression && !isCallTarget(node)) {
-          const access = <ts.PropertyAccessExpression>node;
-          const [targetType, targetSym] = typeAndSymbol(access.expression);
-
-          if (targetSym) {//} && isAny(targetType)) {
-            const fieldConstraints = getConstraint(targetSym).getFieldConstraints(access.name.text);
-            if (ctxType) {//} && !isAny(ctxType)) {
-              fieldConstraints.isType(ctxType);
-            }
-          }
-        }
-            
         if (node.kind === ts.SyntaxKind.CallExpression) {
             const call = <ts.CallExpression>node;
-            const callee = call.expression;
-                    
-            let callConstraints: CallConstraints | undefined;
+            const calleeConstraints = getNodeConstraints(call.expression);
 
-            if (callee.kind === ts.SyntaxKind.Identifier) {
-              const [calleeType, calleeSym] = typeAndSymbol(callee);
-              if (calleeSym) {//} && isAny(calleeType)) {
-                const argTypes = call.arguments.map(a => checker.getTypeAtLocation(a));
-                callConstraints = getConstraint(calleeSym).getCallConstraints();
-              }
-            } else if (callee.kind === ts.SyntaxKind.PropertyAccessExpression) {
-                const access = <ts.PropertyAccessExpression>callee;
-                const [targetType, targetSym] = typeAndSymbol(access.expression);
+            if (calleeConstraints) {
+                const callConstraints = calleeConstraints.getCallConstraints();
                 
-                if (targetSym) {//} && isAny(targetType)) {
-                    callConstraints = getConstraint(targetSym).getFieldConstraints(access.name.text).getCallConstraints();
-                }
-            }
-
-            if (callConstraints) {
                 let returnType: ts.Type | undefined = ctxType;
                 const argTypes = call.arguments.map(a => checker.getTypeAtLocation(a));
                 
-                console.log(`IS VOID`);
-                    
                 if (returnType) {
                     callConstraints.returnType.isType(returnType);
                 } else if (node.parent && node.parent.kind == ts.SyntaxKind.ExpressionStatement) {
-                // if ((returnType == null || isAny(returnType)) &&
-                    // (node.parent && node.parent.kind == ts.SyntaxKind.ExpressionStatement)) {
                     callConstraints.returnType.isVoid();
                 }
                 argTypes.forEach((t, i) => callConstraints!.getArgType(i).isType(t));
@@ -167,26 +152,28 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
             const binExpr = <ts.BinaryExpression>node;
             const [[leftType, leftSym], [rightType, rightSym]] = [binExpr.left, binExpr.right].map(typeAndSymbol);
             
-            // console.log(`[${fileName}] Binary expression: ${node.kind}
-            //     text = "${node.getFullText()}"
-            //     left.type = ${typeToString(leftType)} (symbol = ${symbolToString(leftSym)})
-            //     right.type = ${typeToString(rightType)} (symbol = ${symbolToString(rightSym)})
-            // `);
+            const leftConstraints = getNodeConstraints(binExpr.left);
+            const rightConstraints = getNodeConstraints(binExpr.right);
 
-            if (leftSym || rightType) {
-                switch (binExpr.operatorToken.kind) {
-                    case ts.SyntaxKind.PlusToken:
-                        if (leftSym) {//} && isAny(leftType)) {
-                            // console.log(`left is any`);
-                            // console.log(`right.flags = ${rightType.flags}`);
-                            if (isNumber(rightType)) {
-                                getConstraint(leftSym).isNumber();
-                            }
+            switch (binExpr.operatorToken.kind) {
+                case ts.SyntaxKind.PlusToken:
+                    if (leftConstraints && rightType) {
+                        if (isNumber(rightType)) {
+                            leftConstraints.isNumber();
                         }
-                        break;
-                    default:
-                        // console.log(`OP: ${binExpr.operatorToken.kind}`);
-                }
+                    }
+                    break;
+                case ts.SyntaxKind.EqualsEqualsToken:
+                case ts.SyntaxKind.EqualsEqualsEqualsToken:
+                    if (leftConstraints && rightType && !isAny(rightType)) {
+                        if (isNumber(rightType) || isString(rightType)) {
+                            // console.log(`GOT RIGHT[${binExpr.right.getFullText()}] == type ${typeToString(rightType)}`);
+                            leftConstraints.isType(rightType);
+                        }
+                    }
+                    break;
+                default:
+                    // console.log(`OP: ${binExpr.operatorToken.kind}`);
             }
         }
         
@@ -196,6 +183,9 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
 
 function isNumber(t: ts.Type): boolean {
     return (t.flags & (ts.TypeFlags.Number | ts.TypeFlags.NumberLiteral)) !== 0;
+}
+function isString(t: ts.Type): boolean {
+    return (t.flags & (ts.TypeFlags.String | ts.TypeFlags.StringLiteral | ts.TypeFlags.StringOrNumberLiteral)) !== 0;
 }
 function isAny(t: ts.Type): boolean {
     return (t.flags & ts.TypeFlags.Any) === ts.TypeFlags.Any;

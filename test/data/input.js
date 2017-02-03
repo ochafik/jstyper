@@ -1,6 +1,6 @@
 function f0(x, y) {
   console.log(x, y);
-  let z = x.call(1, 2);
+  var z = x.call(1, 2);
   y.foo();
   g(z);
   g(x.memberOfX);
@@ -20,6 +20,7 @@ modules.exports = {
 };
 
 foo1(10) == '';
+foo2 == 3;
 
 function f(x, y) {
   return x + 2 + g(y);

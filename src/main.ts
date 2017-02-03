@@ -5,6 +5,8 @@ import * as ts from "typescript";
 import {LanguageServiceReactor, AddChangeCallback} from './language_service_reactor';
 import {infer} from './infer';
 import {format} from './format';
+import {updateVars} from './update_vars';
+import {updateImports} from './update_imports';
 
 const fileNames = process.argv.slice(2);
 const fileContents = new Map<string, string>();
@@ -17,6 +19,8 @@ const reactor = new LanguageServiceReactor(fileContents, {
     strictNullChecks: true,
 });
 
+reactor.react(updateImports);
+
 const maxIterations = 5;
 for (let i = 0; i < maxIterations; i++) {
     console.warn(`Running incremental type inference (${i + 1} / ${maxIterations})...`);
@@ -26,6 +30,7 @@ for (let i = 0; i < maxIterations; i++) {
 }
 
 reactor.react(format);
+reactor.react(updateVars);
 
 for (const [fileName, content] of reactor.fileContents) {
     console.warn(`${fileName}:`);
