@@ -16,5 +16,8 @@
     },
     "atom": {
         "rewriteTsconfig": true
-    }
+    },
+    "include": [
+        "src/**/*"
+    ]
 }

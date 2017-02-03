@@ -2,11 +2,12 @@
 
 import * as fs from "fs";
 import * as ts from "typescript";
-import {LanguageServiceReactor, AddChangeCallback} from './language_service_reactor';
-import {infer} from './infer';
-import {format} from './format';
-import {updateVars} from './update_vars';
-import {updateImports} from './update_imports';
+import {LanguageServiceReactor, AddChangeCallback} from './utils/language_service_reactor';
+import {infer} from './passes/infer';
+import {format} from './passes/format';
+import {updateVars} from './passes/update_vars';
+import {updateImports} from './passes/update_imports';
+import {updateExports} from './passes/update_exports';
 
 const fileNames = process.argv.slice(2);
 const fileContents = new Map<string, string>();
@@ -20,8 +21,9 @@ const reactor = new LanguageServiceReactor(fileContents, {
 });
 
 reactor.react(updateImports);
+reactor.react(updateExports);
 
-const maxIterations = 5;
+const maxIterations = 3;
 for (let i = 0; i < maxIterations; i++) {
     console.warn(`Running incremental type inference (${i + 1} / ${maxIterations})...`);
     if (!reactor.react(infer)) {

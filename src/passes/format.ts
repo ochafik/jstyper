@@ -1,5 +1,5 @@
 import * as ts from "typescript";
-import {AddChangeCallback} from './language_service_reactor';
+import {AddChangeCallback} from '../utils/language_service_reactor';
 
 export function format(fileNames: string[], services: ts.LanguageService, addChange: AddChangeCallback) {
   for (const fileName of fileNames) {

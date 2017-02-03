@@ -1,5 +1,6 @@
 import * as ts from "typescript";
-import {AddChangeCallback} from './language_service_reactor';
+import {AddChangeCallback} from '../utils/language_service_reactor';
+import {traverse} from '../utils/nodes';
 
 export function updateVars(fileNames: string[], services: ts.LanguageService, addChange: AddChangeCallback) {
   
@@ -8,9 +9,7 @@ export function updateVars(fileNames: string[], services: ts.LanguageService, ad
 
   for (const sourceFile of program.getSourceFiles()) {
     if (fileNames.indexOf(sourceFile.fileName) >= 0) {
-      ts.forEachChild(sourceFile, visit);
-
-      function visit(node: ts.Node) {
+      traverse(sourceFile, (node: ts.Node) => {
         if (node.kind == ts.SyntaxKind.VariableDeclarationList) {
           const varDecls = <ts.VariableDeclarationList>node;
           const text = varDecls.getFullText();
@@ -25,8 +24,7 @@ export function updateVars(fileNames: string[], services: ts.LanguageService, ad
           }
           // console.log(`FOUND DECLS: ${varDecls.getFullText()}`);
         }
-        ts.forEachChild(node, visit);
-      }
+      });
     }
   }
 }

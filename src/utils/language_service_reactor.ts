@@ -1,6 +1,6 @@
 import * as ts from "typescript";
 
-import {VersionedFile, makeVersionedFile, updateVersionedFile} from './file';
+import {VersionedFile} from './versioned_file';
 
 export type AddChangeCallback = (fileName: string, change: ts.TextChange) => void;
 export type ReactorCallback = (fileNames: string[], services: ts.LanguageService, addChange: AddChangeCallback) => void;
@@ -15,7 +15,7 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
       private options: ts.CompilerOptions) {
     const fileNames: string[] = [];
     for (const [fileName, content] of fileContents) {
-      this.files.set(fileName, makeVersionedFile(content));
+      this.files.set(fileName, new VersionedFile(content));
       fileNames.push(fileName);
     }
     this.services = ts.createLanguageService(this, ts.createDocumentRegistry());
@@ -68,8 +68,7 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
       return false;
     }
     for (const [fileName, changes] of pendingChanges) {
-      const file: VersionedFile = this.files.get(fileName)!;
-      this.files.set(fileName, updateVersionedFile(file, changes));
+      this.files.get(fileName)!.commitChanges(changes);
     }
     return true;
   }
