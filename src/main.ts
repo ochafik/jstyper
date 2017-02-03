@@ -19,7 +19,7 @@ const reactor = new LanguageServiceReactor(fileContents, {
 
 const maxIterations = 5;
 for (let i = 0; i < maxIterations; i++) {
-    console.log(`Running incremental type inference (${i + 1} / ${maxIterations})...`);
+    console.warn(`Running incremental type inference (${i + 1} / ${maxIterations})...`);
     if (!reactor.react(infer)) {
         break;
     }
@@ -28,9 +28,6 @@ for (let i = 0; i < maxIterations; i++) {
 reactor.react(format);
 
 for (const [fileName, content] of reactor.fileContents) {
-    console.log(`
-RESULT[${fileName}]:
-${content}
-        
-    `);
+    console.warn(`${fileName}:`);
+    console.log(content);
 }
