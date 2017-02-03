@@ -16,25 +16,40 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
 
   for (const [sym, constraints] of allConstraints) {
       const resolved = constraints.resolve();
-      if (resolved == null) {
+      const initial = constraints.initialType && typeToString(constraints.initialType);
+      if (resolved == null || resolved == initial) {
         continue;
       }
-      console.log(`CONSTRAINTS for ${checker.symbolToString(sym)}: ${resolved}`);
+    //   console.log(`CONSTRAINTS for ${checker.symbolToString(sym)}: ${resolved}`);
       
       let [decl] = sym.getDeclarations();
       // console.log(`${decl.getFullText()}: ${newText}`)
 
       let insertionPoint = decl.getEnd();
+      let length = 0;
       if (decl.kind == ts.SyntaxKind.Parameter || decl.kind == ts.SyntaxKind.VariableDeclaration) {
-        insertionPoint = (<ts.ParameterDeclaration | ts.VariableDeclaration>decl).name.end;
+        const varDecl = <ts.ParameterDeclaration | ts.VariableDeclaration>decl;
+        if (varDecl.type) {
+            const start = varDecl.type.getStart();
+            // console.log(`REPLACING "${varDecl.type.getFullText()}" with "${resolved}"`);
+            addChange(decl.getSourceFile().fileName, {
+                span: {
+                    start: start,
+                    length: varDecl.type.getEnd() - start
+                },
+                newText: ' ' + resolved
+            });
+        } else {
+
+            addChange(decl.getSourceFile().fileName, {
+                span: {
+                    start: varDecl.name.getEnd(),
+                    length: 0
+                    },
+                newText: ': ' + resolved
+            });
+        }
       }
-      addChange(decl.getSourceFile().fileName, {
-        span: {
-          start: insertionPoint,
-          length: 0
-        },
-        newText: ': ' + resolved
-      });
   }
 
   function typeAndSymbol(n: ts.Node): [ts.Type, ts.Symbol] {
@@ -93,12 +108,12 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
         // console.log(`[${fileName}] Node: ${node.kind}`);
 
         const ctxType = checker.getContextualType(<ts.Expression>node);
-        if (ctxType && !isAny(ctxType)) {
+        if (ctxType) {//} && !isAny(ctxType)) {
             const [nodeType, nodeSym] = typeAndSymbol(node);
-            if (nodeSym && isAny(nodeType)) {
+            if (nodeSym) {//&& isAny(nodeType)) {
                 // const paramType = checker.getTypeOfSymbolAtLocation(param, node);//param.declarations[0]);
                 // addConstraint(nodeSym, paramType);
-                console.log(`CONTEXT TYPE FOR ${symbolToString(nodeSym)} = ${typeToString(ctxType)}`);
+                // console.log(`CONTEXT TYPE FOR ${symbolToString(nodeSym)} = ${typeToString(ctxType)}`);
                 getConstraint(nodeSym).isType(ctxType);
             }
         }
@@ -108,9 +123,9 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
           const access = <ts.PropertyAccessExpression>node;
           const [targetType, targetSym] = typeAndSymbol(access.expression);
 
-          if (targetSym && isAny(targetType)) {
+          if (targetSym) {//} && isAny(targetType)) {
             const fieldConstraints = getConstraint(targetSym).getFieldConstraints(access.name.text);
-            if (ctxType && !isAny(ctxType)) {
+            if (ctxType) {//} && !isAny(ctxType)) {
               fieldConstraints.isType(ctxType);
             }
           }
@@ -134,7 +149,7 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
 
             if (callee.kind === ts.SyntaxKind.Identifier) {
               const [calleeType, calleeSym] = typeAndSymbol(callee);
-              if (calleeSym && isAny(calleeType)) {
+              if (calleeSym) {//} && isAny(calleeType)) {
                 const argTypes = call.arguments.map(a => checker.getTypeAtLocation(a));
                 getConstraint(calleeSym).isCallable(sig);
               }
@@ -142,7 +157,7 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
                 const access = <ts.PropertyAccessExpression>callee;
                 const [targetType, targetSym] = typeAndSymbol(access.expression);
                 
-                if (targetSym && isAny(targetType)) {//} && call.name && call.name.kind == ts.SyntaxKind.Identifier) {
+                if (targetSym) {//} && isAny(targetType)) {
                     getConstraint(targetSym).getFieldConstraints(access.name.text).isCallable(sig);
                 }
             }
@@ -160,7 +175,7 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
             if (leftSym || rightType) {
                 switch (binExpr.operatorToken.kind) {
                     case ts.SyntaxKind.PlusToken:
-                        if (leftSym && isAny(leftType)) {
+                        if (leftSym) {//} && isAny(leftType)) {
                             // console.log(`left is any`);
                             // console.log(`right.flags = ${rightType.flags}`);
                             if (isNumber(rightType)) {
