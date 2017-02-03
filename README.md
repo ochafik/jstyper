@@ -30,3 +30,9 @@ input.js:
       }
       return o.name == 'default' ? x : 'y';
     }
+
+# Run it
+
+- Clone this repo
+- Run `npm i`
+- Run `node build/main.js <your .js files>`
