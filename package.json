@@ -14,8 +14,8 @@
     "acorn": "^3.3.0"
   },
   "scripts": {
-    "test:w": "tsc && concurrently \"tsc -w\" \"watch --wait=1 \\\"node build/main.js test/data/input.js\\\" build test/data\"",
-    "test-pipe:w": "tsc && concurrently \"tsc -w\" \"watch --wait=1 \\\"node build/main.js test/data/input.js | tee test-output/output.ts\\\" build test/data\""
+    "test:w": "tsc && concurrently \"tsc -w\" \"watch --wait=1 \\\"node build/src/main.js test/data/input.js\\\" build test/data\"",
+    "test-pipe:w": "tsc && concurrently \"tsc -w\" \"watch --wait=1 \\\"node build/src/main.js test/data/input.js | tee test-output/output.ts\\\" build test/data\""
   },
   "author": "",
   "license": "ISC"

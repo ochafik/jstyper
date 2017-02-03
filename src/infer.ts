@@ -1,6 +1,6 @@
 import * as ts from "typescript";
 import {AddChangeCallback, ReactorCallback} from './language_service_reactor';
-import {TypeConstraints, Signature} from './constraints';
+import {TypeConstraints, CallConstraints} from './constraints';
 
 export const infer: ReactorCallback = (fileNames, services, addChange) => {
   
@@ -84,11 +84,6 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
       return t == null ? null : checker.symbolToString(t);
   }
 
-  function fmtType(node: ts.Node) {
-      const type = checker.getTypeAtLocation(node);
-      return typeToString(type);
-  }
-
   function getConstraint(sym: ts.Symbol): TypeConstraints {
     let constraints = allConstraints.get(sym);
     if (!constraints) {
@@ -134,32 +129,38 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
         if (node.kind === ts.SyntaxKind.CallExpression) {
             const call = <ts.CallExpression>node;
             const callee = call.expression;
-            const argTypes = call.arguments.map(a => checker.getTypeAtLocation(a));
                     
-            let returnType: ts.Type | undefined = ctxType;
-            // if (returnType == null || isAny(returnType)) {
-            //   if (node.parent && node.parent.kind == ts.SyntaxKind.ExpressionStatement) {
-            //     returnType = 'void';
-            //   }
-            // }
-            const sig: Signature = {
-              returnType: returnType,
-              argTypes: argTypes
-            };
+            let callConstraints: CallConstraints | undefined;
 
             if (callee.kind === ts.SyntaxKind.Identifier) {
               const [calleeType, calleeSym] = typeAndSymbol(callee);
               if (calleeSym) {//} && isAny(calleeType)) {
                 const argTypes = call.arguments.map(a => checker.getTypeAtLocation(a));
-                getConstraint(calleeSym).isCallable(sig);
+                callConstraints = getConstraint(calleeSym).getCallConstraints();
               }
             } else if (callee.kind === ts.SyntaxKind.PropertyAccessExpression) {
                 const access = <ts.PropertyAccessExpression>callee;
                 const [targetType, targetSym] = typeAndSymbol(access.expression);
                 
                 if (targetSym) {//} && isAny(targetType)) {
-                    getConstraint(targetSym).getFieldConstraints(access.name.text).isCallable(sig);
+                    callConstraints = getConstraint(targetSym).getFieldConstraints(access.name.text).getCallConstraints();
                 }
+            }
+
+            if (callConstraints) {
+                let returnType: ts.Type | undefined = ctxType;
+                const argTypes = call.arguments.map(a => checker.getTypeAtLocation(a));
+                
+                console.log(`IS VOID`);
+                    
+                if (returnType) {
+                    callConstraints.returnType.isType(returnType);
+                } else if (node.parent && node.parent.kind == ts.SyntaxKind.ExpressionStatement) {
+                // if ((returnType == null || isAny(returnType)) &&
+                    // (node.parent && node.parent.kind == ts.SyntaxKind.ExpressionStatement)) {
+                    callConstraints.returnType.isVoid();
+                }
+                argTypes.forEach((t, i) => callConstraints!.getArgType(i).isType(t));
             }
         }
         if (node.kind === ts.SyntaxKind.BinaryExpression) {

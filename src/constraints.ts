@@ -6,15 +6,29 @@ export type Signature = {
   // argTypesAndNames: [ts.Type, string[]][]
 };
 
-export type CallableConstraints = {
-  returnType: TypeConstraints,
-  argTypes: TypeConstraints[],
+export class CallConstraints {
+  constructor(
+      private createConstraints: () => TypeConstraints,
+      public readonly returnType: TypeConstraints = createConstraints(),
+      public readonly argTypes: TypeConstraints[] = []) {}
+
+  private ensureArity(arity: number) {
+    for (let i = 0; i < arity; i++) {
+      if (this.argTypes.length <= i) {
+        this.argTypes.push(this.createConstraints());
+      }
+    }
+  }
+  getArgType(index: number) {
+    this.ensureArity(index + 1);
+    return this.argTypes[index];
+  }
 };
 
 export class TypeConstraints {
   private fields = new Map<string, TypeConstraints>();
   private types: ts.Type[] = [];
-  private callConstraints?: CallableConstraints;
+  private callConstraints?: CallConstraints;
   private flags: ts.TypeFlags = 0;
 
   constructor(
@@ -28,6 +42,13 @@ export class TypeConstraints {
 
   private createConstraints(initialType?: ts.Type): TypeConstraints {
     return new TypeConstraints(this.services, this.checker, initialType);
+  }
+
+  get isPureFunction(): boolean {
+    return this.callConstraints != null &&
+        this.flags == 0 &&
+        this.fields.size == 0 &&
+        this.types.length == 0;
   }
 
   getFieldConstraints(name: string): TypeConstraints {
@@ -55,12 +76,12 @@ export class TypeConstraints {
     }
     for (const sig of type.getCallSignatures()) {
       const params = sig.getDeclaration().parameters;
-      const callConstraints = this.getCallConstraints(params.length);
+      const callConstraints = this.getCallConstraints();
       callConstraints.returnType.isType(sig.getReturnType());
 
       params.forEach((param, i) => {
         const paramType = this.checker.getTypeAtLocation(param);
-        callConstraints!.argTypes[i].isType(paramType);
+        callConstraints!.getArgType(i).isType(paramType);
       });
     }
     for (const prop of type.getProperties()) {
@@ -68,42 +89,23 @@ export class TypeConstraints {
         .isType(this.checker.getTypeOfSymbolAtLocation(prop, prop.getDeclarations()[0]));
     }
     this.flags |= type.flags;
-    // this.types.push(type);
   }
   
-  private getCallConstraints(arity: number): CallableConstraints {
+  getCallConstraints(): CallConstraints {
     if (!this.callConstraints) {
-      this.callConstraints = {
-        returnType: this.createConstraints(),
-        argTypes: []
-      };
-    }
-    for (let i = 0; i < arity; i++) {
-      if (this.callConstraints!.argTypes.length <= i) {
-        this.callConstraints!.argTypes.push(this.createConstraints());
-      }
+      this.callConstraints = new CallConstraints(() => this.createConstraints());
     }
     return this.callConstraints;
   }
-
-  isCallable(sig: Signature) {
-    const callConstraints = this.getCallConstraints(sig.argTypes.length);
-    if (sig.returnType) {
-      callConstraints.returnType.isType(sig.returnType);
-    }
-    sig.argTypes.forEach((t, i) => callConstraints.argTypes[i].isType(t));
-  }
-  // hasField(name: string, type: ts.Type) {
-  //   this.getFieldConstraints(name).isType(type);
-  // }
-  // hasMethod(name: string, sig: Signature) {
-  //   this.getFieldConstraints(name).isCallable(sig);
-  // }
+  
   isNumber() {
     this.flags |= ts.TypeFlags.Number;
   }
   isNullable() {
     this.flags |= ts.TypeFlags.Null;
+  }
+  isVoid() {
+    this.flags |= ts.TypeFlags.Void;
   }
   isBooleanLike() {
     this.flags |= ts.TypeFlags.BooleanLike;
@@ -116,20 +118,31 @@ export class TypeConstraints {
     return types.map((t, i) => `arg${i + 1}: ${t || 'any'}`).join(', ');
   }
 
+  resolveCallableArgListAndReturnType(): [string, string] | undefined {
+    return this.callConstraints && 
+      [
+          this.argsListToString(
+              this.callConstraints.argTypes.map(c => c.resolve() || 'any')),
+          this.callConstraints.returnType.resolve() || 'any'
+      ];
+  }
+
   resolve(): string | null {
     const union: string[] = [];
     const members: string[] = [];
 
     for (const [name, constraints] of this.fields) {
-      members.push(`${name}: ${constraints.resolve() || 'any'}`);
+      if (constraints.isPureFunction) {
+        const [argList, retType] = constraints!.resolveCallableArgListAndReturnType()!;
+        members.push(`${name}(${argList}): ${retType}`);
+      } else {
+        members.push(`${name}: ${constraints.resolve() || 'any'}`);
+      }
     }
 
     // const signaturesSeen = new Set<string>();
     if (this.callConstraints) {
-      const argList = this.argsListToString(
-          this.callConstraints.argTypes.map(c => c.resolve() || 'any'));
-      
-      const retType = this.callConstraints.returnType.resolve() || 'any';
+      const [argList, retType] = this.resolveCallableArgListAndReturnType()!;
 
       const sigSig = `(${argList})${retType}`;
       if (members.length > 0) {
@@ -153,6 +166,11 @@ export class TypeConstraints {
     }
     if (members.length > 0) {
       union.push('{' + members.join(', ') + '}');
+    }
+
+    // Skip void if there's any other type.
+    if (union.length == 0 && (missingFlags & ts.TypeFlags.Void)) {
+      union.push('void');
     }
     const result = union.length == 0 ? null : union.join(' | ');
     // console.log(`result = "${result}" (members = [${members}], types = [${this.types.map(t => this.checker.typeToString(t))}], flags = ${this.flags}, missingFlags = ${missingFlags}`);
