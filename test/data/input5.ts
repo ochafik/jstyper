@@ -19,3 +19,8 @@ function h5(x: boolean | {length: number;}) {
     console.log('error');
   }
 }
+
+function i5(x1: undefined | {y: any;}, x2: {y: string;}) {
+  if (x2.y) return x2.y.length;
+  return x1 ? x1.y : null;
+}

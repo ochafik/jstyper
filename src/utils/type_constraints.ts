@@ -148,6 +148,10 @@ export class TypeConstraints {
   }
 
   resolveCallableArgListAndReturnType(): [string, string] | undefined {
+    // const isUndefined = fl.isUndefined(constraints.flags);
+    //     // console.log(`isUndefined(${name}) = ${isUndefined} (Flags = ${constraints.flags})`);
+    //     const resolved = constraints.resolve({ignoreFlags: isUndefined ? ts.TypeFlags.Undefined : 0});
+        
     return this.callConstraints && 
       [
           this.argsListToString(
@@ -156,7 +160,7 @@ export class TypeConstraints {
       ];
   }
 
-  private normalizeUnion() {
+  normalize() {
     let flags = this._flags;
 
     // let fieldsToRemove = new Set([...this.fields.keys()]);
@@ -202,8 +206,8 @@ export class TypeConstraints {
     this._flags = flags;
   }
 
-  resolve(): string | null {
-    this.normalizeUnion();
+  resolve({ignoreFlags}: {ignoreFlags?: ts.TypeFlags} = {}): string | null {
+    this.normalize();
 
     const union: string[] = [];
     const members: string[] = [];
@@ -220,11 +224,16 @@ export class TypeConstraints {
     }
 
     for (const [name, constraints] of this.fields) {
+      constraints.normalize();
+
       if (constraints.isPureFunction) {
         const [argList, retType] = constraints!.resolveCallableArgListAndReturnType()!;
         members.push(`${name}(${argList}): ${retType}`);
       } else {
-        members.push(`${name}: ${constraints.resolve() || 'any'}`);
+        const isUndefined = fl.isUndefined(constraints.flags);
+        // console.log(`isUndefined(${name}) = ${isUndefined} (Flags = ${constraints.flags})`);
+        const resolved = constraints.resolve({ignoreFlags: isUndefined ? ts.TypeFlags.Undefined : 0});
+        members.push(`${name}${isUndefined ? '?' : ''}: ${resolved || 'any'}`);
       }
     }
 
@@ -234,7 +243,10 @@ export class TypeConstraints {
 
     // const typesFlags = this.types.reduce((flags, type) => flags | type.flags, 0);
     // const missingFlags = this._flags & ~typesFlags;
-    const flags = this._flags;
+    let flags = this._flags;
+    if (ignoreFlags) {
+      flags &= ~ignoreFlags;
+    }
     for (const primitive in primitivePredicates) {
       if (primitivePredicates[primitive](flags)) {
         union.push(primitive);

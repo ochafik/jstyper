@@ -21,7 +21,7 @@ export class ConstraintsCache {
       }
   }
 
-  getSymbolConstraints(sym: ts.Symbol): TypeConstraints {
+  private getSymbolConstraints(sym: ts.Symbol): TypeConstraints {
     let constraints = this.allConstraints.get(sym);
     if (!constraints) {
         const decls = sym.getDeclarations();
@@ -57,14 +57,17 @@ export class ConstraintsCache {
         if (sym) {
             const decls = sym.getDeclarations();
             if (decls && decls.length > 0) {
-                const decl = decls[0];
-                if (decl.parent && decl.parent.kind === ts.SyntaxKind.FunctionDeclaration) {
-                    const param = <ts.ParameterDeclaration>decl;
-                    const fun = <ts.FunctionDeclaration>decl.parent;
-                    const paramIndex = fun.parameters.indexOf(param);
-                    const funConstraints = this.getNodeConstraints(fun);
-                    if (funConstraints) {
-                        return funConstraints.getCallConstraints().getArgType(paramIndex);
+                for (const decl of decls) {
+                // const decl = decls[0];
+                    if (decl.parent && decl.parent.kind === ts.SyntaxKind.FunctionDeclaration) {
+                        const param = <ts.ParameterDeclaration>decl;
+                        const fun = <ts.FunctionDeclaration>decl.parent;
+                        const paramIndex = fun.parameters.indexOf(param);
+                        const funConstraints = this.getNodeConstraints(fun);
+                        if (funConstraints) {
+                            return funConstraints.getCallConstraints().getArgType(paramIndex);
+                        }
+                        // return;
                     }
                 }
             }

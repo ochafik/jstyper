@@ -38,15 +38,12 @@ export function applyConstraints(allConstraints: Map<ts.Symbol, TypeConstraints>
         
         if (varDecl.type) {
             const start = varDecl.type.getStart();
-            // const start = varDecl.type.getFirstToken().getStart();
-            // const end = varDecl.type.getLastToken().getStart();
-            //    replacing: "${decl.getSourceFile().getFullText().slice(start, end)}"
             const length = varDecl.type.getEnd() - start;
-             console.log(`REPLACING "${varDecl.type.getFullText()}"
-                resolved: "${resolved}"
-                 initial: "${initial}"
-                 length: ${length}
-              fullWidth: ${varDecl.type.getFullWidth()}`);
+            //  console.log(`REPLACING "${varDecl.type.getFullText()}"
+            //     resolved: "${resolved}"
+            //      initial: "${initial}"
+            //      length: ${length}
+            //   fullWidth: ${varDecl.type.getFullWidth()}`);
 
             addChange(decl.getSourceFile().fileName, {
                 span: {

@@ -53,6 +53,15 @@ function gg(x: number, o: {addValue: boolean, value: number, name: string}) {
 
 # TODO
 
+- Optional parameters `function f(x, y?: number)` instead of `function f(x, y: undefined | number)`
 - Support of nominal types in existing TS files
 - Generate .d.ts automagically
 - Handle index operators
+- Bugs:
+
+  ```js
+  function i5(x1, x2) {
+    if (x2.y) return x2.y.bar();
+    return x1 ? x1.y : null;
+  }
+  ```

@@ -19,3 +19,8 @@ function h5(x) {
     console.log('error');
   }
 }
+
+function i5(x1, x2) {
+  if (x2.y) return x2.y.length;
+  return x1 ? x1.y : null;
+}
