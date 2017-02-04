@@ -41,7 +41,7 @@ reactor.react(updateVars);
 for (const [fileName, content] of reactor.fileContents) {
     console.warn(`${fileName}:`);
     console.warn(content);
-    if (content != fs.readFileSync(fileName).toString()) {
+    if (!fs.existsSync(fileName) || content != fs.readFileSync(fileName).toString()) {
         fs.writeFileSync(fileName, content);
     }
 }
