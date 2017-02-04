@@ -12,6 +12,7 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
   
   constructor(
       fileContents: Map<string, string>,
+      private currentWorkingDir = '.',
       private options: ts.CompilerOptions) {
     const fileNames: string[] = [];
     for (const [fileName, content] of fileContents) {
@@ -35,13 +36,18 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
     return file && ts.ScriptSnapshot.fromString(file.content);
   }
   getCurrentDirectory() {
-    return process.cwd();
+    return this.currentWorkingDir;
   }
   getCompilationSettings() {
     return this.options;
   }
   getDefaultLibFileName(options) {
-    return ts.getDefaultLibFilePath(this.options);
+    try {
+      const result = ts.getDefaultLibFilePath(this.options);
+      return result;
+    } catch (e) {
+      return 'index.ts';
+    }
   }
 
   get fileContents(): Map<string, string> {

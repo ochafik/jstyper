@@ -1,0 +1,24 @@
+<html>
+  <head>
+    <style>
+      textarea {
+        font-family: monospace;
+      }
+    </style>
+    <script>
+      var fs,path,os,crypto,module$1;
+    </script>
+    <script src="node_modules/typescript/lib/typescript.js"></script>
+    <script src="build/demo-bundle.js"></script>
+  </head>
+  <body>
+    <textarea id="input" rows="10" cols="80">
+  function f(x, opts) {
+    return opts &amp;&amp; opts.mult ? x * 2 : x / 2;
+  }
+    </textarea>
+    <textarea id="output" rows="10" cols="80">
+    </textarea>
+    <button id="type">Add Types!</button>
+  </body>
+</html>
