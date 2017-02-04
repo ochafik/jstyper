@@ -14,6 +14,6 @@ function gg4(x: number, y: {addValue: boolean; value: any; name: string;}) {
   return v;
 }
 
-function h4(x: undefined | {length: any;}) {
+function h4(x: string) {
   return x ? x.length : 0;
 }

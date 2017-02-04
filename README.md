@@ -50,3 +50,9 @@ function gg(x: number, o: {addValue: boolean, value: number, name: string}) {
 - Clone this repo
 - Run `npm i`
 - Run `node build/main.js <your .js files>`
+
+# TODO
+
+- Support of nominal types in existing TS files
+- Generate .d.ts automagically
+- Handle index operators

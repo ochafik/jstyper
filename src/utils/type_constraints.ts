@@ -1,5 +1,6 @@
 import * as ts from "typescript";
 import * as fl from "./flags";
+import {Options} from "../options";
 
 export type Signature = {
   returnType?: ts.Type,
@@ -35,6 +36,7 @@ export class TypeConstraints {
   constructor(
       private services: ts.LanguageService,
       private checker: ts.TypeChecker,
+      private options: Options,
       public initialType?: ts.Type) {
     if (initialType) {
       this.isType(initialType);
@@ -46,7 +48,7 @@ export class TypeConstraints {
   }
 
   private createConstraints(initialType?: ts.Type): TypeConstraints {
-    return new TypeConstraints(this.services, this.checker, initialType);
+    return new TypeConstraints(this.services, this.checker, this.options, initialType);
   }
 
   get isPureFunction(): boolean {
@@ -92,8 +94,14 @@ export class TypeConstraints {
       });
     }
     for (const prop of type.getProperties()) {
+      const decls = prop.getDeclarations();
+      if (decls == null || decls.length == 0) {
+        // Declaration is outside the scope of the compilation (maybe, builtin JS types).
+        // console.warn(`Property ${this.checker.symbolToString(prop)} has no known declaration`);
+        continue;
+      }
       this.getFieldConstraints(this.checker.symbolToString(prop))
-        .isType(this.checker.getTypeOfSymbolAtLocation(prop, prop.getDeclarations()[0]));
+         .isType(this.checker.getTypeOfSymbolAtLocation(prop, decls[0]));
     }
     this._flags |= type.flags;
 
@@ -150,15 +158,37 @@ export class TypeConstraints {
 
   private normalizeUnion() {
     let flags = this._flags;
+
+    // let fieldsToRemove = new Set([...this.fields.keys()]);
+    function removeFields(names: string[]) {
+      names.forEach(n => this.fields.remove(n));
+    }
+    if (fl.isString(flags)) {
+      removeFields(Object.keys(String.prototype));
+    }
+    
+    const fieldNames = [...this.fields.keys()];
+    const allFieldsAreStringMembers = fieldNames.every(k => k in String.prototype);
+
+    if (allFieldsAreStringMembers && fieldNames.length >= this.options.methodThresholdAfterWhichAssumeString) {
+      this._isNumberOrString = false;
+      flags |= ts.TypeFlags.String;
+      this.fields.clear();
+    }
+      
     if (this._isNumberOrString) {
       this._isNumberOrString = false;
-      if (!fl.isNumber(flags) && !fl.isString(flags)) {
+
+      if (fieldNames.length > 0 && allFieldsAreStringMembers) {
+        flags |= ts.TypeFlags.String;
+        this.fields.clear();
+      } else if (!fl.isNumber(flags) && !fl.isString(flags)) {
         flags |= ts.TypeFlags.String | ts.TypeFlags.Number;
       }
     }
     if (this._isBooleanLike) {
       this._isBooleanLike = false;
-      if (!fl.isBoolean(flags) && !fl.isNullOrUndefined(flags)) {
+      if (!fl.isNumber(flags) && !fl.isBoolean(flags) && !fl.isString(flags) && !fl.isNullOrUndefined(flags)) {
         if (fl.isObject(flags) || fl.isStructuredType(flags)) {
           flags |= ts.TypeFlags.Undefined;
         } else {
