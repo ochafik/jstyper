@@ -9,7 +9,7 @@ input.js:
     
 ```js
 function f(x) {
-  return x + 1;
+  return x * 2;
 }
 
 function g(x, o) {
@@ -29,7 +29,7 @@ output.ts:
 
 ```ts    
 function f(x: number) {
-  return x + 1;
+  return x * 2;
 }
 
 function g(x: number, o: {addValue: boolean, value: number, name: string}): number | string {

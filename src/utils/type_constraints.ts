@@ -1,10 +1,9 @@
 import * as ts from "typescript";
-import {isAny, isBoolean, isBooleanLike, isNull, isNumber, isNumberOrString, isString, isStructuredType, isVoid} from '../utils/flags';
+import * as fl from "./flags";
 
 export type Signature = {
   returnType?: ts.Type,
   argTypes: ts.Type[]
-  // argTypesAndNames: [ts.Type, string[]][]
 };
 
 export class CallConstraints {
@@ -30,6 +29,8 @@ export class TypeConstraints {
   private fields = new Map<string, TypeConstraints>();
   private callConstraints?: CallConstraints;
   private _flags: ts.TypeFlags = 0;
+  private _isBooleanLike = false;
+  private _isNumberOrString = false;
 
   constructor(
       private services: ts.LanguageService,
@@ -50,6 +51,8 @@ export class TypeConstraints {
 
   get isPureFunction(): boolean {
     return this.callConstraints != null &&
+        !this._isBooleanLike &&
+        !this._isNumberOrString &&
         (this._flags & ts.TypeFlags.Object) === ts.TypeFlags.Object &&
         this.fields.size == 0;
   }
@@ -64,6 +67,9 @@ export class TypeConstraints {
   }
 
   isType(type: ts.Type) {
+    if (fl.isAny(type)) {
+      return;
+    }
     // const before = this.resolve();
     // if (type.flags & ts.TypeFlags.NumberLiteral) {
     //   this.isNumber();
@@ -110,7 +116,8 @@ export class TypeConstraints {
     this._flags |= ts.TypeFlags.String;
   }
   isNumberOrString() {
-    this._flags |= ts.TypeFlags.StringOrNumberLiteral;
+    this._isNumberOrString = true;
+    // this._flags |= ts.TypeFlags.StringOrNumberLiteral;
   }
   isObject() {
     this._flags |= ts.TypeFlags.Object;
@@ -122,7 +129,7 @@ export class TypeConstraints {
     this._flags |= ts.TypeFlags.Void;
   }
   isBooleanLike() {
-    this._flags |= ts.TypeFlags.BooleanLike;
+    this._isBooleanLike = true;
   }
 
   private typeToString(t: ts.Type | null): string | null {
@@ -141,7 +148,27 @@ export class TypeConstraints {
       ];
   }
 
+  private normalizeUnion() {
+    let flags = this._flags;
+    if (this._isNumberOrString) {
+      this._isNumberOrString = false;
+      if (!fl.isNumber(flags) && !fl.isString(flags)) {
+        flags |= ts.TypeFlags.String | ts.TypeFlags.Number;
+      }
+    }
+    if (this._isBooleanLike) {
+      this._isBooleanLike = false;
+      if (!fl.isBoolean(flags) && !fl.isNullOrUndefined(flags)) {
+        flags |= ts.TypeFlags.Undefined;
+        // if (isObject(flags) || isStructuredType(flags)) {
+      }
+    }
+    this._flags = flags;
+  }
+
   resolve(): string | null {
+    this.normalizeUnion();
+
     const union: string[] = [];
     const members: string[] = [];
 
@@ -165,7 +192,6 @@ export class TypeConstraints {
       }
     }
 
-
     // for (const type of this.types) {
     //   union.push(this.checker.typeToString(type));
     // }
@@ -173,21 +199,10 @@ export class TypeConstraints {
     // const typesFlags = this.types.reduce((flags, type) => flags | type.flags, 0);
     // const missingFlags = this._flags & ~typesFlags;
     const flags = this._flags;
-    if (isNumberOrString(flags) && !isNumber(flags) && !isString(flags)) {
-      union.push('number');
-      union.push('string');
-    } else {
-      if (isNumber(flags)) {
-        union.push('number');
+    for (const primitive in primitivePredicates) {
+      if (primitivePredicates[primitive](flags)) {
+        union.push(primitive);
       }
-      if (isString(flags)) {
-        union.push('string');
-      }
-    }
-    if (isNull(flags)) {
-      union.push('null');
-    } else if (isBooleanLike(flags)) {
-      union.push('boolean');
     }
     if (members.length > 0) {
       // union.push('{' + members.join(', ') + '}');
@@ -195,7 +210,7 @@ export class TypeConstraints {
     }
 
     // Skip void if there's any other type.
-    if (union.length == 0 && isVoid(flags)) {
+    if (union.length == 0 && fl.isVoid(flags)) {
       union.push('void');
     }
     const result = union.length == 0 ? null : union.join(' | ');
@@ -203,3 +218,11 @@ export class TypeConstraints {
     return result;
   }
 }
+
+const primitivePredicates = {
+    'number': fl.isNumber,
+    'string': fl.isString,
+    'boolean': fl.isBoolean,
+    'null': fl.isNull,
+    'undefined': fl.isUndefined,
+};

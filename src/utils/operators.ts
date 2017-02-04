@@ -46,6 +46,15 @@ export const binaryNumberOperators = set([
   ts.SyntaxKind.CaretEqualsToken,
 ]);
 
+export const binaryBooleanOperators = set([
+  ts.SyntaxKind.AmpersandAmpersandToken,
+  ts.SyntaxKind.BarBarToken,
+]);
+
+export const unaryBooleanOperators = set([
+  ts.SyntaxKind.ExclamationToken,
+]);
+
 export const assignmentOperators = set([
   ts.SyntaxKind.MinusEqualsToken,
   ts.SyntaxKind.AsteriskEqualsToken,
