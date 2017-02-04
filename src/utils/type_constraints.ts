@@ -141,26 +141,26 @@ export class TypeConstraints {
     const union: string[] = [];
     const members: string[] = [];
 
-    for (const [name, constraints] of this.fields) {
-      // if (useMethodNotationForFunctionMembers && constraints.isPureFunction) {
-      //   const [argList, retType] = constraints!.resolveCallableArgListAndReturnType()!;
-      //   members.push(`${name}(${argList}): ${retType}`);
-      // } else {
-        members.push(`${name}: ${constraints.resolve() || 'any'}`);
-      // }
-    }
-
-    // const signaturesSeen = new Set<string>();
     if (this.callConstraints) {
       const [argList, retType] = this.resolveCallableArgListAndReturnType()!;
 
       const sigSig = `(${argList})${retType}`;
-      if (members.length > 0) {
+      if (this.fields.size > 0) {
         members.push(`(${argList}): ${retType}`)
       } else {
         union.push(`(${argList}) => ${retType}`);
       }
     }
+    
+    for (const [name, constraints] of this.fields) {
+      if (constraints.isPureFunction) {
+        const [argList, retType] = constraints!.resolveCallableArgListAndReturnType()!;
+        members.push(`${name}(${argList}): ${retType}`);
+      } else {
+        members.push(`${name}: ${constraints.resolve() || 'any'}`);
+      }
+    }
+
 
     // for (const type of this.types) {
     //   union.push(this.checker.typeToString(type));
@@ -186,7 +186,8 @@ export class TypeConstraints {
       union.push('boolean');
     }
     if (members.length > 0) {
-      union.push('{' + members.join(', ') + '}');
+      // union.push('{' + members.join(', ') + '}');
+      union.push('{ ' + members.map(m => m + ';').join(' ') + ' }');
     }
 
     // Skip void if there's any other type.
