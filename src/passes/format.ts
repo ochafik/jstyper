@@ -11,7 +11,7 @@ const formattingOptions: ts.FormatCodeOptions = {
     IndentStyle: ts.IndentStyle.Smart,
     IndentSize: 2,
     TabSize: 2,
-    BaseIndentSize: 2,
+    BaseIndentSize: 0,
     ConvertTabsToSpaces: true,
     NewLineCharacter: '\n',
     InsertSpaceAfterCommaDelimiter: true,
