@@ -3,21 +3,21 @@
   var foo2 = foo.foo2;
 
   modules.exports = {
-    f: f,
-    g: g,
+    f2: f2,
+    g2: g2,
   };
 
   foo1(10) == '';
   foo2 == 3;
 
-  function f(x, y) {
-    return x + 2 + g(y);
+  function f2(x, y) {
+    return x + 2 + g2(y) + g2(3);
   }
 
-  function g(x) {
+  function g2(x) {
     return x + 1;
   }
 
-  function h(x) {
+  function h2(x) {
     return ++x;
   }

@@ -64,11 +64,12 @@ export class TypeConstraints {
   }
 
   isType(type: ts.Type) {
-    if (type.flags & ts.TypeFlags.NumberLiteral) {
-      this.isNumber();
-      return;
-    }
-    const sym = type.getSymbol();
+    // const before = this.resolve();
+    // if (type.flags & ts.TypeFlags.NumberLiteral) {
+    //   this.isNumber();
+    //   return;
+    // }
+    // const sym = type.getSymbol();
     // if (sym && sym.getName() != '__type') {
     //   console.log(`SYMBOL(${this.checker.typeToString(type)}) = ${sym && this.checker.symbolToString(sym)}`);
     //   this.types.push(type);
@@ -89,6 +90,9 @@ export class TypeConstraints {
         .isType(this.checker.getTypeOfSymbolAtLocation(prop, prop.getDeclarations()[0]));
     }
     this._flags |= type.flags;
+
+    // const after = this.resolve();
+    // console.log(`isType(${this.checker.typeToString(type)}): "${before}" -> "${after}`);
   }
   
   getCallConstraints(): CallConstraints {
@@ -151,7 +155,7 @@ export class TypeConstraints {
         union.push(`(${argList}) => ${retType}`);
       }
     }
-    
+
     for (const [name, constraints] of this.fields) {
       if (constraints.isPureFunction) {
         const [argList, retType] = constraints!.resolveCallableArgListAndReturnType()!;

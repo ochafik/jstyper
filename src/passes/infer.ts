@@ -2,9 +2,10 @@ import * as ts from "typescript";
 import {AddChangeCallback, ReactorCallback} from '../utils/language_service_reactor';
 import {TypeConstraints, CallConstraints} from '../utils/type_constraints';
 import {isCallTarget, traverse} from '../utils/nodes';
-import {isAny, isBoolean, isBooleanLike, isNumber, isNumberOrString, isString, isStructuredType} from '../utils/flags';
+import {isAny, isBoolean, isBooleanLike, isNull, isNumber, isNumberOrString, isPrimitive, isString, isStructuredType} from '../utils/flags';
 import * as ops from '../utils/operators';
 
+// TODO: check if a constraint has seen any new info, then as long as some do, do our own loop to avoid writing files.
 export const infer: ReactorCallback = (fileNames, services, addChange) => {
   
   const allConstraints = new Map<ts.Symbol, TypeConstraints>();
@@ -37,7 +38,11 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
                     } else if (node.parent && node.parent.kind == ts.SyntaxKind.ExpressionStatement) {
                         callConstraints.returnType.isVoid();
                     }
-                    argTypes.forEach((t, i) => callConstraints!.getArgType(i).isType(t));
+                    // console.log(`CALL(${call.getFullText()}):`);
+                    argTypes.forEach((t, i) => {
+                        // console.log(`  ARG(${i}): ${checker.typeToString(t)}`);
+                        callConstraints!.getArgType(i).isType(t);
+                    });
                 }
             } else if (node.kind === ts.SyntaxKind.BinaryExpression) {
                 const binExpr = <ts.BinaryExpression>node;
@@ -48,18 +53,6 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
 
                 const op = binExpr.operatorToken.kind;
 
-                function handleStringOrNumberOp(constraints: TypeConstraints | undefined, otherType: ts.Type) {
-                    if (!constraints) {
-                        return;
-                    }
-                    if (!isString(constraints.flags) && isNumber(otherType)) {
-                        constraints.isNumber();
-                    }
-                    if (!isNumber(constraints.flags) && isString(otherType)) {
-                        constraints.isString();
-                    }
-                }
-
                 if (ops.binaryNumberOperators.has(op)) {
                     if (leftConstraints) {
                         leftConstraints.isNumber();
@@ -68,8 +61,23 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
                         rightConstraints.isNumber();
                     }
                 } else if (ops.binaryNumberOrStringOperators.has(op)) {
-                    handleStringOrNumberOp(leftConstraints, rightType);
-                    handleStringOrNumberOp(rightConstraints, leftType);
+                    if (isNumber(ctxType)) {
+                      leftConstraints && leftConstraints.isNumber();
+                      rightConstraints && rightConstraints.isNumber();  
+                    }
+                    // function handlePlusOp(constraints: TypeConstraints | undefined, otherType: ts.Type) {
+                    //     if (!constraints) {
+                    //         return;
+                    //     }
+                    //     if (!isString(constraints.flags) && isNumber(otherType)) {
+                    //         constraints.isNumber();
+                    //     }
+                    //     if (!isNumber(constraints.flags) && isString(otherType)) {
+                    //         constraints.isString();
+                    //     }
+                    // }
+                    // handlePlusOp(leftConstraints, rightType);
+                    // handlePlusOp(rightConstraints, leftType);
                     // if (leftConstraints && isNumberOrString(rightType)) {
                     //     leftConstraints.isNumberOrString();
                     // }
@@ -78,15 +86,24 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
                     // }
                 } else if (ops.equalityLikeOperators.has(op)) {
                     // This is a bit bold: we assume if things can be equatable, then they have the same type.
-                    if (leftConstraints && rightType && !isAny(rightType)) {
-                        leftConstraints.isType(rightType);
+                    function handle(constraints: TypeConstraints | undefined, otherType: ts.Type) {
+                        if (leftConstraints && otherType) {
+                            if (isPrimitive(otherType)) {//!isAny(otherType)) {
+                                leftConstraints.isType(otherType);
+                            } else if (isNull(otherType)) {
+                                leftConstraints.isNullable();
+                            }
+                        }
                     }
-                    if (rightConstraints && leftType && !isAny(leftType)) {
-                        rightConstraints.isType(leftType);
-                    }
-                } else if (ops.assignmentOperators.has(op)) {
-                    if (op == ts.SyntaxKind.PlusToken) {
-                        handleStringOrNumberOp(leftConstraints, rightType);
+                    handle(leftConstraints, rightType);
+                    handle(rightConstraints, leftType);
+                }
+                if (ops.assignmentOperators.has(op)) {
+                    if (op == ts.SyntaxKind.PlusEqualsToken) {
+                        if (leftConstraints && isNumber(leftConstraints.flags) && rightConstraints) {
+                            rightConstraints.isNumber();
+                        }
+                        // handlePlusOp(leftConstraints, rightType);
                     } else if (leftConstraints && rightType && !isAny(rightType)) {
                         leftConstraints.isType(rightType);
                     }
@@ -98,37 +115,58 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
             //   console.log(`leftConstraints for ${node.getFullText()}: ${leftConstraints} (op = ${expr.operator}, ops.unaryNumberOperators = ${[...ops.unaryNumberOperators.values()]})`);
               if (constraints) {
                   if (ops.unaryNumberOperators.has(expr.operator)) {
-                      console.log(`YAY`);
                       constraints.isNumber();
                   }
               }
+            // } else if (node.kind == ts.SyntaxKind.Parameter || node.kind == ts.SyntaxKind.VariableDeclaration) {
+            //     const varDecl = <ts.ParameterDeclaration | ts.VariableDeclaration>node;
+            //     const varSym = checker.getSymbolAtLocation(varDecl.name);
+            //     // console.log(`INIT[${varSym && checker.symbolToString(varSym)}]`);
+            //     if (varSym && varDecl.initializer) {
+            //         const constraints = getSymbolConstraints(varSym);
+            //         const initType = checker.getTypeAtLocation(varDecl.initializer);
+            //         // console.log(`INIT[${checker.symbolToString(varSym)}]: ${initType && checker.typeToString(initType)}`);
+            //         if (initType) {
+            //             constraints.isType(initType);
+            //         }
+            //     }
             }
-
         });
     }
   }
 
   for (const [sym, constraints] of allConstraints) {
-      const resolved = constraints.resolve();
-      const initial = constraints.initialType && checker.typeToString(constraints.initialType);
-      if (resolved == null || resolved == initial) {
-        continue;
-      }
-      
       let [decl] = sym.getDeclarations();
-
-      let insertionPoint = decl.getEnd();
-      let length = 0;
+      
       if (decl.kind == ts.SyntaxKind.Parameter || decl.kind == ts.SyntaxKind.VariableDeclaration) {
-        const varDecl = <ts.ParameterDeclaration | ts.VariableDeclaration>decl;
+        handleVarConstraints(constraints, <ts.ParameterDeclaration | ts.VariableDeclaration>decl)
+      } else if (decl.kind === ts.SyntaxKind.FunctionDeclaration) {
+        const fun = <ts.FunctionDeclaration>decl;
+        const callConstraints = constraints.getCallConstraints();
+        if (callConstraints) {
+            callConstraints.argTypes.forEach((argConstraints, i) => {
+                const param = fun.parameters[i];
+                handleVarConstraints(argConstraints, param);
+            });
+        }
+      }
+
+      function handleVarConstraints(constraints: TypeConstraints, varDecl: ts.ParameterDeclaration | ts.VariableDeclaration) {
+
+        const resolved = constraints.resolve();
+        const initial = constraints.initialType && checker.typeToString(constraints.initialType);
+        if (resolved == null || resolved == initial) {
+            return;
+        }
+        
         if (varDecl.type) {
             const start = varDecl.type.getStart();
             // const start = varDecl.type.getFirstToken().getStart();
             // const end = varDecl.type.getLastToken().getStart();
+            //    replacing: "${decl.getSourceFile().getFullText().slice(start, end)}"
             // console.log(`REPLACING "${varDecl.type.getFullText()}"
             //     resolved: "${resolved}"
-            //      initial: "${initial}"
-            //    replacing: "${decl.getSourceFile().getFullText().slice(start, end)}"`);
+            //      initial: "${initial}"`);
 
             addChange(decl.getSourceFile().fileName, {
                 span: {
@@ -181,14 +219,14 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
   function getNodeConstraints(node: ts.Node): TypeConstraints | undefined {
     if (node.kind === ts.SyntaxKind.PropertyAccessExpression) {
         const access = <ts.PropertyAccessExpression>node;
-        const sym = checker.getSymbolAtLocation(access.expression);
-        if (sym) {
-            return getSymbolConstraints(sym).getFieldConstraints(access.name.text);
+        const constraints = getNodeConstraints(access.expression);
+        if (constraints) {
+            return constraints.getFieldConstraints(access.name.text);
         }
     } else if (node.kind === ts.SyntaxKind.CallExpression) {
-        let calleeConstraints = getNodeConstraints((<ts.CallExpression>node).expression);
-        if (calleeConstraints) {
-            return calleeConstraints.getCallConstraints().returnType;
+        let constraints = getNodeConstraints((<ts.CallExpression>node).expression);
+        if (constraints) {
+            return constraints.getCallConstraints().returnType;
         }
     } else if (node.kind === ts.SyntaxKind.Identifier) {
         const sym = checker.getSymbolAtLocation(node);

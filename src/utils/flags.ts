@@ -21,3 +21,8 @@ export const isString = flagsTester(ts.TypeFlags.String, ts.TypeFlags.StringLite
 export const isStructuredType = flagsTester(ts.TypeFlags.StructuredType);
 export const isVoid = flagsTester(ts.TypeFlags.Void);
 
+export const isPrimitive = flagsTester(
+    ts.TypeFlags.Number, ts.TypeFlags.NumberLiteral,
+    ts.TypeFlags.String, ts.TypeFlags.StringLiteral,
+    ts.TypeFlags.StringOrNumberLiteral,
+    ts.TypeFlags.Boolean, ts.TypeFlags.BooleanLiteral)

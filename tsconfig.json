@@ -11,7 +11,7 @@
         "pretty": true,
         "removeComments": true,
         "sourceMap": true,
-        "allowJs": true,
+        "allowJs": false,
         "strictNullChecks": true
     },
     "atom": {

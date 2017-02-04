@@ -1,23 +1,23 @@
-  let foo: {foo1: (arg1: number) => string, foo2: number} = require('foo');
+  let foo: {foo1(arg1: number): string; foo2: number;} = require('foo');
   let foo1: (arg1: number) => string = foo.foo1;
   let foo2: number = foo.foo2;
 
   modules.exports = {
-    f: f,
-    g: g,
+    f2: f2,
+    g2: g2,
   };
 
   foo1(10) == '';
   foo2 == 3;
 
-  function f(x: number, y: number) {
-    return x + 2 + g(y);
+  function f2(x, y: number) {
+    return x + 2 + g2(y) + g2(3);
   }
 
-  function g(x: number) {
+  function g2(x: number) {
     return x + 1;
   }
 
-  function h(x: number) {
+  function h2(x: number) {
     return ++x;
   }
