@@ -17,3 +17,7 @@
   function g(x) {
     return x + 1;
   }
+
+  function h(x) {
+    return ++x;
+  }

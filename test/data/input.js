@@ -6,9 +6,12 @@
     g(x.memberOfX);
     y(1, 2, 3);
     
+    var zz;
+    zz = z;
+    zz = '';
     return x + 2 + g(y);
   }
 
   function g(x) {
-    return x + 1;
+    return x * 2;
   }

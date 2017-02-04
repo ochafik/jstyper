@@ -29,7 +29,7 @@ export class CallConstraints {
 export class TypeConstraints {
   private fields = new Map<string, TypeConstraints>();
   private callConstraints?: CallConstraints;
-  private flags: ts.TypeFlags = 0;
+  private _flags: ts.TypeFlags = 0;
 
   constructor(
       private services: ts.LanguageService,
@@ -40,13 +40,17 @@ export class TypeConstraints {
     }
   }
 
+  get flags() {
+    return this._flags;
+  }
+
   private createConstraints(initialType?: ts.Type): TypeConstraints {
     return new TypeConstraints(this.services, this.checker, initialType);
   }
 
   get isPureFunction(): boolean {
     return this.callConstraints != null &&
-        (this.flags & ts.TypeFlags.Object) === ts.TypeFlags.Object &&
+        (this._flags & ts.TypeFlags.Object) === ts.TypeFlags.Object &&
         this.fields.size == 0;
   }
 
@@ -84,7 +88,7 @@ export class TypeConstraints {
       this.getFieldConstraints(this.checker.symbolToString(prop))
         .isType(this.checker.getTypeOfSymbolAtLocation(prop, prop.getDeclarations()[0]));
     }
-    this.flags |= type.flags;
+    this._flags |= type.flags;
   }
   
   getCallConstraints(): CallConstraints {
@@ -96,22 +100,25 @@ export class TypeConstraints {
   }
   
   isNumber() {
-    this.flags |= ts.TypeFlags.Number;
+    this._flags |= ts.TypeFlags.Number;
+  }
+  isString() {
+    this._flags |= ts.TypeFlags.String;
   }
   isNumberOrString() {
-    this.flags |= ts.TypeFlags.StringOrNumberLiteral;
+    this._flags |= ts.TypeFlags.StringOrNumberLiteral;
   }
   isObject() {
-    this.flags |= ts.TypeFlags.Object;
+    this._flags |= ts.TypeFlags.Object;
   }
   isNullable() {
-    this.flags |= ts.TypeFlags.Null;
+    this._flags |= ts.TypeFlags.Null;
   }
   isVoid() {
-    this.flags |= ts.TypeFlags.Void;
+    this._flags |= ts.TypeFlags.Void;
   }
   isBooleanLike() {
-    this.flags |= ts.TypeFlags.BooleanLike;
+    this._flags |= ts.TypeFlags.BooleanLike;
   }
 
   private typeToString(t: ts.Type | null): string | null {
@@ -160,8 +167,8 @@ export class TypeConstraints {
     // }
 
     // const typesFlags = this.types.reduce((flags, type) => flags | type.flags, 0);
-    // const missingFlags = this.flags & ~typesFlags;
-    const flags = this.flags;
+    // const missingFlags = this._flags & ~typesFlags;
+    const flags = this._flags;
     if (isNumberOrString(flags) && !isNumber(flags) && !isString(flags)) {
       union.push('number');
       union.push('string');
@@ -187,7 +194,7 @@ export class TypeConstraints {
       union.push('void');
     }
     const result = union.length == 0 ? null : union.join(' | ');
-    // console.log(`result = "${result}" (members = [${members}], types = [${this.types.map(t => this.checker.typeToString(t))}], flags = ${this.flags}, missingFlags = ${missingFlags}`);
+    // console.log(`result = "${result}" (members = [${members}], types = [${this.types.map(t => this.checker.typeToString(t))}], flags = ${this._flags}, missingFlags = ${missingFlags}`);
     return result;
   }
 }

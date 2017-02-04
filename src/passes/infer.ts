@@ -3,6 +3,7 @@ import {AddChangeCallback, ReactorCallback} from '../utils/language_service_reac
 import {TypeConstraints, CallConstraints} from '../utils/type_constraints';
 import {isCallTarget, traverse} from '../utils/nodes';
 import {isAny, isBoolean, isBooleanLike, isNumber, isNumberOrString, isString, isStructuredType} from '../utils/flags';
+import * as ops from '../utils/operators';
 
 export const infer: ReactorCallback = (fileNames, services, addChange) => {
   
@@ -38,74 +39,69 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
                     }
                     argTypes.forEach((t, i) => callConstraints!.getArgType(i).isType(t));
                 }
-            }
-            if (node.kind === ts.SyntaxKind.BinaryExpression) {
+            } else if (node.kind === ts.SyntaxKind.BinaryExpression) {
                 const binExpr = <ts.BinaryExpression>node;
                 const [[leftType, leftSym], [rightType, rightSym]] = [binExpr.left, binExpr.right].map(typeAndSymbol);
                 
                 const leftConstraints = getNodeConstraints(binExpr.left);
                 const rightConstraints = getNodeConstraints(binExpr.right);
 
-                switch (binExpr.operatorToken.kind) {
-                    case ts.SyntaxKind.PlusToken:
-                    case ts.SyntaxKind.PlusEqualsToken:
-                        if (leftConstraints && isNumberOrString(rightType)) {
-                            leftConstraints.isNumberOrString();
-                        }
-                        if (rightConstraints && isNumberOrString(leftType)) {
-                            rightConstraints.isNumberOrString();
-                        }
-                        break;
-                    case ts.SyntaxKind.MinusToken:
-                    case ts.SyntaxKind.MinusEqualsToken:
-                    case ts.SyntaxKind.AsteriskToken:
-                    case ts.SyntaxKind.AsteriskEqualsToken:
-                    case ts.SyntaxKind.AsteriskAsteriskToken:
-                    case ts.SyntaxKind.AsteriskAsteriskEqualsToken:
-                    case ts.SyntaxKind.SlashToken:
-                    case ts.SyntaxKind.SlashEqualsToken:
-                    case ts.SyntaxKind.PercentToken:
-                    case ts.SyntaxKind.PercentEqualsToken:
-                    case ts.SyntaxKind.LessThanToken:
-                    case ts.SyntaxKind.LessThanEqualsToken:
-                    case ts.SyntaxKind.GreaterThanToken:
-                    case ts.SyntaxKind.GreaterThanEqualsToken:
-                    case ts.SyntaxKind.LessThanLessThanToken:
-                    case ts.SyntaxKind.LessThanLessThanEqualsToken:
-                    case ts.SyntaxKind.GreaterThanGreaterThanToken:
-                    case ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken:
-                    case ts.SyntaxKind.AmpersandToken:
-                    case ts.SyntaxKind.AmpersandEqualsToken:
-                    case ts.SyntaxKind.BarToken:
-                    case ts.SyntaxKind.BarEqualsToken:
-                    case ts.SyntaxKind.CaretToken:
-                    case ts.SyntaxKind.CaretEqualsToken:
-                        if (leftConstraints) {
-                            leftConstraints.isNumber();
-                        }
-                        if (rightConstraints) {
-                            rightConstraints.isNumber();
-                        }
-                        break;
-                    case ts.SyntaxKind.EqualsEqualsToken:
-                    case ts.SyntaxKind.EqualsEqualsEqualsToken:
-                    case ts.SyntaxKind.ExclamationEqualsToken:
-                    case ts.SyntaxKind.ExclamationEqualsEqualsToken:
-                        if (leftConstraints && rightType && !isAny(rightType)) {
-                            leftConstraints.isType(rightType);
-                        }
-                        if (rightConstraints && leftType && !isAny(leftType)) {
-                            rightConstraints.isType(leftType);
-                        }
-                        // if (leftConstraints) {
-                        //     // if (isNumber(rightType) || isString(rightType)) {
-                        //     leftConstraints.isType(rightType);
-                        //     // }
-                        // }
-                        break;
-                    default:
-                        // console.log(`OP: ${binExpr.operatorToken.kind}`);
+                const op = binExpr.operatorToken.kind;
+
+                function handleStringOrNumberOp(constraints: TypeConstraints | undefined, otherType: ts.Type) {
+                    if (!constraints) {
+                        return;
+                    }
+                    if (!isString(constraints.flags) && isNumber(otherType)) {
+                        constraints.isNumber();
+                    }
+                    if (!isNumber(constraints.flags) && isString(otherType)) {
+                        constraints.isString();
+                    }
                 }
+
+                if (ops.binaryNumberOperators.has(op)) {
+                    if (leftConstraints) {
+                        leftConstraints.isNumber();
+                    }
+                    if (rightConstraints) {
+                        rightConstraints.isNumber();
+                    }
+                } else if (ops.binaryNumberOrStringOperators.has(op)) {
+                    handleStringOrNumberOp(leftConstraints, rightType);
+                    handleStringOrNumberOp(rightConstraints, leftType);
+                    // if (leftConstraints && isNumberOrString(rightType)) {
+                    //     leftConstraints.isNumberOrString();
+                    // }
+                    // if (rightConstraints && isNumberOrString(leftType)) {
+                    //     rightConstraints.isNumberOrString();
+                    // }
+                } else if (ops.equalityLikeOperators.has(op)) {
+                    // This is a bit bold: we assume if things can be equatable, then they have the same type.
+                    if (leftConstraints && rightType && !isAny(rightType)) {
+                        leftConstraints.isType(rightType);
+                    }
+                    if (rightConstraints && leftType && !isAny(leftType)) {
+                        rightConstraints.isType(leftType);
+                    }
+                } else if (ops.assignmentOperators.has(op)) {
+                    if (op == ts.SyntaxKind.PlusToken) {
+                        handleStringOrNumberOp(leftConstraints, rightType);
+                    } else if (leftConstraints && rightType && !isAny(rightType)) {
+                        leftConstraints.isType(rightType);
+                    }
+                }
+            } else if (node.kind === ts.SyntaxKind.PostfixUnaryExpression ||
+                node.kind == ts.SyntaxKind.PrefixUnaryExpression) {
+              const expr = <ts.PrefixUnaryExpression | ts.PostfixUnaryExpression>node;
+              const constraints = getNodeConstraints(expr.operand);
+            //   console.log(`leftConstraints for ${node.getFullText()}: ${leftConstraints} (op = ${expr.operator}, ops.unaryNumberOperators = ${[...ops.unaryNumberOperators.values()]})`);
+              if (constraints) {
+                  if (ops.unaryNumberOperators.has(expr.operator)) {
+                      console.log(`YAY`);
+                      constraints.isNumber();
+                  }
+              }
             }
 
         });
@@ -176,7 +172,7 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
         if (decls.length > 0) {
           type = checker.getTypeOfSymbolAtLocation(sym, decls[0]);
         }
-        constraints = new TypeConstraints(services, checker, type && isAny(type) ? undefined : type);
+        constraints = new TypeConstraints(services, checker, type && !isAny(type) ? type : undefined);
         allConstraints.set(sym, constraints);
     }
     return constraints;
