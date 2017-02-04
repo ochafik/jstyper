@@ -8,6 +8,7 @@ export type Options = {
   updateExports: boolean,
   updateVars: boolean,
   maxIterations: number,
+  maxSubInferenceCount: number,
   currentWorkingDir: string,
   methodThresholdAfterWhichAssumeString: number,
 };
@@ -18,6 +19,7 @@ export const defaultOptions: Readonly<Options> = {
   updateExports: true,
   updateVars: true,
   maxIterations: 5,
+  maxSubInferenceCount: 5,
   currentWorkingDir: '.',
   methodThresholdAfterWhichAssumeString: 1,
 };

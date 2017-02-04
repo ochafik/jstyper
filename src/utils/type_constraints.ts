@@ -169,8 +169,11 @@ export class TypeConstraints {
     
     const fieldNames = [...this.fields.keys()];
     const allFieldsAreStringMembers = fieldNames.every(k => k in String.prototype);
+    const allFieldsAreArrayMembers = fieldNames.every(k => k in Array.prototype);
 
-    if (allFieldsAreStringMembers && fieldNames.length >= this.options.methodThresholdAfterWhichAssumeString) {
+    if (allFieldsAreStringMembers && 
+        (!allFieldsAreArrayMembers || this._isBooleanLike) &&
+        fieldNames.length >= this.options.methodThresholdAfterWhichAssumeString) {
       this._isNumberOrString = false;
       flags |= ts.TypeFlags.String;
       this.fields.clear();

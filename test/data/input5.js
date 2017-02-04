@@ -6,6 +6,10 @@ function ff5(s) {
   return s.length == 0 ? '' : s;
 }
 
+function fff5(s) {
+  return s.substring(1);
+}
+
 function g5(s) {
   return s ? s : '';
 }
