@@ -159,8 +159,11 @@ export class TypeConstraints {
     if (this._isBooleanLike) {
       this._isBooleanLike = false;
       if (!fl.isBoolean(flags) && !fl.isNullOrUndefined(flags)) {
-        flags |= ts.TypeFlags.Undefined;
-        // if (isObject(flags) || isStructuredType(flags)) {
+        if (fl.isObject(flags) || fl.isStructuredType(flags)) {
+          flags |= ts.TypeFlags.Undefined;
+        } else {
+          flags |= ts.TypeFlags.Boolean;
+        }
       }
     }
     this._flags = flags;
