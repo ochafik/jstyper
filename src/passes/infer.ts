@@ -4,9 +4,10 @@ import {TypeConstraints, CallConstraints} from '../utils/type_constraints';
 import {isCallTarget, traverse} from '../utils/nodes';
 import * as fl from "../utils/flags";
 import * as ops from '../utils/operators';
+import {Options} from '../options';
 
 // TODO: check if a constraint has seen any new info, then as long as some do, do our own loop to avoid writing files.
-export const infer: ReactorCallback = (fileNames, services, addChange) => {
+export const infer: (options: Options) => ReactorCallback = (options) => (fileNames, services, addChange) => {
   
   const allConstraints = new Map<ts.Symbol, TypeConstraints>();
   const program = services.getProgram();
@@ -134,7 +135,11 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
   }
 
   for (const [sym, constraints] of allConstraints) {
-      let [decl] = sym.getDeclarations();
+      const decls = sym.getDeclarations();
+      if (!decls || decls.length == 0) {
+          continue;
+      }
+      let [decl] = decls;
       
       if (decl.kind == ts.SyntaxKind.Parameter || decl.kind == ts.SyntaxKind.VariableDeclaration) {
         handleVarConstraints(constraints, <ts.ParameterDeclaration | ts.VariableDeclaration>decl)
@@ -162,14 +167,17 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
             // const start = varDecl.type.getFirstToken().getStart();
             // const end = varDecl.type.getLastToken().getStart();
             //    replacing: "${decl.getSourceFile().getFullText().slice(start, end)}"
-            // console.log(`REPLACING "${varDecl.type.getFullText()}"
-            //     resolved: "${resolved}"
-            //      initial: "${initial}"`);
+            const length = varDecl.type.getEnd() - start;
+             console.log(`REPLACING "${varDecl.type.getFullText()}"
+                resolved: "${resolved}"
+                 initial: "${initial}"
+                 length: ${length}
+              fullWidth: ${varDecl.type.getFullWidth()}`);
 
             addChange(decl.getSourceFile().fileName, {
                 span: {
                     start: start,
-                    length: varDecl.type.getEnd() - start
+                    length: length
                 },
                 newText: resolved
             });
@@ -197,10 +205,10 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
     if (!constraints) {
         const decls = sym.getDeclarations();
         let type: ts.Type | undefined;
-        if (decls.length > 0) {
+        if (decls && decls.length > 0) {
           type = checker.getTypeOfSymbolAtLocation(sym, decls[0]);
         }
-        constraints = new TypeConstraints(services, checker, type && !fl.isAny(type) ? type : undefined);
+        constraints = new TypeConstraints(services, checker, options, type && !fl.isAny(type) ? type : undefined);
         allConstraints.set(sym, constraints);
     }
     return constraints;
@@ -226,6 +234,19 @@ export const infer: ReactorCallback = (fileNames, services, addChange) => {
     } else if (node.kind === ts.SyntaxKind.Identifier) {
         const sym = checker.getSymbolAtLocation(node);
         if (sym) {
+            const decls = sym.getDeclarations();
+            if (decls && decls.length > 0) {
+                const decl = decls[0];
+                if (decl.parent && decl.parent.kind === ts.SyntaxKind.FunctionDeclaration) {
+                    const param = <ts.ParameterDeclaration>decl;
+                    const fun = <ts.FunctionDeclaration>decl.parent;
+                    const paramIndex = fun.parameters.indexOf(param);
+                    const funConstraints = getNodeConstraints(fun);
+                    if (funConstraints) {
+                        return funConstraints.getCallConstraints().getArgType(paramIndex);
+                    }
+                }
+            }
             return getSymbolConstraints(sym);
         }
     }
