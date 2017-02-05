@@ -1,6 +1,6 @@
 import {UndoManager} from './undo';
 
-export function addTabIndentSupport(textArea: HTMLTextAreaElement, undoManager: UndoManager) {
+export function addTabIndentSupport(textArea: HTMLTextAreaElement, contentChanged: (content: string) => void) {
   const tab = '  ';
   textArea.addEventListener('keydown', (e) => {
     if ((e.keyCode || e.which) == '\t'.charCodeAt(0)) {
@@ -41,7 +41,7 @@ export function addTabIndentSupport(textArea: HTMLTextAreaElement, undoManager: 
           textArea.selectionStart = start + startOffset;
           textArea.selectionEnd = end + startOffset + newSelection.length - selection.length;
         }
-        undoManager.content = textArea.value;
+        contentChanged(textArea.value);
     }
   });
 }

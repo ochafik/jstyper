@@ -22,8 +22,11 @@ function f(x, opts) {
     location.hash = '#' + encodeURIComponent(jsInput.value);
     autoRun();
   });
-  const manager = addUndoSupport(jsInput);
-  addTabIndentSupport(jsInput, manager);
+  const manager = addUndoSupport(jsInput, (c) => autoRun());
+  addTabIndentSupport(jsInput, (c) => {
+    manager.content = c;
+    autoRun();
+  });
   updateRunVisibility();
   autoRunCheckBox.addEventListener('change', () => {
     autoRun();

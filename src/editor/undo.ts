@@ -1,4 +1,4 @@
-export function addUndoSupport(textArea: HTMLTextAreaElement): UndoManager {
+export function addUndoSupport(textArea: HTMLTextAreaElement, contentChanged: (content: string) => void): UndoManager {
   const manager = new UndoManager(textArea.value);
   textArea.addEventListener('input', (e) => {
     manager.content = textArea.value;
@@ -13,6 +13,7 @@ export function addUndoSupport(textArea: HTMLTextAreaElement): UndoManager {
         manager.undo();
       }
       textArea.value = manager.content;
+      contentChanged(textArea.value);
     }
   });
   return manager;
