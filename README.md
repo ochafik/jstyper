@@ -3,6 +3,12 @@ Adds flow / typescript types to JavaScript files
 
 Typer adds {TypeScript, Flow, Closure} types to JavaScript programs using iterative type propagation and the TypeScript Language Services.
 
+# Demo
+
+[Run it here](https://goo.gl/5lkE11)
+* [Gist](https://gist.github.com/ochafik/f69b7e7b11bc0c41631e0bd17800e932)
+* [Short-link analytics](https://goo.gl/#analytics/goo.gl/5lkE11/all_time)
+
 # Example
 
 input.js:

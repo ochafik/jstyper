@@ -45,7 +45,7 @@ function f(x, opts) {
     const [[_, output]] = result;
     tsOutput.value = output;
     const time = new Date().getTime() - start;
-    stats.textContent = `Took ${time} milliseconds`;
+    stats.textContent = `(execution time: ${time} milliseconds)`;
   }
   button.onclick = run;
 });
