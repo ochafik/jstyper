@@ -25,6 +25,10 @@
         height: 50%;
       }
 
+      #output {
+        background: lavender;
+      }
+
       html, body {
         height: 100%;
         margin: 0;
@@ -59,8 +63,14 @@
     <div class="textarea-with-overlay">
       <textarea id="input" rows="10" cols="80"></textarea>
       <div class="bar overlay">
-        <input id="autorun" checked type="checkbox">Auto-run
-        <button id="run">Run</button>
+        <div>
+          <input id="autorun" checked type="checkbox">Auto-run
+          <button id="run">Run</button>
+        </div>
+        <div>
+          Max iterations:
+          <input type="text" size="2" id="maxIterations">
+        </div>
       </div>
     </div>
     <div class="textarea-with-overlay">

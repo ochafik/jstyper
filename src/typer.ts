@@ -30,6 +30,12 @@ export function runTyper(fileContents: Map<string, string>, options = defaultOpt
       if (!reactor.react(inferrer)) {
           break;
       }
+      if (options.debugPasses) {
+          console.warn(`Partial result after inference pass ${i + 1}:`);
+          for (const [fileName, contents] of reactor.fileContents) {
+              console.warn(`${fileName}:\n${contents}\n`);
+          }
+      }
   }
 
   if (options.format) reactor.react(format);

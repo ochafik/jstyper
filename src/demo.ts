@@ -1,4 +1,5 @@
 import {runTyper} from './typer';
+import {Options, defaultOptions} from './options';
 import {addTabIndentSupport} from './editor/indent';
 import {addUndoSupport} from './editor/undo';
 
@@ -8,6 +9,7 @@ window.addEventListener('load', () => {
   const button = <HTMLButtonElement>document.getElementById('run');
   const autoRunCheckBox = <HTMLInputElement>document.getElementById('autorun');
   const stats = <HTMLTextAreaElement>document.getElementById('stats');
+  const maxIterations = <HTMLInputElement>document.getElementById('maxIterations');
 
   if (location.hash.length > 0) {
     jsInput.value = decodeURIComponent(location.hash.substring(1));
@@ -22,7 +24,11 @@ function f(x, opts) {
     location.hash = '#' + encodeURIComponent(jsInput.value);
     autoRun();
   });
-  const manager = addUndoSupport(jsInput, (c) => autoRun());
+
+  maxIterations.value = '' + defaultOptions.maxIterations;
+  maxIterations.addEventListener('input', autoRun);
+  
+  const manager = addUndoSupport(jsInput, autoRun);
   addTabIndentSupport(jsInput, (c) => {
     manager.content = c;
     autoRun();
@@ -44,6 +50,11 @@ function f(x, opts) {
   function run() {
     stats.textContent = `Analyzing...`;
     const start = new Date().getTime();
+
+    const options = <Options>new Object(defaultOptions);
+    options.debugPasses = true;
+    options.maxIterations = Number.parseInt(maxIterations.value);
+
     const {fileContents: [[_, output]], inferencePasses} = runTyper(new Map([['file.js', jsInput.value]]))
     tsOutput.value = output;
     const time = new Date().getTime() - start;
