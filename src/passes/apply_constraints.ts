@@ -23,7 +23,9 @@ export function applyConstraints(allConstraints: Map<ts.Symbol, TypeConstraints>
         if (callConstraints) {
             callConstraints.argTypes.forEach((argConstraints, i) => {
                 const param = fun.parameters[i];
-                handleVarConstraints(argConstraints, param);
+                if (param) {
+                    handleVarConstraints(argConstraints, param);
+                }
             });
         }
       }
