@@ -16,12 +16,13 @@
         width: 100%;
       }
     </style>
-    <script src="node_modules/typescript/lib/typescript.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typescript/2.2.0/typescript.min.js"></script>
+    <!--<script src="node_modules/typescript/lib/typescript.js"></script>-->
     <script src="build/demo-bundle.js"></script>
   </head>
   <body>
     <textarea id="input" rows="10" cols="80"></textarea>
-    <textarea id="output" rows="10" cols="80"></textarea>
+    <textarea id="output" rows="10" cols="80" readonly></textarea>
     <div class="bar">
       <button id="run">Run</button>
       <div class="label"><input id="autorun" checked type="checkbox">Auto-run</div>
