@@ -61,19 +61,20 @@ export class ConstraintsCache {
             if (decls && decls.length > 0) {
                 for (const decl of decls) {
                     // console.log(`DECL.parent.kind: ${decl.parent && decl.parent.kind}`);
-                    const parentFun = <ts.FunctionDeclaration>findParentOfKind(decl, ts.SyntaxKind.FunctionDeclaration);
-                    if (parentFun) {
-                        const param = <ts.ParameterDeclaration>decl;
-                        const paramIndex = parentFun.parameters.indexOf(param);
-                        const funConstraints = this.getNodeConstraints(parentFun);
-                        // console.log(`FUN constraints: ${funConstraints}`);
-                        if (funConstraints) {
-                            return funConstraints.getCallConstraints().getArgType(paramIndex);
+                    if (decl.kind == ts.SyntaxKind.Parameter) {
+                        const parentFun = <ts.FunctionDeclaration>findParentOfKind(decl, ts.SyntaxKind.FunctionDeclaration);
+                        if (parentFun) {
+                            const param = <ts.ParameterDeclaration>decl;
+                            const paramIndex = parentFun.parameters.indexOf(param);
+                            const funConstraints = this.getNodeConstraints(parentFun);
+                            // console.log(`FUN constraints: ${funConstraints}`);
+                            if (funConstraints) {
+                                return funConstraints.getCallConstraints().getArgType(paramIndex);
+                            }
+                        } else {
+                            console.warn(`Found no parent function decl for ${node.getFullText()}`);
+                            return undefined;
                         }
-                        // return;
-                    // } else {
-                    //     console.warn(`Found no parent function decl for ${node.getFullText()}`);
-                    //     return undefined;
                     }
                 }
             }

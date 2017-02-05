@@ -26,6 +26,7 @@ export function findParentOfKind(node: ts.Node, ...kinds: ts.SyntaxKind[]) {
     }
     return undefined;
 }
+
 export function isAnyKind(node: ts.Node, ...kinds: ts.SyntaxKind[]) {
     return kinds.indexOf(node.kind) >= 0;
 }
