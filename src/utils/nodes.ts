@@ -16,6 +16,11 @@ export function isCallTarget(n: ts.Node): boolean {
     return false;
 }
 
+export function findEnclosingFunctionLikeDeclaration(node: ts.Node) {
+    return <ts.FunctionLikeDeclaration>findParentOfKind(node,
+        ts.SyntaxKind.FunctionDeclaration, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.FunctionExpression);
+}
+
 export function findParentOfKind(node: ts.Node, ...kinds: ts.SyntaxKind[]) {
     let parent = node.parent;
     while (parent) {

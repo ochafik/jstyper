@@ -9,8 +9,9 @@ export type Signature = {
 
 export class CallConstraints {
   constructor(
-      private createConstraints: () => TypeConstraints,
-      public readonly returnType: TypeConstraints = createConstraints(),
+      private calleeDescription: string,
+      private createConstraints: (description: string) => TypeConstraints,
+      public readonly returnType: TypeConstraints = createConstraints(`${calleeDescription}.return`),
       public readonly argTypes: TypeConstraints[] = []) {}
 
   get hasChanges() {
@@ -23,7 +24,7 @@ export class CallConstraints {
   private ensureArity(arity: number) {
     for (let i = 0; i < arity; i++) {
       if (this.argTypes.length <= i) {
-        this.argTypes.push(this.createConstraints());
+        this.argTypes.push(this.createConstraints(`${this.calleeDescription}.arguments[${i}]`));
       }
     }
   }
@@ -40,11 +41,13 @@ export class TypeConstraints {
   private _flags: ts.TypeFlags = 0;
   private _isBooleanLike = false;
   private _isNumberOrString = false;
+  private _cannotBeVoid = false;
 
   private _hasChanges = false;
   // private _isBuilding = true;
 
   constructor(
+      private description: string,
       private services: ts.LanguageService,
       private checker: ts.TypeChecker,
       private options: Options,
@@ -53,6 +56,7 @@ export class TypeConstraints {
       this.isType(initialType);
       this.clearHasChanges();
     }
+    // console.log(`TypeConstraints: ${description}`);
     // this._isBuilding = false;
   }
 
@@ -60,8 +64,8 @@ export class TypeConstraints {
     return this._flags;
   }
 
-  private createConstraints(initialType?: ts.Type): TypeConstraints {
-    return new TypeConstraints(this.services, this.checker, this.options, initialType);
+  private createConstraints(description: string, initialType?: ts.Type): TypeConstraints {
+    return new TypeConstraints(description, this.services, this.checker, this.options, initialType);
   }
 
   get isPureFunction(): boolean {
@@ -76,7 +80,7 @@ export class TypeConstraints {
     this.isObject();
     let constraints = this.fields.get(name);
     if (!constraints) {
-      this.fields.set(name, constraints = this.createConstraints());
+      this.fields.set(name, constraints = this.createConstraints(`${this.description}.${name}`));
     }
     return constraints;
   }
@@ -156,7 +160,7 @@ export class TypeConstraints {
   getCallConstraints(): CallConstraints {
     this.isObject();
     if (!this.callConstraints) {
-      this.callConstraints = new CallConstraints(() => this.createConstraints());
+      this.callConstraints = new CallConstraints(this.description, (d) => this.createConstraints(d));
     }
     return this.callConstraints;
   }
@@ -175,6 +179,12 @@ export class TypeConstraints {
   }
   isVoid() {
     this.hasFlags(ts.TypeFlags.Void);
+  }
+  cannotBeVoid() {
+    if (this._cannotBeVoid) return;
+
+    this._cannotBeVoid = true;
+    this.markChange();
   }
   isBooleanLike() {
     if (this._isBooleanLike || fl.isBoolean(this._flags) || fl.isBooleanLike(this._flags) ||
@@ -297,6 +307,10 @@ export class TypeConstraints {
           flags |= ts.TypeFlags.Boolean;
         }
       }
+    }
+    if (this._cannotBeVoid) {
+      this._cannotBeVoid = false;
+      flags &= ~ts.TypeFlags.Void;
     }
     this._flags = flags;
   }

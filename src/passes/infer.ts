@@ -4,6 +4,7 @@ import {TypeConstraints, CallConstraints} from '../utils/type_constraints';
 import {isCallTarget, traverse} from '../utils/nodes';
 import * as fl from "../utils/flags";
 import * as ops from '../utils/operators';
+import * as nodes from '../utils/nodes';
 import {Options} from '../options';
 import {applyConstraints} from './apply_constraints';
 import {ConstraintsCache} from './constraints_cache';
@@ -46,6 +47,15 @@ export const infer: (options: Options) => ReactorCallback = (options) => (fileNa
                             // console.log(`  ARG(${i}): ${checker.typeToString(t)}`);
                             callConstraints!.getArgType(i).isType(t);
                         });
+                    }
+                } else if (node.kind === ts.SyntaxKind.ReturnStatement) {
+                    const ret = <ts.ReturnStatement>node;
+                    if (ret.expression) {
+                        const exe = nodes.findEnclosingFunctionLikeDeclaration(ret);
+                        const constraints = constraintsCache.getNodeConstraints(exe);
+                        if (constraints) {
+                            constraints.cannotBeVoid();
+                        }
                     }
                 } else if (node.kind === ts.SyntaxKind.BinaryExpression) {
                     const binExpr = <ts.BinaryExpression>node;

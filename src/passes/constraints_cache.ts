@@ -1,7 +1,7 @@
 import * as ts from "typescript";
 import {TypeConstraints, CallConstraints} from '../utils/type_constraints';
 import * as fl from "../utils/flags";
-import {findParentOfKind} from "../utils/nodes";
+import * as nodes from "../utils/nodes";
 import {Options} from '../options';
 import {applyConstraints} from './apply_constraints';
 
@@ -31,19 +31,20 @@ export class ConstraintsCache {
   private getSymbolConstraints(sym: ts.Symbol): TypeConstraints {
     let constraints = this.allConstraints.get(sym);
     if (!constraints) {
+        // console.log(`Building constraints for ${this.checker.symbolToString(sym)}`);
         const decls = sym.getDeclarations();
         let type: ts.Type | undefined;
         if (decls && decls.length > 0) {
           type = this.checker.getTypeOfSymbolAtLocation(sym, decls[0]);
         }
-        constraints = new TypeConstraints(this.services, this.checker, this.options, type && !fl.isAny(type) ? type : undefined);
+        constraints = new TypeConstraints(this.checker.symbolToString(sym), this.services, this.checker, this.options, type && !fl.isAny(type) ? type : undefined);
         this.allConstraints.set(sym, constraints);
     }
     return constraints;
   }
 
   getNodeConstraints(node: ts.Node): TypeConstraints | undefined {
-    // console.log(`getNodeConstraints(${getDebugNodeClass(node)})`);
+    // console.log(`getNodeConstraints(${nodes.getNodeKindDebugDescription(node)})`);
 
     while (node.kind === ts.SyntaxKind.ParenthesizedExpression) {
       node = (<ts.ParenthesizedExpression>node).expression;
@@ -61,15 +62,17 @@ export class ConstraintsCache {
             return constraints.getCallConstraints().returnType;
         }
     } else if (node.kind === ts.SyntaxKind.FunctionDeclaration ||
+            node.kind === ts.SyntaxKind.ArrowFunction ||
+            node.kind === ts.SyntaxKind.FunctionExpression ||
             node.kind == ts.SyntaxKind.InterfaceDeclaration ||
             node.kind == ts.SyntaxKind.VariableDeclaration) {
-        const decl = <ts.FunctionDeclaration | ts.InterfaceDeclaration | ts.VariableDeclaration>node;
+        const decl = <ts.FunctionLikeDeclaration | ts.InterfaceDeclaration | ts.VariableDeclaration>node;
         const sym = decl.name && this.checker.getSymbolAtLocation(decl.name);
         if (sym) {
             return this.getSymbolConstraints(sym);
         }
     } else if (node.kind === ts.SyntaxKind.Parameter) {
-        const parentFun = <ts.FunctionDeclaration>findParentOfKind(node, ts.SyntaxKind.FunctionDeclaration);
+        const parentFun = <ts.FunctionDeclaration>nodes.findParentOfKind(node, ts.SyntaxKind.FunctionDeclaration);
         if (parentFun) {
             const param = <ts.ParameterDeclaration>node;
             const paramIndex = parentFun.parameters.indexOf(param);
