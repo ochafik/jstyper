@@ -24,10 +24,12 @@ export default {
       main: true,
       browser: true
     }),
+    //*
     babel({
       exclude: 'node_modules/**'
     }),
     uglify({sourceMap: true}, minify),
+    //*/
     filesize(),
   ]
 }

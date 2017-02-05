@@ -20,8 +20,8 @@ const results = runTyper(fileContents, options);
 const metadataComment = `// ${results.inferencePasses} inference passes`;
     
 for (let [fileName, content] of results.fileContents) {
-    console.warn(`${fileName}:`);
-    console.warn(content);
+    // console.warn(`${fileName}:`);
+    // console.warn(content);
     
     content += '\n\n' + metadataComment
     
