@@ -253,8 +253,8 @@ export class TypeConstraints {
       }
     }
     if (members.length > 0) {
-      // union.push('{' + members.join(', ') + '}');
-      union.push('{ ' + members.map(m => m + ';').join(' ') + ' }');
+      union.push('{' + members.join(', ') + '}');
+      // union.push('{ ' + members.map(m => m + ';').join(' ') + ' }');
     }
 
     // Skip void if there's any other type.

@@ -5,21 +5,28 @@
         font-family: monospace;
         display: block;
       }
+      .label {
+        display: inline-block;
+        font-size: small;
+      }
+      #stats {
+        float: right;
+      }
+      textarea, .bar {
+        width: 100%;
+      }
     </style>
-    <script>
-      var fs,path,os,crypto,module$1;
-    </script>
     <script src="node_modules/typescript/lib/typescript.js"></script>
     <script src="build/demo-bundle.js"></script>
   </head>
   <body>
-    <textarea id="input" rows="10" cols="80">
-  function f(x, opts) {
-    return opts &amp;&amp; opts.mult ? x * 2 : x / 2;
-  }
-    </textarea>
-    <button id="type">Add Types!</button>
+    <textarea id="input" rows="10" cols="80"></textarea>
     <textarea id="output" rows="10" cols="80"></textarea>
+    <div class="bar">
+      <button id="run">Run</button>
+      <div class="label"><input id="autorun" checked type="checkbox">Auto-run</div>
+      <div id="stats" class="label"></div>
+    </div>
     
   </body>
 </html>
