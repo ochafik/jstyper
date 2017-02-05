@@ -33,7 +33,8 @@
     "rollup": "rollup -c",
     "rollup:w": "rollup -c -w",
     "build": "npm run rollup && inline-assets index.html build/index.html",
-    "test:w": "tsc && concurrently \"tsc -w\" \"watch --wait=1 \\\"node build/main.js test/data/*.js\\\" build test/data\""
+    "update-tests": "./update_test_expectations.sh",
+    "test:w": "tsc && concurrently \"tsc -w\" \"watch --wait=1 \\\"npm run update-tests\\\" build test/data\""
   },
   "author": "",
   "license": "ISC"
