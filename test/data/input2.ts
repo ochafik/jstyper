@@ -21,3 +21,5 @@ function g2(x: number) {
 function h2(x: number) {
   return ++x;
 }
+
+// 5 inference passes

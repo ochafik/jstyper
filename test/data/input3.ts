@@ -6,3 +6,5 @@ function f3(x: number) {
 function g3(x: number) {
   return x + 1;
 }
+
+// 5 inference passes

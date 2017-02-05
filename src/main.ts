@@ -17,9 +17,14 @@ options.currentWorkingDir = process.cwd();
 // options.maxIterations = 1;
 const results = runTyper(fileContents, options);
 
-for (const [fileName, content] of results) {
+const metadataComment = `// ${results.inferencePasses} inference passes`;
+    
+for (let [fileName, content] of results.fileContents) {
     console.warn(`${fileName}:`);
     console.warn(content);
+    
+    content += '\n\n' + metadataComment
+    
     if (!fs.existsSync(fileName) || content != fs.readFileSync(fileName).toString()) {
         fs.writeFileSync(fileName, content);
     }

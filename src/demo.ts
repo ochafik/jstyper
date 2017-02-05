@@ -44,11 +44,10 @@ function f(x, opts) {
   function run() {
     stats.textContent = `Analyzing...`;
     const start = new Date().getTime();
-    const result = runTyper(new Map([['file.js', jsInput.value]]))
-    const [[_, output]] = result;
+    const {fileContents: [[_, output]], inferencePasses} = runTyper(new Map([['file.js', jsInput.value]]))
     tsOutput.value = output;
     const time = new Date().getTime() - start;
-    stats.textContent = `(execution time: ${time} milliseconds)`;
+    stats.textContent = `Execution time (${inferencePasses} passes): ${time} milliseconds`;
   }
   button.onclick = run;
 });

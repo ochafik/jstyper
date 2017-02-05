@@ -17,3 +17,5 @@ function gg4(x: number, y: {addValue: boolean, value: any, name: string}) {
 function h4(x: string) {
   return x ? x.length : 0;
 }
+
+// 5 inference passes
