@@ -15,3 +15,17 @@ export function isCallTarget(n: ts.Node): boolean {
     }
     return false;
 }
+
+export function findParentOfKind(node: ts.Node, ...kinds: ts.SyntaxKind[]) {
+    let parent = node.parent;
+    while (parent) {
+        if (isAnyKind(parent, ...kinds)) {
+            return parent;
+        }
+        parent = parent.parent;
+    }
+    return undefined;
+}
+export function isAnyKind(node: ts.Node, ...kinds: ts.SyntaxKind[]) {
+    return kinds.indexOf(node.kind) >= 0;
+}

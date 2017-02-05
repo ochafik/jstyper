@@ -1,6 +1,7 @@
 import * as ts from "typescript";
 import {TypeConstraints, CallConstraints} from '../utils/type_constraints';
 import * as fl from "../utils/flags";
+import {findParentOfKind} from "../utils/nodes";
 import {Options} from '../options';
 import {applyConstraints} from './apply_constraints';
 
@@ -56,18 +57,23 @@ export class ConstraintsCache {
         const sym = this.checker.getSymbolAtLocation(node);
         if (sym) {
             const decls = sym.getDeclarations();
+            // console.log(`DECLS for idend ${node.getFullText()}: ${decls && decls.length}`);
             if (decls && decls.length > 0) {
                 for (const decl of decls) {
-                // const decl = decls[0];
-                    if (decl.parent && decl.parent.kind === ts.SyntaxKind.FunctionDeclaration) {
+                    // console.log(`DECL.parent.kind: ${decl.parent && decl.parent.kind}`);
+                    const parentFun = <ts.FunctionDeclaration>findParentOfKind(decl, ts.SyntaxKind.FunctionDeclaration);
+                    if (parentFun) {
                         const param = <ts.ParameterDeclaration>decl;
-                        const fun = <ts.FunctionDeclaration>decl.parent;
-                        const paramIndex = fun.parameters.indexOf(param);
-                        const funConstraints = this.getNodeConstraints(fun);
+                        const paramIndex = parentFun.parameters.indexOf(param);
+                        const funConstraints = this.getNodeConstraints(parentFun);
+                        // console.log(`FUN constraints: ${funConstraints}`);
                         if (funConstraints) {
                             return funConstraints.getCallConstraints().getArgType(paramIndex);
                         }
                         // return;
+                    } else {
+                        console.warn(`Found no parent function decl for ${node.getFullText()}`);
+                        return undefined;
                     }
                 }
             }
