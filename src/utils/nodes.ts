@@ -30,3 +30,7 @@ export function findParentOfKind(node: ts.Node, ...kinds: ts.SyntaxKind[]) {
 export function isAnyKind(node: ts.Node, ...kinds: ts.SyntaxKind[]) {
     return kinds.indexOf(node.kind) >= 0;
 }
+
+export function getDebugNodeClass(node: ts.Node) {
+    return Object.keys(ts.SyntaxKind).find(k => ts.SyntaxKind[k] == node.kind);
+}

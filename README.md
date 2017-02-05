@@ -59,7 +59,6 @@ function gg(x: number, o: {addValue: boolean, value: number, name: string}) {
 
 # TODO
 
-- Avoid unnecessary passes by detecting unchanged constraints
 - Use type constraints instead of types to allow local inference passes
 - Optional parameters `function f(x, y?: number)` instead of `function f(x, y: undefined | number)`
 - Support of nominal types in existing TS files

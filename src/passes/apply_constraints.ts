@@ -9,6 +9,10 @@ import {Options} from '../options';
 // TODO: check if a constraint has seen any new info, then as long as some do, do our own loop to avoid writing files.
 export function applyConstraints(allConstraints: Map<ts.Symbol, TypeConstraints>, checker: ts.TypeChecker, addChange: AddChangeCallback) {
   for (const [sym, constraints] of allConstraints) {
+      if (!constraints.hasChanges) {
+        //   console.log(`No changes for symbol ${checker.symbolToString(sym)}`);
+          continue;
+      }
       const decls = sym.getDeclarations();
       if (!decls || decls.length == 0) {
           continue;
@@ -19,9 +23,8 @@ export function applyConstraints(allConstraints: Map<ts.Symbol, TypeConstraints>
         handleVarConstraints(constraints, <ts.ParameterDeclaration | ts.VariableDeclaration>decl)
       } else if (decl.kind === ts.SyntaxKind.FunctionDeclaration) {
         const fun = <ts.FunctionDeclaration>decl;
-        const callConstraints = constraints.getCallConstraints();
-        if (callConstraints) {
-            callConstraints.argTypes.forEach((argConstraints, i) => {
+        if (constraints.hasCallConstraints()) {
+            constraints.getCallConstraints().argTypes.forEach((argConstraints, i) => {
                 const param = fun.parameters[i];
                 if (param) {
                     handleVarConstraints(argConstraints, param);
@@ -31,8 +34,11 @@ export function applyConstraints(allConstraints: Map<ts.Symbol, TypeConstraints>
       }
 
       function handleVarConstraints(constraints: TypeConstraints, varDecl: ts.ParameterDeclaration | ts.VariableDeclaration) {
-
         const resolved = constraints.resolve();
+        if (!constraints.hasChanges) {
+            // console.log(`No changes for var ${varDecl.getFullText()}: ${resolved}`);
+            return;
+        }
         const initial = constraints.initialType && checker.typeToString(constraints.initialType);
         if (resolved == null || resolved == initial) {
             return;

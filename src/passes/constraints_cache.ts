@@ -1,7 +1,7 @@
 import * as ts from "typescript";
 import {TypeConstraints, CallConstraints} from '../utils/type_constraints';
 import * as fl from "../utils/flags";
-import {findParentOfKind} from "../utils/nodes";
+import {findParentOfKind, getDebugNodeClass} from "../utils/nodes";
 import {Options} from '../options';
 import {applyConstraints} from './apply_constraints';
 
@@ -15,6 +15,12 @@ export class ConstraintsCache {
     private program: ts.Program,
     private checker: ts.TypeChecker) {}
 
+  get hasChanges() {
+    for (const c of this.allConstraints.values()) {
+        if (c.hasChanges) return true;
+    }
+    return false;
+  }
   nodeIsBooleanLike(node: ts.Node) {
       const constraints = this.getNodeConstraints(node);
       if (constraints) {
@@ -37,9 +43,10 @@ export class ConstraintsCache {
   }
 
   getNodeConstraints(node: ts.Node): TypeConstraints | undefined {
+    // console.log(`getNodeConstraints(${getDebugNodeClass(node)})`);
 
     while (node.kind === ts.SyntaxKind.ParenthesizedExpression) {
-        node = (<ts.ParenthesizedExpression>node).expression;
+      node = (<ts.ParenthesizedExpression>node).expression;
     }
 
     if (node.kind === ts.SyntaxKind.PropertyAccessExpression) {
@@ -53,6 +60,25 @@ export class ConstraintsCache {
         if (constraints) {
             return constraints.getCallConstraints().returnType;
         }
+    } else if (node.kind === ts.SyntaxKind.FunctionDeclaration ||
+            node.kind == ts.SyntaxKind.InterfaceDeclaration ||
+            node.kind == ts.SyntaxKind.VariableDeclaration) {
+        const decl = <ts.FunctionDeclaration | ts.InterfaceDeclaration | ts.VariableDeclaration>node;
+        const sym = decl.name && this.checker.getSymbolAtLocation(decl.name);
+        if (sym) {
+            return this.getSymbolConstraints(sym);
+        }
+    } else if (node.kind === ts.SyntaxKind.Parameter) {
+        const parentFun = <ts.FunctionDeclaration>findParentOfKind(node, ts.SyntaxKind.FunctionDeclaration);
+        if (parentFun) {
+            const param = <ts.ParameterDeclaration>node;
+            const paramIndex = parentFun.parameters.indexOf(param);
+            const funConstraints = this.getNodeConstraints(parentFun);
+            // console.log(`FUN constraints: ${funConstraints}`);
+            if (funConstraints) {
+                return funConstraints.getCallConstraints().getArgType(paramIndex);
+            }
+        }
     } else if (node.kind === ts.SyntaxKind.Identifier) {
         const sym = this.checker.getSymbolAtLocation(node);
         if (sym) {
@@ -60,25 +86,32 @@ export class ConstraintsCache {
             // console.log(`DECLS for idend ${node.getFullText()}: ${decls && decls.length}`);
             if (decls && decls.length > 0) {
                 for (const decl of decls) {
-                    // console.log(`DECL.parent.kind: ${decl.parent && decl.parent.kind}`);
-                    if (decl.kind == ts.SyntaxKind.Parameter) {
-                        const parentFun = <ts.FunctionDeclaration>findParentOfKind(decl, ts.SyntaxKind.FunctionDeclaration);
-                        if (parentFun) {
-                            const param = <ts.ParameterDeclaration>decl;
-                            const paramIndex = parentFun.parameters.indexOf(param);
-                            const funConstraints = this.getNodeConstraints(parentFun);
-                            // console.log(`FUN constraints: ${funConstraints}`);
-                            if (funConstraints) {
-                                return funConstraints.getCallConstraints().getArgType(paramIndex);
-                            }
-                        } else {
-                            console.warn(`Found no parent function decl for ${node.getFullText()}`);
-                            return undefined;
-                        }
+                    const constraints = this.getNodeConstraints(decl);
+                    if (constraints) {
+                        return constraints;
                     }
+                    // // console.log(`DECL.parent.kind: ${decl.parent && decl.parent.kind}`);
+                    // if (decl.kind == ts.SyntaxKind.Parameter || decl.kind === ts.SyntaxKind.Decorator) {
+                    //     const parentFun = <ts.FunctionDeclaration>findParentOfKind(decl, ts.SyntaxKind.FunctionDeclaration);
+                    //     if (parentFun) {
+                    //         const param = <ts.ParameterDeclaration>decl;
+                    //         const paramIndex = parentFun.parameters.indexOf(param);
+                    //         const funConstraints = this.getNodeConstraints(parentFun);
+                    //         // console.log(`FUN constraints: ${funConstraints}`);
+                    //         if (funConstraints) {
+                    //             return funConstraints.getCallConstraints().getArgType(paramIndex);
+                    //         }
+                    //     } else {
+                    //         console.warn(`Found no parent function decl for ${node.getFullText()}`);
+                    //         return undefined;
+                    //     }
+                    // } else if (decl.kind == ts.SyntaxKind.FunctionDeclaration ||
+                    //     decl.kind == ts.SyntaxKind.InterfaceDeclaration ||
+                    //     decl.kind == ts.SyntaxKind.VariableDeclaration) {
+                    //   return this.getSymbolConstraints(sym);
+                    // }
                 }
             }
-            return this.getSymbolConstraints(sym);
         }
     }
     return undefined;

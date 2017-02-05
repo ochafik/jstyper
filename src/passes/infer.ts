@@ -140,6 +140,9 @@ export const infer: (options: Options) => ReactorCallback = (options) => (fileNa
   // TODO: check if a constraint has seen any new info, then as long as some do, do our own loop to avoid writing files.
 //   for (let i = 0; i < options.maxSubInferenceCount; i++) {
     inferOnce();
+//     if (!constraintsCache.hasChanges) {
+//         break;
+//     }
 //   }
   
   applyConstraints(constraintsCache.allConstraints, checker, addChange);

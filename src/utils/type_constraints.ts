@@ -13,6 +13,13 @@ export class CallConstraints {
       public readonly returnType: TypeConstraints = createConstraints(),
       public readonly argTypes: TypeConstraints[] = []) {}
 
+  get hasChanges() {
+    return this.returnType.hasChanges || this.argTypes.some(c => c.hasChanges);
+  }
+  clearHasChanges() {
+    this.returnType.clearHasChanges();
+    this.argTypes.forEach(c => c.clearHasChanges());
+  }
   private ensureArity(arity: number) {
     for (let i = 0; i < arity; i++) {
       if (this.argTypes.length <= i) {
@@ -33,6 +40,8 @@ export class TypeConstraints {
   private _isBooleanLike = false;
   private _isNumberOrString = false;
 
+  private _hasChanges = false;
+
   constructor(
       private services: ts.LanguageService,
       private checker: ts.TypeChecker,
@@ -40,6 +49,7 @@ export class TypeConstraints {
       public initialType?: ts.Type) {
     if (initialType) {
       this.isType(initialType);
+      this.clearHasChanges();
     }
   }
 
@@ -103,12 +113,24 @@ export class TypeConstraints {
       this.getFieldConstraints(this.checker.symbolToString(prop))
          .isType(this.checker.getTypeOfSymbolAtLocation(prop, decls[0]));
     }
-    this._flags |= type.flags;
+
+    this.hasFlags(type.flags);
 
     // const after = this.resolve();
     // console.log(`isType(${this.checker.typeToString(type)}): "${before}" -> "${after}`);
   }
+
+  private hasFlags(flags: ts.TypeFlags) {
+    const newFlags = this._flags | flags;
+    if (newFlags != this._flags) {
+      this._flags = newFlags;
+      this._hasChanges = true;
+    }
+  }
   
+  hasCallConstraints(): boolean {
+    return !!this.callConstraints;
+  }
   getCallConstraints(): CallConstraints {
     this.isObject();
     if (!this.callConstraints) {
@@ -118,26 +140,61 @@ export class TypeConstraints {
   }
   
   isNumber() {
-    this._flags |= ts.TypeFlags.Number;
+    this.hasFlags(ts.TypeFlags.Number);
   }
   isString() {
-    this._flags |= ts.TypeFlags.String;
-  }
-  isNumberOrString() {
-    this._isNumberOrString = true;
-    // this._flags |= ts.TypeFlags.StringOrNumberLiteral;
+    this.hasFlags(ts.TypeFlags.String);
   }
   isObject() {
-    this._flags |= ts.TypeFlags.Object;
+    this.hasFlags(ts.TypeFlags.Object);
   }
   isNullable() {
-    this._flags |= ts.TypeFlags.Null;
+    this.hasFlags(ts.TypeFlags.Null);
   }
   isVoid() {
-    this._flags |= ts.TypeFlags.Void;
+    this.hasFlags(ts.TypeFlags.Void);
   }
   isBooleanLike() {
+    if (this._isBooleanLike || fl.isBoolean(this._flags) || fl.isBooleanLike(this._flags)) {
+      return;
+    }
     this._isBooleanLike = true;
+    this._hasChanges = true;
+  }
+  isNumberOrString() {
+    if (this._isNumberOrString || fl.isNumberOrString(this._flags)) {
+      return;
+    }
+    this._isNumberOrString = true;
+    this._hasChanges = true;
+    // this.hasFlags(ts.TypeFlags.StringOrNumberLiteral);
+  }
+
+  get hasChanges() {
+    if (this._hasChanges) {
+      return true;
+    }
+    for (const c of this.fields.values()) {
+      if (c.hasChanges) {
+        this._hasChanges = true;
+        return true;
+      }
+    }
+    if (this.callConstraints && this.callConstraints.hasChanges) {
+      this._hasChanges = true;
+      return true;
+    }
+    return false;
+  }
+
+  clearHasChanges() {
+    this._hasChanges = false;
+    for (const c of this.fields.values()) {
+      c.clearHasChanges();
+    }
+    if (this.callConstraints) {
+      this.callConstraints.clearHasChanges();
+    }
   }
 
   private typeToString(t: ts.Type | null): string | null {
