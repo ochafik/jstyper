@@ -1,7 +1,8 @@
 import {runTyper} from './typer';
 import {addTabIndentSupport} from './editor/indent';
+import {addUndoSupport} from './editor/undo';
 
-window.onload = () => {
+window.addEventListener('load', () => {
   const jsInput = <HTMLTextAreaElement>document.getElementById('input');
   const tsOutput = <HTMLTextAreaElement>document.getElementById('output');
   const button = <HTMLButtonElement>document.getElementById('run');
@@ -17,16 +18,17 @@ function f(x, opts) {
 }
     `.trim();
   }
-  jsInput.oninput = () => {
+  jsInput.addEventListener('input', (e) => {
     location.hash = '#' + encodeURIComponent(jsInput.value);
     autoRun();
-  };
-  addTabIndentSupport(jsInput);
+  });
+  const manager = addUndoSupport(jsInput);
+  addTabIndentSupport(jsInput, manager);
   updateRunVisibility();
-  autoRunCheckBox.onchange = () => {
+  autoRunCheckBox.addEventListener('change', () => {
     autoRun();
     updateRunVisibility();
-  }
+  });
   autoRun();
 
   function autoRun() {
@@ -46,4 +48,4 @@ function f(x, opts) {
     stats.textContent = `Took ${time} milliseconds`;
   }
   button.onclick = run;
-};
+});

@@ -1,7 +1,8 @@
+import {UndoManager} from './undo';
 
-export function addTabIndentSupport(textArea: HTMLTextAreaElement) {
+export function addTabIndentSupport(textArea: HTMLTextAreaElement, undoManager: UndoManager) {
   const tab = '  ';
-  textArea.onkeydown = (e) => {
+  textArea.addEventListener('keydown', (e) => {
     if ((e.keyCode || e.which) == '\t'.charCodeAt(0)) {
         e.preventDefault();
         const start = textArea.selectionStart;
@@ -31,11 +32,16 @@ export function addTabIndentSupport(textArea: HTMLTextAreaElement) {
             newSelection = selection.replace(/\n/g, '\n' + tab);
             pre = tab;
           }
-          textArea.value = text.substring(0, preTabIndex) + pre + text.substring(skippedPreTabIndex, start) + newSelection + text.substring(end);
+          if (preTabIndex == start) {
+            textArea.value = pre + newSelection.substring(skippedPreTabIndex - preTabIndex) + text.substring(end);
+          } else {
+            textArea.value = text.substring(0, preTabIndex) + pre + text.substring(skippedPreTabIndex, start) + newSelection + text.substring(end);
+          }
           const startOffset = pre.length + preTabIndex - skippedPreTabIndex;
           textArea.selectionStart = start + startOffset;
           textArea.selectionEnd = end + startOffset + newSelection.length - selection.length;
         }
+        undoManager.content = textArea.value;
     }
-  };
+  });
 }
