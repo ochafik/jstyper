@@ -2,7 +2,7 @@ function f5(s: string) {
   return s.length == 0 ? '' : s.substring(1);
 }
 
-function ff5(s: {length: number}) {
+function ff5(s: boolean | {length: number}) {
   return s.length == 0 ? '' : s;
 }
 
@@ -10,7 +10,7 @@ function fff5(s: string) {
   return s.substring(1);
 }
 
-function g5(s: boolean) {
+function g5(s: boolean | {length: number}) {
   return s ? s : '';
 }
 

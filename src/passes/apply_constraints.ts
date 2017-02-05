@@ -24,25 +24,63 @@ export function applyConstraints(allConstraints: Map<ts.Symbol, TypeConstraints>
       } else if (decl.kind === ts.SyntaxKind.FunctionDeclaration) {
         const fun = <ts.FunctionDeclaration>decl;
         if (constraints.hasCallConstraints()) {
-            constraints.getCallConstraints().argTypes.forEach((argConstraints, i) => {
+            const callConstraints = constraints.getCallConstraints();
+            callConstraints.argTypes.forEach((argConstraints, i) => {
                 const param = fun.parameters[i];
                 if (param) {
                     handleVarConstraints(argConstraints, param);
                 }
             });
+            // handleReturnType(callConstraints.returnType, fun);
         }
       }
 
+      function handleReturnType(constraints: TypeConstraints, fun: ts.FunctionDeclaration) {
+            if (!constraints.hasChanges) {
+                return;
+            }
+          const resolved = constraints.resolve();
+            if (!resolved) {
+                return;
+            }
+            let start: number;
+            let length: number;
+            let pre: string;
+            if (fun.type) {
+                start = fun.type.getStart();
+                length = fun.type.getEnd() - start;
+                pre = '';
+            } else {
+                if (fun.body) {
+                    start = fun.body.getStart() - 1;
+                } else {
+                    start = fun.end;
+                }
+                length = 0;
+                pre = ': ';
+            }
+            addChange(fun.getSourceFile().fileName, {
+                span: {
+                    start: start,
+                    length: length
+                },
+                newText: pre + resolved
+            });
+      }
+
       function handleVarConstraints(constraints: TypeConstraints, varDecl: ts.ParameterDeclaration | ts.VariableDeclaration) {
+          if (!constraints.hasChanges) {
+              return;
+          }
         const resolved = constraints.resolve();
-        if (!constraints.hasChanges) {
+        if (resolved == null) {
             // console.log(`No changes for var ${varDecl.getFullText()}: ${resolved}`);
             return;
         }
-        const initial = constraints.initialType && checker.typeToString(constraints.initialType);
-        if (resolved == null || resolved == initial) {
-            return;
-        }
+        // const initial = constraints.initialType && checker.typeToString(constraints.initialType);
+        // if (resolved == null || resolved == initial) {
+        //     return;
+        // }
         
         if (varDecl.type) {
             const start = varDecl.type.getStart();

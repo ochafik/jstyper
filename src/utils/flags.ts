@@ -22,6 +22,7 @@ export const isObject = flagsTester(ts.TypeFlags.String, ts.TypeFlags.Object);
 export const isString = flagsTester(ts.TypeFlags.String, ts.TypeFlags.StringLiteral);
 export const isStructuredType = flagsTester(ts.TypeFlags.StructuredType);
 export const isUndefined = flagsTester(ts.TypeFlags.Undefined);
+export const isUnion = flagsTester(ts.TypeFlags.Union);
 export const isVoid = flagsTester(ts.TypeFlags.Void);
 
 export const isPrimitive = flagsTester(
@@ -29,3 +30,16 @@ export const isPrimitive = flagsTester(
     ts.TypeFlags.String, ts.TypeFlags.StringLiteral,
     ts.TypeFlags.StringOrNumberLiteral,
     ts.TypeFlags.Boolean, ts.TypeFlags.BooleanLiteral);
+
+export function normalize(flags: ts.TypeFlags) {
+  function replaceFlag(original: ts.TypeFlags, replacement: ts.TypeFlags) {
+    if (flags & original) {
+      flags = (flags & ~original) | replacement;
+    }
+  }
+  replaceFlag(ts.TypeFlags.BooleanLiteral, ts.TypeFlags.Boolean)
+  replaceFlag(ts.TypeFlags.StringLiteral, ts.TypeFlags.String)
+  replaceFlag(ts.TypeFlags.NumberLiteral, ts.TypeFlags.Number)
+  replaceFlag(ts.TypeFlags.EnumLiteral, ts.TypeFlags.Enum)
+  return flags;
+}

@@ -36,21 +36,24 @@ export class CallConstraints {
 export class TypeConstraints {
   private fields = new Map<string, TypeConstraints>();
   private callConstraints?: CallConstraints;
+  private types: ts.Type[] = [];
   private _flags: ts.TypeFlags = 0;
   private _isBooleanLike = false;
   private _isNumberOrString = false;
 
   private _hasChanges = false;
+  // private _isBuilding = true;
 
   constructor(
       private services: ts.LanguageService,
       private checker: ts.TypeChecker,
       private options: Options,
-      public initialType?: ts.Type) {
+      initialType?: ts.Type) {
     if (initialType) {
       this.isType(initialType);
       this.clearHasChanges();
     }
+    // this._isBuilding = false;
   }
 
   get flags() {
@@ -82,6 +85,22 @@ export class TypeConstraints {
     if (fl.isAny(type)) {
       return;
     }
+
+    if (fl.isUnion(type)) {
+      for (const member of (<ts.UnionType>type).types) {
+        this.isType(member);
+      }
+      if (type.flags === ts.TypeFlags.Union) {
+        // Nothing else in this union type.
+        return;
+      }
+    }
+
+    this.types.push(type);
+      // const baseTypes = type.getBaseTypes();
+      // if (baseTypes)
+      // console.log(`BASE types: ${baseTypes.length}`);
+
     // const before = this.resolve();
     // if (type.flags & ts.TypeFlags.NumberLiteral) {
     //   this.isNumber();
@@ -121,10 +140,13 @@ export class TypeConstraints {
   }
 
   private hasFlags(flags: ts.TypeFlags) {
-    const newFlags = this._flags | flags;
+    flags = fl.normalize(flags);
+
+    const oldFlags = this._flags;
+    const newFlags = oldFlags | flags;
     if (newFlags != this._flags) {
       this._flags = newFlags;
-      this._hasChanges = true;
+      this.markChange();
     }
   }
   
@@ -155,19 +177,27 @@ export class TypeConstraints {
     this.hasFlags(ts.TypeFlags.Void);
   }
   isBooleanLike() {
-    if (this._isBooleanLike || fl.isBoolean(this._flags) || fl.isBooleanLike(this._flags)) {
+    if (this._isBooleanLike || fl.isBoolean(this._flags) || fl.isBooleanLike(this._flags) ||
+        fl.isNullOrUndefined(this._flags) || fl.isNumberOrString(this._flags)) {
       return;
     }
     this._isBooleanLike = true;
-    this._hasChanges = true;
+    this.markChange();
   }
   isNumberOrString() {
     if (this._isNumberOrString || fl.isNumberOrString(this._flags)) {
       return;
     }
     this._isNumberOrString = true;
-    this._hasChanges = true;
+    this.markChange();
     // this.hasFlags(ts.TypeFlags.StringOrNumberLiteral);
+  }
+
+  private markChange() {
+    if (this._hasChanges) return;
+
+    // const typeNames = this.types.map(t => this.checker.typeToString(t)).join(', ');
+    this._hasChanges = true;
   }
 
   get hasChanges() {
@@ -240,7 +270,8 @@ export class TypeConstraints {
       this.fields.clear();
     }
       
-    if (this._isNumberOrString) {
+    if (this._isNumberOrString || fl.isNumber(flags) || fl.isString(flags)) {
+    // if (this._isNumberOrString) {
       this._isNumberOrString = false;
 
       if (fieldNames.length > 0 && allFieldsAreStringMembers) {

@@ -22,4 +22,4 @@ function h2(x: number) {
   return ++x;
 }
 
-// 5 inference passes
+// 3 inference passes

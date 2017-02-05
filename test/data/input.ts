@@ -19,4 +19,4 @@ function g1(x: number) {
   return x * 2;
 }
 
-// 5 inference passes
+// 4 inference passes

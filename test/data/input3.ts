@@ -7,4 +7,4 @@ function g3(x: number) {
   return x + 1;
 }
 
-// 5 inference passes
+// 3 inference passes
