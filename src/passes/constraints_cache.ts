@@ -71,9 +71,9 @@ export class ConstraintsCache {
                             return funConstraints.getCallConstraints().getArgType(paramIndex);
                         }
                         // return;
-                    } else {
-                        console.warn(`Found no parent function decl for ${node.getFullText()}`);
-                        return undefined;
+                    // } else {
+                    //     console.warn(`Found no parent function decl for ${node.getFullText()}`);
+                    //     return undefined;
                     }
                 }
             }
