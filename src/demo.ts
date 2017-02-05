@@ -3,6 +3,35 @@ import {Options, defaultOptions} from './options';
 import {addTabIndentSupport} from './editor/indent';
 import {addUndoSupport} from './editor/undo';
 
+type State = {
+  content?: string,
+  maxIterations?: number,
+  autoRun?: boolean,
+};
+
+const defaultState: State = {
+  content: `
+function f(x, opts) {
+  return opts && opts.mult ? x * 2 : x / 2;
+}
+    `.trim(),
+  maxIterations: defaultOptions.maxIterations,
+  autoRun: true,
+};
+
+function readStateFromFragment(): State {
+  if (location.hash.length > 0) {
+    try {
+      return <State>JSON.parse(decodeURIComponent(location.hash.substring(1)));
+    } catch (_) {}
+  }
+  return defaultState;
+}
+
+function saveStateToFragment(state: State) {
+  location.hash = '#' + encodeURIComponent(JSON.stringify(state));
+}
+
 window.addEventListener('load', () => {
   const jsInput = <HTMLTextAreaElement>document.getElementById('input');
   const tsOutput = <HTMLTextAreaElement>document.getElementById('output');
@@ -11,40 +40,51 @@ window.addEventListener('load', () => {
   const stats = <HTMLTextAreaElement>document.getElementById('stats');
   const maxIterations = <HTMLInputElement>document.getElementById('maxIterations');
 
-  if (location.hash.length > 0) {
-    jsInput.value = decodeURIComponent(location.hash.substring(1));
-  } else {
-    jsInput.value = `
-function f(x, opts) {
-  return opts && opts.mult ? x * 2 : x / 2;
-}
-    `.trim();
-  }
+  const initialState = readStateFromFragment();
+  
+  jsInput.value = 'content' in initialState ? initialState.content! : '';
   jsInput.addEventListener('input', (e) => {
-    location.hash = '#' + encodeURIComponent(jsInput.value);
+    saveState();
     autoRun();
   });
 
-  maxIterations.value = '' + defaultOptions.maxIterations;
-  maxIterations.addEventListener('input', autoRun);
+  maxIterations.value = String('maxIterations' in initialState ? initialState.maxIterations! : defaultState.maxIterations);
+  maxIterations.addEventListener('input', () => {
+    saveState();
+    autoRun();
+  });
+  
+  autoRunCheckBox.checked = 'autoRun' in initialState ? initialState.autoRun! : true;
+  autoRunCheckBox.addEventListener('change', () => {
+    saveState();
+    autoRun();
+    updateRunVisibility();
+  });
   
   const manager = addUndoSupport(jsInput, autoRun);
   addTabIndentSupport(jsInput, (c) => {
     manager.content = c;
     autoRun();
   });
+  
   updateRunVisibility();
-  autoRunCheckBox.addEventListener('change', () => {
-    autoRun();
-    updateRunVisibility();
-  });
   autoRun();
 
+  function saveState() {
+    saveStateToFragment({
+      content: jsInput.value,
+      maxIterations: getMaxIterations(),
+      autoRun: autoRunCheckBox.checked
+    });
+  }
   function autoRun() {
     if (autoRunCheckBox.checked) run();
   }
   function updateRunVisibility() {
     button.disabled = autoRunCheckBox.checked;
+  }
+  function getMaxIterations() {
+    return Number.parseInt(maxIterations.value);
   }
 
   function run() {
@@ -53,7 +93,7 @@ function f(x, opts) {
 
     const options = <Options>new Object(defaultOptions);
     options.debugPasses = true;
-    options.maxIterations = Number.parseInt(maxIterations.value);
+    options.maxIterations = getMaxIterations();
 
     const {fileContents: [[_, output]], inferencePasses} = runTyper(new Map([['file.js', jsInput.value]]))
     tsOutput.value = output;
