@@ -76,28 +76,9 @@ export const infer: (options: Options) => ReactorCallback = (options) => (fileNa
                         }
                     } else if (ops.binaryNumberOrStringOperators.has(op)) {
                         if (fl.isNumber(ctxType)) {
-                        leftConstraints && leftConstraints.isNumber();
-                        rightConstraints && rightConstraints.isNumber();  
+                            leftConstraints && leftConstraints.isNumber();
+                            rightConstraints && rightConstraints.isNumber();  
                         }
-                        // function handlePlusOp(constraints: TypeConstraints | undefined, otherType: ts.Type) {
-                        //     if (!constraints) {
-                        //         return;
-                        //     }
-                        //     if (!isString(constraints.flags) && isNumber(otherType)) {
-                        //         constraints.isNumber();
-                        //     }
-                        //     if (!isNumber(constraints.flags) && isString(otherType)) {
-                        //         constraints.isString();
-                        //     }
-                        // }
-                        // handlePlusOp(leftConstraints, rightType);
-                        // handlePlusOp(rightConstraints, leftType);
-                        // if (leftConstraints && isNumberOrString(rightType)) {
-                        //     leftConstraints.isNumberOrString();
-                        // }
-                        // if (rightConstraints && isNumberOrString(leftType)) {
-                        //     rightConstraints.isNumberOrString();
-                        // }
                     } else if (ops.equalityLikeOperators.has(op)) {
                         // This is a bit bold: we assume if things can be equatable, then they have the same type.
                         function handle(constraints: TypeConstraints | undefined, otherType: ts.Type) {
@@ -113,6 +94,9 @@ export const infer: (options: Options) => ReactorCallback = (options) => (fileNa
                         handle(rightConstraints, leftType);
                     } else if (ops.binaryBooleanOperators.has(op)) {
                         constraintsCache.nodeIsBooleanLike(binExpr.left);
+                        // In `a && b`, we know that `a` is bool-like but know absolutely nothing about `b`.
+                        // But if that is embedded in `(a && b) && c`, then it's another game.
+                        // TODO: propagate contextual type upwards.
                         constraintsCache.nodeIsBooleanLike(binExpr.right);
                     }
                     if (ops.assignmentOperators.has(op)) {

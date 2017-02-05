@@ -97,7 +97,8 @@ export class TypeConstraints {
     return this.callConstraints != null &&
         !this._isBooleanLike &&
         !this._isNumberOrString &&
-        (this._flags & ts.TypeFlags.Object) === ts.TypeFlags.Object &&
+        (this._flags === ts.TypeFlags.Object) &&
+        // (this._flags & ts.TypeFlags.Object) === ts.TypeFlags.Object &&
         this.fields.size == 0;
   }
 
@@ -322,10 +323,15 @@ export class TypeConstraints {
     const allFieldsAreStringMembers = fieldNames.every(k => k in String.prototype);
     const allFieldsAreArrayMembers = fieldNames.every(k => k in Array.prototype);
 
-    // Make boolean yield to string and number, as they both fulfil the same bool-like purpose.
     // TODO: avoid overwriting literal booleans (which are erased during flag normalization)
-    if (fl.isBoolean(flags) && (fl.isString(flags) || fl.isNumber(flags))) {
-      flags &= ~ts.TypeFlags.Boolean;
+    if (fl.isBoolean(flags)) {
+      if (fl.isNullOrUndefined(flags)) {
+        flags &= ~(ts.TypeFlags.Null | ts.TypeFlags.Undefined);
+      }
+      // Make boolean yield to string and number, as they both fulfil the same bool-like purpose.
+      if (fl.isString(flags) || fl.isNumber(flags)) {
+        flags &= ~ts.TypeFlags.Boolean;
+      }
     }
 
     if (allFieldsAreStringMembers && 
@@ -368,11 +374,18 @@ export class TypeConstraints {
   resolve({ignoreFlags}: {ignoreFlags?: ts.TypeFlags} = {}): string | null {
     this.normalize();
 
+    if (fl.isAny(this.flags)) {
+      return 'any';
+    }
+
     const union: string[] = [];
     const members: string[] = [];
 
     if (this.callConstraints) {
-      const [argList, retType] = this.resolveCallableArgListAndReturnType()!;
+      let [argList, retType] = this.resolveCallableArgListAndReturnType()!;
+      if (retType.indexOf(' ') >= 0) {
+        retType = `(${retType})`;
+      }
 
       const sigSig = `(${argList})${retType}`;
       if (this.fields.size > 0) {
