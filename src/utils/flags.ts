@@ -43,3 +43,7 @@ export function normalize(flags: ts.TypeFlags) {
   replaceFlag(ts.TypeFlags.EnumLiteral, ts.TypeFlags.Enum)
   return flags;
 }
+
+// export function getFlagsDebugDescription(flags: ts.TypeFlags) {
+//     return Object.keys(ts.SyntaxKind).find(k => ts.SyntaxKind[k] == node.kind);
+// }

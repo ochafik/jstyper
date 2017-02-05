@@ -262,10 +262,17 @@ export class TypeConstraints {
     const allFieldsAreStringMembers = fieldNames.every(k => k in String.prototype);
     const allFieldsAreArrayMembers = fieldNames.every(k => k in Array.prototype);
 
+    // Make boolean yield to string and number, as they both fulfil the same bool-like purpose.
+    // TODO: avoid overwriting literal booleans (which are erased during flag normalization)
+    if (fl.isBoolean(flags) && (fl.isString(flags) || fl.isNumber(flags))) {
+      flags &= ~ts.TypeFlags.Boolean;
+    }
+
     if (allFieldsAreStringMembers && 
-        (!allFieldsAreArrayMembers || this._isBooleanLike) &&
+        (!allFieldsAreArrayMembers || this._isBooleanLike || fl.isBoolean(flags) || fl.isBooleanLike(flags)) &&
         fieldNames.length >= this.options.methodThresholdAfterWhichAssumeString) {
       this._isNumberOrString = false;
+      flags &= ~ts.TypeFlags.Boolean;
       flags |= ts.TypeFlags.String;
       this.fields.clear();
     }

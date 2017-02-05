@@ -28,13 +28,14 @@
     "acorn": "^3.3.0"
   },
   "scripts": {
-    "start": "concurrently --kill-others \"npm run rollup:w\" lite-server",
+    "start": "concurrently --kill-others \"npm run rollup:w\" lite-server \"npm run test:w\"",
     "lite": "lite-server",
     "rollup": "rollup -c",
     "rollup:w": "rollup -c -w",
     "build": "npm run rollup && inline-assets index.html build/index.html",
     "update-tests": "./update_test_expectations.sh",
-    "test:w": "tsc && concurrently \"tsc -w\" \"watch --wait=1 \\\"npm run update-tests\\\" build test/data\""
+    "update-tests:w": "watch --wait=1 \"npm run update-tests\" build test/data",
+    "test:w": "tsc && concurrently \"tsc -w\" \"npm run update-tests:w\""
   },
   "author": "",
   "license": "ISC"

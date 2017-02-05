@@ -1,7 +1,7 @@
 import * as ts from "typescript";
 import {TypeConstraints, CallConstraints} from '../utils/type_constraints';
 import * as fl from "../utils/flags";
-import {findParentOfKind, getDebugNodeClass} from "../utils/nodes";
+import {findParentOfKind} from "../utils/nodes";
 import {Options} from '../options';
 import {applyConstraints} from './apply_constraints';
 
