@@ -54,7 +54,7 @@ export const infer: (options: Options) => ReactorCallback = (options) => (fileNa
                         const exe = nodes.findEnclosingFunctionLikeDeclaration(ret);
                         const constraints = constraintsCache.getNodeConstraints(exe);
                         if (constraints) {
-                            constraints.cannotBeVoid();
+                            constraints.getCallConstraints().returnType.cannotBeVoid();
                         }
                     }
                 } else if (node.kind === ts.SyntaxKind.BinaryExpression) {

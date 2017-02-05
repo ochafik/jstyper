@@ -31,7 +31,7 @@ export function applyConstraints(allConstraints: Map<ts.Symbol, TypeConstraints>
                     handleVarConstraints(argConstraints, param);
                 }
             });
-            // handleReturnType(callConstraints.returnType, fun);
+            handleReturnType(callConstraints.returnType, fun);
         }
       }
 

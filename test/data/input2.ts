@@ -14,12 +14,12 @@ function f2(x, y: number) {
   return x + 2 + g2(y) + g2(3);
 }
 
-function g2(x: number) {
+function g2(x: number): number {
   return x + 1;
 }
 
-function h2(x: number) {
+function h2(x: number): number {
   return ++x;
 }
 
-// 3 inference passes
+// 5 inference passes

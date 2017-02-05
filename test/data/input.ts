@@ -15,8 +15,8 @@ function f1(x: {call(arg1: number, arg2: number): number, memberOfX: number}, y:
   // return x + 2 + g1(y);
 }
 
-function g1(x: number) {
+function g1(x: number): number {
   return x * 2;
 }
 
-// 4 inference passes
+// 5 inference passes

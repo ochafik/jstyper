@@ -1,4 +1,4 @@
-function f4(x: number) {
+function f4(x: number): number {
   return x * 2;
 }
 

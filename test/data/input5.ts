@@ -2,7 +2,7 @@ function f5(s: string) {
   return s.length == 0 ? '' : s.substring(1);
 }
 
-function ff5(s: string) {
+function ff5(s: string): string {
   return s.length == 0 ? '' : s;
 }
 
@@ -10,7 +10,7 @@ function fff5(s: string) {
   return s.substring(1);
 }
 
-function g5(s: string) {
+function g5(s: string): string {
   return s ? s : '';
 }
 
