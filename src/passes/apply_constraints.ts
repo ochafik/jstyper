@@ -72,41 +72,29 @@ export function applyConstraints(allConstraints: Map<ts.Symbol, TypeConstraints>
           if (!constraints.hasChanges) {
               return;
           }
-        const resolved = constraints.resolve();
+        // const resolved = constraints.resolve();
+        const {isUndefined, resolved} = constraints.resolveMaybeUndefined();
         if (resolved == null) {
             // console.log(`No changes for var ${varDecl.getFullText()}: ${resolved}`);
             return;
         }
-        // const initial = constraints.initialType && checker.typeToString(constraints.initialType);
-        // if (resolved == null || resolved == initial) {
-        //     return;
-        // }
+
+        const start = varDecl.name.getEnd();
+        let length: number;
+        let pre = isUndefined ? '?: ' : ': ';
         
         if (varDecl.type) {
-            const start = varDecl.type.getStart();
-            const length = varDecl.type.getEnd() - start;
-            //  console.log(`REPLACING "${varDecl.type.getFullText()}"
-            //     resolved: "${resolved}"
-            //      initial: "${initial}"
-            //      length: ${length}
-            //   fullWidth: ${varDecl.type.getFullWidth()}`);
-
-            addChange(decl.getSourceFile().fileName, {
-                span: {
-                    start: start,
-                    length: length
-                },
-                newText: resolved
-            });
+            length = varDecl.type.getEnd() - start;
         } else {
-            addChange(decl.getSourceFile().fileName, {
-                span: {
-                    start: varDecl.name.getEnd(),
-                    length: 0
-                },
-                newText: ': ' + resolved
-            });
+            length = 0;
         }
+        addChange(decl.getSourceFile().fileName, {
+            span: {
+                start: start,
+                length: length
+            },
+            newText: pre + resolved
+        });
       }
   }
 }

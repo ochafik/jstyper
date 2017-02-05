@@ -8,6 +8,9 @@ export type Signature = {
 };
 
 export class CallConstraints {
+  // private arities: number[] = [];
+  private minArity: number | undefined;
+
   constructor(
       private calleeDescription: string,
       private createConstraints: (description: string) => TypeConstraints,
@@ -22,15 +25,37 @@ export class CallConstraints {
     this.argTypes.forEach(c => c.clearHasChanges());
   }
   private ensureArity(arity: number) {
+    let updated = false;
     for (let i = 0; i < arity; i++) {
       if (this.argTypes.length <= i) {
         this.argTypes.push(this.createConstraints(`${this.calleeDescription}.arguments[${i}]`));
+        updated = true;
       }
+    }
+
+    if (updated) {
+      this.updateOptionalArgs();
+    }
+  }
+  hasArity(arity: number) {
+    // this.arities.push(arity);
+    if (typeof this.minArity === 'undefined' || arity < this.minArity) {
+      this.minArity = arity;
     }
   }
   getArgType(index: number) {
     this.ensureArity(index + 1);
     return this.argTypes[index];
+  }
+  private updateOptionalArgs() {
+    if (typeof this.minArity === 'undefined') {
+      return;
+    }
+    this.argTypes.forEach((t, i) => {
+      if (i >= this.minArity) {
+        t.isUndefined();
+      }
+    });
   }
 };
 
@@ -119,10 +144,21 @@ export class TypeConstraints {
     for (const sig of type.getCallSignatures()) {
       const params = sig.getDeclaration().parameters;
       const callConstraints = this.getCallConstraints();
-      callConstraints.returnType.isType(sig.getReturnType());
 
-      params.forEach((param, i) => {
-        const paramType = this.checker.getTypeAtLocation(param);
+      const paramTypes = params.map(p => this.checker.getTypeAtLocation(p));
+
+      callConstraints.returnType.isType(sig.getReturnType());
+      
+      let minArity = 0;
+      for (let paramType of paramTypes) {
+        if (fl.isUndefined(paramType.flags)) {
+          break;
+        }
+        minArity++;
+      }
+      callConstraints.hasArity(minArity);
+
+      paramTypes.forEach((paramType, i) => {
         callConstraints!.getArgType(i).isType(paramType);
       });
     }
@@ -157,6 +193,7 @@ export class TypeConstraints {
   hasCallConstraints(): boolean {
     return !!this.callConstraints;
   }
+
   getCallConstraints(): CallConstraints {
     this.isObject();
     if (!this.callConstraints) {
@@ -170,6 +207,9 @@ export class TypeConstraints {
   }
   isString() {
     this.hasFlags(ts.TypeFlags.String);
+  }
+  isUndefined() {
+    this.hasFlags(ts.TypeFlags.Undefined);
   }
   isObject() {
     this.hasFlags(ts.TypeFlags.Object);
@@ -240,8 +280,20 @@ export class TypeConstraints {
   private typeToString(t: ts.Type | null): string | null {
     return t == null ? null : this.checker.typeToString(t);
   }
-  private argsListToString(types: string[]): string {
-    return types.map((t, i) => `arg${i + 1}: ${t || 'any'}`).join(', ');
+
+  resolveMaybeUndefined(): {resolved: string | null, isUndefined: boolean} {
+    this.normalize();
+    const isUndefined = fl.isUndefined(this.flags);
+
+    // console.log(`isUndefined(${name}) = ${isUndefined} (Flags = ${constraints.flags})`);
+    const resolved = this.resolve({ignoreFlags: isUndefined ? ts.TypeFlags.Undefined : 0});
+    return {resolved: resolved, isUndefined: isUndefined};
+  }
+
+  private resolveKeyValueDecl(name: string, valueType: TypeConstraints): string {
+    valueType.normalize();
+    const {isUndefined, resolved} = valueType.resolveMaybeUndefined();
+    return `${name}${isUndefined ? '?' : ''}: ${resolved || 'any'}`;
   }
 
   resolveCallableArgListAndReturnType(): [string, string] | undefined {
@@ -249,12 +301,10 @@ export class TypeConstraints {
     //     // console.log(`isUndefined(${name}) = ${isUndefined} (Flags = ${constraints.flags})`);
     //     const resolved = constraints.resolve({ignoreFlags: isUndefined ? ts.TypeFlags.Undefined : 0});
         
-    return this.callConstraints && 
-      [
-          this.argsListToString(
-              this.callConstraints.argTypes.map(c => c.resolve() || 'any')),
-          this.callConstraints.returnType.resolve() || 'any'
-      ];
+    return this.callConstraints && [
+      this.callConstraints.argTypes.map((t, i) => this.resolveKeyValueDecl(`arg${i + 1}`, t)).join(', '),
+      this.callConstraints.returnType.resolve() || 'any'
+    ];
   }
 
   normalize() {
@@ -339,10 +389,7 @@ export class TypeConstraints {
         const [argList, retType] = constraints!.resolveCallableArgListAndReturnType()!;
         members.push(`${name}(${argList}): ${retType}`);
       } else {
-        const isUndefined = fl.isUndefined(constraints.flags);
-        // console.log(`isUndefined(${name}) = ${isUndefined} (Flags = ${constraints.flags})`);
-        const resolved = constraints.resolve({ignoreFlags: isUndefined ? ts.TypeFlags.Undefined : 0});
-        members.push(`${name}${isUndefined ? '?' : ''}: ${resolved || 'any'}`);
+        members.push(this.resolveKeyValueDecl(name, constraints));
       }
     }
 

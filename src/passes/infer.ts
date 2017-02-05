@@ -43,9 +43,10 @@ export const infer: (options: Options) => ReactorCallback = (options) => (fileNa
                             callConstraints.returnType.isVoid();
                         }
                         // console.log(`CALL(${call.getFullText()}):`);
+                        callConstraints.hasArity(argTypes.length);
                         argTypes.forEach((t, i) => {
                             // console.log(`  ARG(${i}): ${checker.typeToString(t)}`);
-                            callConstraints!.getArgType(i).isType(t);
+                            callConstraints.getArgType(i).isType(t);
                         });
                     }
                 } else if (node.kind === ts.SyntaxKind.ReturnStatement) {
