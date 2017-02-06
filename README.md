@@ -57,6 +57,7 @@ function gg(x: number, o: {addValue: boolean, value: number, name: string}) {
 
 # TODO
 
+- parse and output flow comment / flow types
 - Proper tests
 - Better propagate contextual types in expressions (e.g. in `(a && b && c`, `a ? b : c`)
 - Use type constraints instead of types to allow local inference passes
