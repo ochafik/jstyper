@@ -41,6 +41,7 @@ export class CallConstraints {
     // this.arities.push(arity);
     if (typeof this.minArity === 'undefined' || arity < this.minArity) {
       this.minArity = arity;
+      this.updateOptionalArgs();
     }
   }
   getArgType(index: number) {
