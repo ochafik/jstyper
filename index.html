@@ -10,7 +10,8 @@
       .bar {
         display: inline-block;
         font-size: small;
-        top: 0;
+        /*top: 0;*/
+        bottom: 0;
         text-align: right;
         margin: 3px;
       }
@@ -73,12 +74,12 @@
       <textarea id="input" rows="10" cols="80"></textarea>
       <div class="bar overlay">
         <div>
-          <input id="autorun" checked type="checkbox">Auto-run
-          <button id="run">Run</button>
-        </div>
-        <div>
           Max passes:
           <input type="text" size="2" id="maxIterations">
+        </div>
+        <div>
+          <input id="autorun" checked type="checkbox">Auto-run
+          <button id="run">Run</button>
         </div>
       </div>
     </div>
