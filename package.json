@@ -28,7 +28,8 @@
     "acorn": "^3.3.0"
   },
   "scripts": {
-    "start": "concurrently --kill-others \"npm run rollup:w\" lite-server \"npm run test:w\"",
+    "demo": "concurrently --kill-others \"npm run rollup:w\" lite-server",
+    "start": "concurrently --kill-others \"npm run demo\" \"npm run test:w\"",
     "lite": "lite-server",
     "rollup": "rollup -c",
     "rollup:w": "rollup -c -w",
