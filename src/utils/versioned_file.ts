@@ -12,9 +12,12 @@ export class VersionedFile {
     return this._version;
   }
 
-  commitChanges(changes: ts.TextChange[]): void {
+  commitChanges(changes: ts.TextChange[]): boolean {
     this._version++;
-    this._content = applyTextChanges(this._content, changes);
+    const oldContent = this._content;
+    const newContent = applyTextChanges(oldContent, changes);
+    this._content = newContent;
+    return newContent != oldContent;
   }
 
   get content() {
