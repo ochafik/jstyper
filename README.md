@@ -57,6 +57,7 @@ function gg(x: number, o: {addValue: boolean, value: number, name: string}) {
 
 # TODO
 
+- add argument name hints (`f(a.getFoo())` -> `f.arguments[0].name == 'foo'`)
 - parse and output flow comment / flow types
 - Proper tests
 - Better propagate contextual types in expressions (e.g. in `(a && b && c`, `a ? b : c`)
