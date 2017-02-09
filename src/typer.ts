@@ -8,11 +8,11 @@ import {updateExports} from './passes/update_exports';
 import {Options, defaultOptions} from './options';
 
 export type TyperResult = {
-    fileContents: Map<string, string>,
+    fileContents: {[fileName: string]: string}, //Map<string, string>,
     inferencePasses: number,
 };
 
-export function runTyper(fileContents: Map<string, string>, options = defaultOptions): TyperResult {
+export function runTyper(fileContents: {[fileName: string]: string}, options = defaultOptions): TyperResult {
   const reactor = new LanguageServiceReactor(fileContents, options.currentWorkingDir, {
       allowJs: true,
       strictNullChecks: true,
@@ -32,7 +32,9 @@ export function runTyper(fileContents: Map<string, string>, options = defaultOpt
       }
       if (options.debugPasses) {
           console.warn(`Partial result after inference pass ${i + 1}:`);
-          for (const [fileName, contents] of reactor.fileContents) {
+          const fileContents = reactor.fileContents;
+          for (const fileName in fileContents) {
+              const contents = fileContents[fileName];
               console.warn(`${fileName}:\n${contents}\n`);
           }
       }

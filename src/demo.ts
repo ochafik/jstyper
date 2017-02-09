@@ -95,7 +95,7 @@ window.addEventListener('load', () => {
     options.debugPasses = true;
     options.maxIterations = getMaxIterations();
 
-    const {fileContents: [[_, output]], inferencePasses} = runTyper(new Map([['file.js', jsInput.value]]))
+    const {fileContents: {'file.ts': output}, inferencePasses} = runTyper({'file.ts': jsInput.value})
     tsOutput.value = output;
     const time = new Date().getTime() - start;
     stats.textContent = `Execution time (${inferencePasses} passes): ${time} milliseconds`;

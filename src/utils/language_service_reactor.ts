@@ -11,11 +11,12 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
   private fileNames: string[];
   
   constructor(
-      fileContents: Map<string, string>,
+      fileContents: {[fileName: string]: string},
       private currentWorkingDir = '.',
       private options: ts.CompilerOptions) {
     const fileNames: string[] = [];
-    for (const [fileName, content] of fileContents) {
+    for (const fileName in fileContents) {
+      const content = fileContents[fileName];
       this.files.set(fileName, new VersionedFile(content));
       fileNames.push(fileName);
     }
@@ -50,13 +51,20 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
     }
   }
 
-  get fileContents(): Map<string, string> {
-    const result = new Map<string, string>();
+  get fileContents(): {[fileName: string]: string} {
+    const result = Object.create(null);
     for (const [fileName, file] of this.files) {
-      result.set(fileName, file.content);
+      result[fileName] = file.content;
     }
     return result;
   }
+  // get fileContents(): Map<string, string> {
+  //   const result = new Map<string, string>();
+  //   for (const [fileName, file] of this.files) {
+  //     result.set(fileName, file.content);
+  //   }
+  //   return result;
+  // }
 
   react(callback: ReactorCallback): boolean {
     const pendingChanges = new Map<string, ts.TextChange[]>();
