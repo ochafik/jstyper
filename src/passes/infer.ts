@@ -5,6 +5,7 @@ import {isCallTarget, traverse} from '../utils/nodes';
 import * as fl from "../utils/flags";
 import * as ops from '../utils/operators';
 import * as nodes from '../utils/nodes';
+import {guessName} from '../utils/name_guesser';
 import {Options} from '../options';
 import {applyConstraints} from './apply_constraints';
 import {ConstraintsCache} from './constraints_cache';
@@ -51,8 +52,13 @@ export const infer: (options: Options) => ReactorCallback = (options) => (fileNa
                         // console.log(`CALL(${call.getFullText()}):`);
                         callConstraints.hasArity(argTypes.length);
                         argTypes.forEach((t, i) => {
+                            const argConstraints = callConstraints.getArgType(i);
+                            const arg = call.arguments[i];
+                            if (arg) {
+                                argConstraints.addNameHint(guessName(arg));
+                            }
                             // console.log(`  ARG(${i}): ${checker.typeToString(t)}`);
-                            callConstraints.getArgType(i).isType(t);
+                            argConstraints.isType(t);
                         });
                     }
                 } else if (node.kind === ts.SyntaxKind.ReturnStatement) {

@@ -1,6 +1,7 @@
 import * as ts from "typescript";
 import * as fl from "./flags";
 import {Options} from "../options";
+import {guessName} from './name_guesser';
 
 export type Signature = {
   returnType?: ts.Type,
@@ -65,6 +66,8 @@ export class TypeConstraints {
   private callConstraints?: CallConstraints;
   // private types: ts.Type[] = [];
   private symbols: ts.Symbol[] = [];
+  private names: Set<string> | undefined;
+  private nameHints: Set<string> | undefined;
   private _flags: ts.TypeFlags = 0;
   private _isBooleanLike = false;
   private _isNumberOrString = false;
@@ -85,6 +88,15 @@ export class TypeConstraints {
     }
     // console.log(`TypeConstraints: ${description}`);
     // this._isBuilding = false;
+  }
+
+  addName(name?: string) {
+    if (!name) return;
+    (this.names = this.names || new Set()).add(name);
+  }
+  addNameHint(name?: string) {
+    if (!name) return;
+    (this.nameHints = this.nameHints || new Set()).add(name);
   }
 
   get flags() {
@@ -193,7 +205,10 @@ export class TypeConstraints {
       callConstraints.hasArity(minArity, markChanges);
 
       paramTypes.forEach((paramType, i) => {
-        callConstraints!.getArgType(i, markChanges).isType(paramType, markChanges);
+        const param = params[i];
+        const paramConstraints = callConstraints!.getArgType(i, markChanges);
+        paramConstraints.isType(paramType, markChanges);
+        paramConstraints.addName(guessName(param.name));
       });
     }
     for (const prop of type.getProperties()) {
@@ -343,13 +358,34 @@ export class TypeConstraints {
     return `${name}${isUndefined ? '?' : ''}: ${resolved || 'any'}`;
   }
 
+  get bestName(): string | undefined {
+    if (this.names) {
+      for (const name of this.names) {
+        return name;
+      }
+    }
+    if (this.nameHints) {
+      const hints = [...this.nameHints.values()];
+      const camelSplit = hints.map(n => n.replace(/([a-z](?=[A-Z]))/g, '$1 ').toLowerCase());
+      // TODO: tokenize camel-case instead of this crude test.
+      return hints.find((h, i) => {
+        const cs = camelSplit[i];
+        return camelSplit.every((cs2, ii) => i == ii || cs2.endsWith(cs));
+      });
+    }
+    return undefined;
+  }
+
   resolveCallableArgListAndReturnType(): [string, string] | undefined {
     // const isUndefined = fl.isUndefined(constraints.flags);
     //     // console.log(`isUndefined(${name}) = ${isUndefined} (Flags = ${constraints.flags})`);
     //     const resolved = constraints.resolve({ignoreFlags: isUndefined ? ts.TypeFlags.Undefined : 0});
         
     return this.callConstraints && [
-      this.callConstraints.argTypes.map((t, i) => this.resolveKeyValueDecl(`arg${i + 1}`, t)).join(', '),
+      this.callConstraints.argTypes.map((t, i) => {
+        const name = t.bestName || `arg${i + 1}`;
+        return this.resolveKeyValueDecl(name, t);
+      }).join(', '),
       this.callConstraints.returnType.resolve() || 'any'
     ];
   }
