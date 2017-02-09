@@ -1,4 +1,4 @@
-function f1(x: {call(arg1: number, arg2: number): number, memberOfX: number}, y: {(arg1: number, arg2: number, arg3: number): void, foo(): void}) {
+function f1(x: {call(arg1: number, arg2: number): number, memberOfX: number}, y: {(arg1: number, arg2: number, arg3: number): void, foo(): void}): void {
   console.log(x, y);
   let z: number = x.call(1, 2);
   y.foo();
@@ -19,4 +19,4 @@ function g1(x: number): number {
   return x * 2;
 }
 
-// 5 inference passes
+// 4 inference passes

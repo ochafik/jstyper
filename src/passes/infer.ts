@@ -21,9 +21,15 @@ export const infer: (options: Options) => ReactorCallback = (options) => (fileNa
             traverse(sourceFile, (node: ts.Node) => {
                 const nodeConstraints = constraintsCache.getNodeConstraints(node);
                 const ctxType = checker.getContextualType(<ts.Expression>node);
-                if (ctxType) {//} && !isAny(ctxType)) {
-                    if (nodeConstraints) {
+                if (nodeConstraints) {
+                    // Don't propagate contextual type up of `test ? x : null`, as x will be inferred to be nullable.
+                    if (node.parent && node.parent.kind !== ts.SyntaxKind.ConditionalExpression) {
+                        // console.log(`CTX(${nodeConstraints.description} = ${node.getFullText().trim()}) = ${ctxType && checker.typeToString(ctxType)}`);
                         nodeConstraints.isType(ctxType);
+
+                        if (node.parent.kind != ts.SyntaxKind.ExpressionStatement) {
+                            nodeConstraints.cannotBeVoid();
+                        }
                     }
                 }
 
@@ -111,17 +117,17 @@ export const infer: (options: Options) => ReactorCallback = (options) => (fileNa
                     }
                 } else if (node.kind === ts.SyntaxKind.PostfixUnaryExpression ||
                     node.kind == ts.SyntaxKind.PrefixUnaryExpression) {
-                const expr = <ts.PrefixUnaryExpression | ts.PostfixUnaryExpression>node;
-                const constraints = constraintsCache.getNodeConstraints(expr.operand);
-                //   console.log(`leftConstraints for ${node.getFullText()}: ${leftConstraints} (op = ${expr.operator}, ops.unaryNumberOperators = ${[...ops.unaryNumberOperators.values()]})`);
-                if (constraints) {
-                    const op = expr.operator;
-                        if (ops.unaryNumberOperators.has(op)) {
-                        constraints.isNumber();
-                    } else if (ops.unaryBooleanOperators.has(op)) {
-                        constraints.isBooleanLike();
+                    const expr = <ts.PrefixUnaryExpression | ts.PostfixUnaryExpression>node;
+                    const constraints = constraintsCache.getNodeConstraints(expr.operand);
+                    //   console.log(`leftConstraints for ${node.getFullText()}: ${leftConstraints} (op = ${expr.operator}, ops.unaryNumberOperators = ${[...ops.unaryNumberOperators.values()]})`);
+                    if (constraints) {
+                        const op = expr.operator;
+                            if (ops.unaryNumberOperators.has(op)) {
+                            constraints.isNumber();
+                        } else if (ops.unaryBooleanOperators.has(op)) {
+                            constraints.isBooleanLike();
+                        }
                     }
-                }
                 } else if (node.kind === ts.SyntaxKind.IfStatement) {
                 constraintsCache.nodeIsBooleanLike((<ts.IfStatement>node).expression);
                 } else if (node.kind === ts.SyntaxKind.ConditionalExpression) {

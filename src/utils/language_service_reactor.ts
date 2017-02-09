@@ -73,9 +73,13 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
     if (pendingChanges.size == 0) {
       return false;
     }
+
+    let changed = false;
     for (const [fileName, changes] of pendingChanges) {
-      this.files.get(fileName)!.commitChanges(changes);
+      if (this.files.get(fileName)!.commitChanges(changes)) {
+        changed = true;
+      }
     }
-    return true;
+    return changed;
   }
 }

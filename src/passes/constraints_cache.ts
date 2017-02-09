@@ -50,11 +50,15 @@ export class ConstraintsCache {
       node = (<ts.ParenthesizedExpression>node).expression;
     }
 
-    if (node.kind === ts.SyntaxKind.PropertyAccessExpression) {
-        const access = <ts.PropertyAccessExpression>node;
-        const constraints = this.getNodeConstraints(access.expression);
-        if (constraints) {
-            return constraints.getFieldConstraints(access.name.text);
+    if (node.kind === ts.SyntaxKind.PropertyAccessExpression
+        || node.kind === ts.SyntaxKind.ElementAccessExpression
+    ) {
+        const access = <ts.PropertyAccessExpression | ts.ElementAccessExpression>node;
+        if ('name' in access) {
+            const constraints = this.getNodeConstraints(access.expression);
+            if (constraints) {
+                return constraints.getFieldConstraints((access as any).name.text);
+            }
         }
     } else if (node.kind === ts.SyntaxKind.CallExpression) {
         let constraints = this.getNodeConstraints((<ts.CallExpression>node).expression);

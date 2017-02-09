@@ -14,7 +14,7 @@ function g5(s: string): string {
   return s ? s : '';
 }
 
-function h5(x: string) {
+function h5(x: string): void {
   if (ff5(x) == '' && g5(x) == '') {
     console.log('error');
   }
@@ -25,4 +25,4 @@ function i5(x1?: {y: any}, x2: {y: string}) {
   return x1 ? x1.y : null;
 }
 
-// 5 inference passes
+// 4 inference passes

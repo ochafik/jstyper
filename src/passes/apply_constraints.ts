@@ -7,12 +7,23 @@ import * as ops from '../utils/operators';
 import {Options} from '../options';
 
 // TODO: check if a constraint has seen any new info, then as long as some do, do our own loop to avoid writing files.
-export function applyConstraints(allConstraints: Map<ts.Symbol, TypeConstraints>, checker: ts.TypeChecker, addChange: AddChangeCallback) {
-  for (const [sym, constraints] of allConstraints) {
-      if (!constraints.hasChanges) {
-        //   console.log(`No changes for symbol ${checker.symbolToString(sym)}`);
-          continue;
+export function applyConstraints(allConstraints: Map<ts.Symbol, TypeConstraints>, checker: ts.TypeChecker, _addChange: AddChangeCallback) {
+
+  function addChange(sourceFile: ts.SourceFile, change: ts.TextChange) {
+      if (change.span.length > 0) {
+        const source = sourceFile.getFullText();
+        const existing = source.substr(change.span.start, change.span.length);
+        if (existing == change.newText) {
+            return;
+        }
       }
+      _addChange(sourceFile.fileName, change);
+  }
+  for (const [sym, constraints] of allConstraints) {
+    //   if (!constraints.hasChanges) {
+    //     //   console.log(`No changes for symbol ${checker.symbolToString(sym)}`);
+    //       continue;
+    //   }
       const decls = sym.getDeclarations();
       if (!decls || decls.length == 0) {
           continue;
@@ -36,9 +47,9 @@ export function applyConstraints(allConstraints: Map<ts.Symbol, TypeConstraints>
       }
 
       function handleReturnType(constraints: TypeConstraints, fun: ts.FunctionDeclaration) {
-            if (!constraints.hasChanges) {
-                return;
-            }
+            // if (!constraints.hasChanges) {
+            //     return;
+            // }
           const resolved = constraints.resolve();
             if (!resolved) {
                 return;
@@ -59,7 +70,7 @@ export function applyConstraints(allConstraints: Map<ts.Symbol, TypeConstraints>
                 length = 0;
                 pre = ': ';
             }
-            addChange(fun.getSourceFile().fileName, {
+            addChange(fun.getSourceFile(), {
                 span: {
                     start: start,
                     length: length
@@ -69,9 +80,9 @@ export function applyConstraints(allConstraints: Map<ts.Symbol, TypeConstraints>
       }
 
       function handleVarConstraints(constraints: TypeConstraints, varDecl: ts.ParameterDeclaration | ts.VariableDeclaration) {
-          if (!constraints.hasChanges) {
-              return;
-          }
+        //   if (!constraints.hasChanges) {
+        //       return;
+        //   }
         // const resolved = constraints.resolve();
         const {isUndefined, resolved} = constraints.resolveMaybeUndefined();
         if (resolved == null) {
@@ -88,7 +99,7 @@ export function applyConstraints(allConstraints: Map<ts.Symbol, TypeConstraints>
         } else {
             length = 0;
         }
-        addChange(decl.getSourceFile().fileName, {
+        addChange(decl.getSourceFile(), {
             span: {
                 start: start,
                 length: length

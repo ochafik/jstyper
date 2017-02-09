@@ -18,4 +18,4 @@ function h4(x: string) {
   return x ? x.length : 0;
 }
 
-// 5 inference passes
+// 4 inference passes

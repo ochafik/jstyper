@@ -20,11 +20,11 @@ export class CallConstraints {
   get hasChanges() {
     return this.returnType.hasChanges || this.argTypes.some(c => c.hasChanges);
   }
-  clearHasChanges() {
-    this.returnType.clearHasChanges();
-    this.argTypes.forEach(c => c.clearHasChanges());
-  }
-  private ensureArity(arity: number) {
+  // clearHasChanges() {
+  //   this.returnType.clearHasChanges();
+  //   this.argTypes.forEach(c => c.clearHasChanges());
+  // }
+  private ensureArity(arity: number, markChanges: boolean = true) {
     let updated = false;
     for (let i = 0; i < arity; i++) {
       if (this.argTypes.length <= i) {
@@ -34,27 +34,27 @@ export class CallConstraints {
     }
 
     if (updated) {
-      this.updateOptionalArgs();
+      this.updateOptionalArgs(markChanges);
     }
   }
-  hasArity(arity: number) {
+  hasArity(arity: number, markChanges: boolean = true) {
     // this.arities.push(arity);
     if (typeof this.minArity === 'undefined' || arity < this.minArity) {
       this.minArity = arity;
-      this.updateOptionalArgs();
+      this.updateOptionalArgs(markChanges);
     }
   }
-  getArgType(index: number) {
-    this.ensureArity(index + 1);
+  getArgType(index: number, markChanges: boolean = true) {
+    this.ensureArity(index + 1, markChanges);
     return this.argTypes[index];
   }
-  private updateOptionalArgs() {
+  private updateOptionalArgs(markChanges: boolean = true) {
     if (typeof this.minArity === 'undefined') {
       return;
     }
     this.argTypes.forEach((t, i) => {
       if (i >= this.minArity) {
-        t.isUndefined();
+        t.isUndefined(markChanges);
       }
     });
   }
@@ -63,7 +63,8 @@ export class CallConstraints {
 export class TypeConstraints {
   private fields = new Map<string, TypeConstraints>();
   private callConstraints?: CallConstraints;
-  private types: ts.Type[] = [];
+  // private types: ts.Type[] = [];
+  private symbols: ts.Symbol[] = [];
   private _flags: ts.TypeFlags = 0;
   private _isBooleanLike = false;
   private _isNumberOrString = false;
@@ -73,14 +74,14 @@ export class TypeConstraints {
   // private _isBuilding = true;
 
   constructor(
-      private description: string,
+      public readonly description: string,
       private services: ts.LanguageService,
       private checker: ts.TypeChecker,
       private options: Options,
       initialType?: ts.Type) {
     if (initialType) {
       this.isType(initialType);
-      this.clearHasChanges();
+      // this.clearHasChanges();
     }
     // console.log(`TypeConstraints: ${description}`);
     // this._isBuilding = false;
@@ -99,27 +100,60 @@ export class TypeConstraints {
         !this._isBooleanLike &&
         !this._isNumberOrString &&
         (this._flags === ts.TypeFlags.Object) &&
-        // (this._flags & ts.TypeFlags.Object) === ts.TypeFlags.Object &&
         this.fields.size == 0;
   }
 
-  getFieldConstraints(name: string): TypeConstraints {
-    this.isObject();
+  getFieldConstraints(name: string, markChanges: boolean = true): TypeConstraints {
+    this.isObject(markChanges);
     let constraints = this.fields.get(name);
     if (!constraints) {
-      this.fields.set(name, constraints = this.createConstraints(`${this.description}.${name}`));
+      constraints = this.createConstraints(`${this.description}.${name}`);
+      if (markChanges) {
+        constraints.markChange();
+      }
+      this.fields.set(name, constraints);
     }
     return constraints;
   }
 
-  isType(type: ts.Type) {
-    if (fl.isAny(type)) {
+  isType(type: ts.Type, markChanges: boolean = true) {
+    // {
+    //   let tpe = type && this.checker.typeToString(type);
+    //   console.log(`Constraints(${this.description}).isType(${tpe})`);
+    // }
+                    
+    // const name = this.checker.typeToString(type);
+    if (!type || fl.isAny(type)) {
+      if (markChanges && !this._flags && this.symbols.length == 0) {
+        this.markChange();
+      }
       return;
     }
 
+    if (type.flags & ts.TypeFlags.Object && type.symbol && type.symbol.flags & (
+          ts.SymbolFlags.Class |
+          ts.SymbolFlags.Enum |
+          ts.SymbolFlags.ConstEnum |
+          ts.SymbolFlags.Interface |
+          ts.SymbolFlags.Alias |
+          ts.SymbolFlags.TypeAlias |
+          ts.SymbolFlags.TypeParameter)) {
+      // console.log(`GOT SYMBOL ${this.checker.symbolToString(ft.symbol)}`);
+      if (this.symbols.indexOf(type.symbol) >= 0) {
+        return;
+      }
+      this.symbols.push(type.symbol);
+      if (markChanges) {
+        this.markChange();
+      }
+      markChanges = false;
+    }
+
+    const originalHasChanges = this._hasChanges;
+
     if (fl.isUnion(type)) {
       for (const member of (<ts.UnionType>type).types) {
-        this.isType(member);
+        this.isType(member, markChanges);
       }
       if (type.flags === ts.TypeFlags.Union) {
         // Nothing else in this union type.
@@ -127,29 +161,27 @@ export class TypeConstraints {
       }
     }
 
-    this.types.push(type);
-      // const baseTypes = type.getBaseTypes();
-      // if (baseTypes)
-      // console.log(`BASE types: ${baseTypes.length}`);
+    // this.types.push(type);
 
-    // const before = this.resolve();
-    // if (type.flags & ts.TypeFlags.NumberLiteral) {
-    //   this.isNumber();
-    //   return;
+    // function isType(c: TypeConstraints, t: ts.Type) {
+    //   if (isNamedSymbol) {
+    //     const hadChanges = c.hasChanges;
+    //     c.isType(t);
+    //     if (!hadChanges) {
+    //       c.clearHasChanges();
+    //     }
+    //   } else {
+    //     c.isType(t);
+    //   }
     // }
-    // const sym = type.getSymbol();
-    // if (sym && sym.getName() != '__type') {
-    //   console.log(`SYMBOL(${this.checker.typeToString(type)}) = ${sym && this.checker.symbolToString(sym)}`);
-    //   this.types.push(type);
-    //   return;
-    // }
+    
     for (const sig of type.getCallSignatures()) {
       const params = sig.getDeclaration().parameters;
-      const callConstraints = this.getCallConstraints();
+      const callConstraints = this.getCallConstraints(markChanges);
 
       const paramTypes = params.map(p => this.checker.getTypeAtLocation(p));
 
-      callConstraints.returnType.isType(sig.getReturnType());
+      callConstraints.returnType.isType(sig.getReturnType(), markChanges);
       
       let minArity = 0;
       for (let paramType of paramTypes) {
@@ -158,10 +190,10 @@ export class TypeConstraints {
         }
         minArity++;
       }
-      callConstraints.hasArity(minArity);
+      callConstraints.hasArity(minArity, markChanges);
 
       paramTypes.forEach((paramType, i) => {
-        callConstraints!.getArgType(i).isType(paramType);
+        callConstraints!.getArgType(i, markChanges).isType(paramType, markChanges);
       });
     }
     for (const prop of type.getProperties()) {
@@ -171,24 +203,31 @@ export class TypeConstraints {
         // console.warn(`Property ${this.checker.symbolToString(prop)} has no known declaration`);
         continue;
       }
-      this.getFieldConstraints(this.checker.symbolToString(prop))
-         .isType(this.checker.getTypeOfSymbolAtLocation(prop, decls[0]));
+      this.getFieldConstraints(this.checker.symbolToString(prop), markChanges).isType(
+          this.checker.getTypeOfSymbolAtLocation(prop, decls[0]),
+          markChanges);
     }
 
-    this.hasFlags(type.flags);
+    this.hasFlags(type.flags, markChanges);
 
+
+    if (!markChanges) {
+      this._hasChanges = originalHasChanges;
+    }
     // const after = this.resolve();
     // console.log(`isType(${this.checker.typeToString(type)}): "${before}" -> "${after}`);
   }
 
-  private hasFlags(flags: ts.TypeFlags) {
+  private hasFlags(flags: ts.TypeFlags, markChanges: boolean = true) {
     flags = fl.normalize(flags);
 
     const oldFlags = this._flags;
     const newFlags = oldFlags | flags;
     if (newFlags != this._flags) {
       this._flags = newFlags;
-      this.markChange();
+      if (markChanges) {
+        this.markChange();
+      }
     }
   }
   
@@ -196,52 +235,58 @@ export class TypeConstraints {
     return !!this.callConstraints;
   }
 
-  getCallConstraints(): CallConstraints {
-    this.isObject();
+  getCallConstraints(markChanges: boolean = true): CallConstraints {
+    this.isObject(markChanges);
     if (!this.callConstraints) {
       this.callConstraints = new CallConstraints(this.description, (d) => this.createConstraints(d));
     }
     return this.callConstraints;
   }
   
-  isNumber() {
-    this.hasFlags(ts.TypeFlags.Number);
+  isNumber(markChanges: boolean = true) {
+    this.hasFlags(ts.TypeFlags.Number, markChanges);
   }
-  isString() {
-    this.hasFlags(ts.TypeFlags.String);
+  isString(markChanges: boolean = true) {
+    this.hasFlags(ts.TypeFlags.String, markChanges);
   }
-  isUndefined() {
-    this.hasFlags(ts.TypeFlags.Undefined);
+  isUndefined(markChanges: boolean = true) {
+    this.hasFlags(ts.TypeFlags.Undefined, markChanges);
   }
-  isObject() {
-    this.hasFlags(ts.TypeFlags.Object);
+  isObject(markChanges: boolean = true) {
+    this.hasFlags(ts.TypeFlags.Object, markChanges);
   }
-  isNullable() {
-    this.hasFlags(ts.TypeFlags.Null);
+  isNullable(markChanges: boolean = true) {
+    this.hasFlags(ts.TypeFlags.Null, markChanges);
   }
-  isVoid() {
-    this.hasFlags(ts.TypeFlags.Void);
+  isVoid(markChanges: boolean = true) {
+    this.hasFlags(ts.TypeFlags.Void, markChanges);
   }
-  cannotBeVoid() {
+  cannotBeVoid(markChanges: boolean = true) {
     if (this._cannotBeVoid) return;
 
     this._cannotBeVoid = true;
-    this.markChange();
+    if (markChanges) {
+      this.markChange();
+    }
   }
-  isBooleanLike() {
+  isBooleanLike(markChanges: boolean = true) {
     if (this._isBooleanLike || fl.isBoolean(this._flags) || fl.isBooleanLike(this._flags) ||
         fl.isNullOrUndefined(this._flags) || fl.isNumberOrString(this._flags)) {
       return;
     }
     this._isBooleanLike = true;
-    this.markChange();
+    if (markChanges) {
+      this.markChange();
+    }
   }
-  isNumberOrString() {
+  isNumberOrString(markChanges: boolean = true) {
     if (this._isNumberOrString || fl.isNumberOrString(this._flags)) {
       return;
     }
     this._isNumberOrString = true;
-    this.markChange();
+    if (markChanges) {
+      this.markChange();
+    }
     // this.hasFlags(ts.TypeFlags.StringOrNumberLiteral);
   }
 
@@ -269,15 +314,15 @@ export class TypeConstraints {
     return false;
   }
 
-  clearHasChanges() {
-    this._hasChanges = false;
-    for (const c of this.fields.values()) {
-      c.clearHasChanges();
-    }
-    if (this.callConstraints) {
-      this.callConstraints.clearHasChanges();
-    }
-  }
+  // clearHasChanges() {
+  //   this._hasChanges = false;
+  //   for (const c of this.fields.values()) {
+  //     c.clearHasChanges();
+  //   }
+  //   if (this.callConstraints) {
+  //     this.callConstraints.clearHasChanges();
+  //   }
+  // }
 
   private typeToString(t: ts.Type | null): string | null {
     return t == null ? null : this.checker.typeToString(t);
@@ -396,7 +441,15 @@ export class TypeConstraints {
       }
     }
 
+    for (const sym of this.symbols) {
+      union.push(this.checker.symbolToString(sym));
+    }
+
     for (const [name, constraints] of this.fields) {
+      if (!constraints.hasChanges) {
+        // console.log(`NO CHANGE for ${constraints.description}`);
+        continue;
+      }
       constraints.normalize();
 
       if (constraints.isPureFunction) {

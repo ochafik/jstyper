@@ -7,4 +7,4 @@ function g6(x?: {y?: (arg1: number) => boolean}): boolean {
 }
 
 
-// 5 inference passes
+// 3 inference passes
