@@ -4,6 +4,7 @@ set -eu
 readonly TEMP_DIR="$PWD/tmp/ochafik.com"
 readonly RELATIVE_DEMO="assets/typer-demo.html"
 
+npm test
 npm run build
 
 rm -fR "${TEMP_DIR}"
