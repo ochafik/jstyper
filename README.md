@@ -1,15 +1,16 @@
-# typer [![Build Status](https://travis-ci.org/ochafik/jstyper.svg?branch=master)](https://travis-ci.org/ochafik/jstyper) [![npm version](https://badge.fury.io/js/jstyper.svg)](https://badge.fury.io/js/jstyper)
+# jstyper [![Build Status](https://travis-ci.org/ochafik/jstyper.svg?branch=master)](https://travis-ci.org/ochafik/jstyper) [![npm version](https://badge.fury.io/js/jstyper.svg)](https://badge.fury.io/js/jstyper)
 Adds flow / typescript types to JavaScript files
 
-Typer adds {TypeScript, Flow, Closure} types to JavaScript programs using iterative type propagation and the TypeScript Language Services.
+JsTyper adds {TypeScript, Flow, Closure} types to JavaScript programs using iterative type propagation and the TypeScript Language Services.
 
-# Demo
+# Run it
 
-[Run it here](http://ochafik.com/assets/typer-demo.html)
+* [Interactive online demo](http://ochafik.com/assets/typer-demo.html)
+* `npm i -g jstyper` then `jstyper input.js`
 
 # Example
 
-input.js:
+example.js:
     
 ```js
 function f(x) {
@@ -24,27 +25,27 @@ function g(x, o) {
 }
 
 function gg(x, y) {
-  var v = gg(x, y);
+  var v = g(x, y);
   return v;
 }
 ```
 
-output.ts:
+example.ts:
 
 ```ts    
-function f(x: number) {
+function f(x: number): number {
   return x * 2;
 }
 
-function g(x: number, o: {addValue: boolean, value: number, name: string}): number | string {
+function g(x: number, o: {addValue: boolean, value: any, name: string}) {
   if (o.addValue) {
     return f(x) + o.value;
   }
   return o.name == 'default' ? x : 'y';
 }
 
-function gg(x: number, o: {addValue: boolean, value: number, name: string}) {
-  var v: string | number = g(x, y);
+function gg(x: number, y: {addValue: boolean, value: any, name: string}) {
+  let v = g(x, y);
   return v;
 }
 ```
