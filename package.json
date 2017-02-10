@@ -52,16 +52,15 @@
     "uglify-js-harmony": "^2.6.2",
     "watch": "^1.0.1"
   },
-  "main": "build/src/typer.js",
   "dependencies": {
     "minimist": "^1.2.0"
   },
   "scripts": {
-    "build": "npm run rollup && inline-assets index.html build/index.html",
-    "demo": "concurrently --kill-others \"npm run rollup:w\" lite-server",
+    "build": "rm -fR build && npm run rollup:demo && npm run rollup:cli && inline-assets demo.html build/demo.html",
+    "demo": "concurrently --kill-others \"npm run rollup:demo -- -w\" lite-server",
     "start": "concurrently --kill-others \"npm run demo\" \"npm run test:w\"",
-    "rollup": "rollup -c",
-    "rollup:w": "rollup -c -w",
+    "rollup:demo": "rollup -c rollup.config.demo.js",
+    "rollup:cli": "rollup -c rollup.config.cli.js",
     "test": "tsc && mocha build/test",
     "test:w": "tsc && concurrently \"tsc -w\" \"mocha build/test --watch\"",
     "update-specs": "UPDATE_SPECS=1 npm test",
@@ -72,5 +71,10 @@
   },
   "bin": {
     "jstyper": "bin/jstyper.js"
-  }
+  },
+  "files": [
+    "build/cli.js",
+    "build/demo.html",
+    "build/demo.js.map"
+  ]
 }

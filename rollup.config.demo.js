@@ -7,29 +7,26 @@ import babel from 'rollup-plugin-babel';
 
 export default {
   entry: './src/demo.ts',
+  dest: 'build/demo.js',
   format: 'iife',
-  dest: 'build/demo-bundle.js',
+  sourceMap: true,
   external: ['typescript'],
   globals: {
     typescript: 'ts'
   },
-  sourceMap: true,
   plugins: [
-    typescript({
-      // Force usage of same version of typescript as the project:,
-      typescript: require('typescript')
-    }),
+    typescript({typescript: require('typescript')}),
     nodeResolve({
       jsnext: true,
       main: true,
       browser: true
     }),
-    //*
-    babel({
-      exclude: 'node_modules/**'
-    }),
-    uglify({sourceMap: true}, minify),
-    //*/
-    filesize(),
+    ...(process.env.DEV == '1'
+      ? []
+      : [
+        babel({exclude: 'node_modules/**'}),
+        uglify({sourceMap: true}, minify),
+      ]),
+    filesize()
   ]
 }

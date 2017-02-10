@@ -1,2 +1,6 @@
 #! /usr/bin/env node
-require('../build/src/main');
+global.fs = require('fs')
+global.path = require('path')
+global.ts = require('typescript')
+
+require('../build/main');

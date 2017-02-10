@@ -10,7 +10,7 @@ rm -fR "${TEMP_DIR}"
 mkdir -p "${TEMP_DIR}"
 git clone --depth 1 git@github.com:ochafik/ochafik.github.io.git "$TEMP_DIR"
 
-cp build/index.html "${TEMP_DIR}/${RELATIVE_DEMO}"
+cp build/demo.html "${TEMP_DIR}/${RELATIVE_DEMO}"
 (
   cd "${TEMP_DIR}"
   git status
