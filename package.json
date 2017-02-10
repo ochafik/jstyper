@@ -1,4 +1,25 @@
 {
+  "name": "jstyper",
+  "version": "0.1.0",
+  "author": {
+    "name": "Olivier Chafik",
+    "email": "olivier.chafik@gmail.com",
+    "url": "http://ochafik.com"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ochafik/jstyper/issues"
+  },
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/ochafik/jstyper.git"
+  },
+  "categories": [
+    "Linters", "Formatters", "Languages"
+  ],
+  "keywords": [
+    "typescript", "flow", "closure", "types", "migration"
+  ],
   "devDependencies": {
     "@types/chai": "^3.4.34",
     "@types/minimist": "^1.2.0",
@@ -25,8 +46,6 @@
     "uglify-js-harmony": "^2.6.2",
     "watch": "^1.0.1"
   },
-  "name": "jstyper",
-  "version": "0.1.0",
   "main": "build/src/typer.js",
   "dependencies": {
     "minimist": "^1.2.0"
@@ -41,10 +60,10 @@
     "test:w": "tsc && concurrently \"tsc -w\" \"mocha build/test --watch\"",
     "update-specs": "UPDATE_SPECS=1 npm test",
     "update-specs:w": "UPDATE_SPECS=1 npm test:w",
+    "major-release": "npm version major && npm publish && git push --follow-tags",
+    "minor-release": "npm version minor && npm publish && git push --follow-tags",
     "patch-release": "npm version patch && npm publish && git push --follow-tags"
   },
-  "author": "",
-  "license": "ISC",
   "bin": {
     "jstyper": "bin/jstyper.js"
   }
