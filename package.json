@@ -32,15 +32,15 @@
     "minimist": "^1.2.0"
   },
   "scripts": {
+    "build": "npm run rollup && inline-assets index.html build/index.html",
     "demo": "concurrently --kill-others \"npm run rollup:w\" lite-server",
     "start": "concurrently --kill-others \"npm run demo\" \"npm run test:w\"",
-    "lite": "lite-server",
     "rollup": "rollup -c",
     "rollup:w": "rollup -c -w",
-    "build": "npm run rollup && inline-assets index.html build/index.html",
-    "update-specs": "UPDATE_SPECS=1 npm test",
+    "test": "tsc && mocha build/test",
     "test:w": "tsc && concurrently \"tsc -w\" \"mocha build/test --watch\"",
-    "test": "tsc && mocha build/test"
+    "update-specs": "UPDATE_SPECS=1 npm test",
+    "update-specs:w": "UPDATE_SPECS=1 npm test:w"
   },
   "author": "",
   "license": "ISC"
