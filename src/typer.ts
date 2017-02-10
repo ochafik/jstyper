@@ -5,6 +5,7 @@ import {format} from './passes/format';
 import {updateVars} from './passes/update_vars';
 import {updateImports} from './passes/update_imports';
 import {updateExports} from './passes/update_exports';
+import {turnToDeclarations} from './passes/declarations';
 import {Options, defaultOptions} from './options';
 
 export interface TyperMetadata {
@@ -47,6 +48,7 @@ export function runTyper(fileContents: {[fileName: string]: string}, options = d
 
   if (options.format) reactor.react(format);
   if (options.updateVars) reactor.react(updateVars);
+  if (options.declarations) reactor.react(turnToDeclarations);
 
   return {
       outputs: reactor.fileContents,

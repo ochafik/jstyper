@@ -5,6 +5,9 @@ import filesize from 'rollup-plugin-filesize';
 import { minify } from 'uglify-js-harmony';
 import babel from 'rollup-plugin-babel';
 
+const isDev = process.env.DEV == '1'
+console.warn(`DEV: ${isDev}`);
+
 export default {
   entry: './src/demo.ts',
   dest: 'build/demo.js',
@@ -21,12 +24,10 @@ export default {
       main: true,
       browser: true
     }),
-    ...(process.env.DEV == '1'
-      ? []
-      : [
-        babel({exclude: 'node_modules/**'}),
-        uglify({sourceMap: true}, minify),
-      ]),
+    ...(isDev ? [] : [
+      babel({exclude: 'node_modules/**'}),
+      uglify({sourceMap: true}, minify),
+    ]),
     filesize()
   ]
 }
