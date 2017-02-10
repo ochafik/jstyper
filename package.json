@@ -57,7 +57,7 @@
   },
   "scripts": {
     "build": "rm -fR build && npm run rollup:demo && npm run rollup:cli && inline-assets demo.html build/demo.html",
-    "demo": "concurrently --kill-others \"npm run rollup:demo -- -w\" lite-server",
+    "demo": "concurrently --kill-others \"DEV=1 npm run rollup:demo -- -w\" lite-server",
     "start": "concurrently --kill-others \"npm run demo\" \"npm run test:w\"",
     "rollup:demo": "rollup -c rollup.config.demo.js",
     "rollup:cli": "rollup -c rollup.config.cli.js",
