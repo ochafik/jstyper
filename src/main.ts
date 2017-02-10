@@ -13,7 +13,8 @@ const fileNames = argv['_'];
 const inputContents: {[fileName: string]: string} = Object.create(null);
 for (const fileName of fileNames) {
   if (!fileName.endsWith('.js')) {
-    throw new Error(`File '${fileName}' does not have a JavaScript extension.`);
+    console.warn(`ERROR: file '${fileName}' does not have a JavaScript extension.`);
+    process.exit(1);
   }
   const tsFileName = fileName.slice(0, -3) + '.ts';
   inputContents[tsFileName] = fs.readFileSync(fileName).toString();
@@ -26,7 +27,7 @@ const options = <Options>{
 };
 const results = runTyper(inputContents, options);
 
-const metadataComment = `// ${results.metadata.inferencePasses} inference passes`;
+// const metadataComment = `// ${results.metadata.inferencePasses} inference passes`;
     
 for (const fileName in results.outputs) {
     let content = results.outputs[fileName];

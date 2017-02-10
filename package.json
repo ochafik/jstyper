@@ -25,9 +25,9 @@
     "uglify-js-harmony": "^2.6.2",
     "watch": "^1.0.1"
   },
-  "name": "infer-types.ts",
-  "version": "1.0.0",
-  "main": "index.js",
+  "name": "jstyper",
+  "version": "0.1.0",
+  "main": "build/src/typer.js",
   "dependencies": {
     "minimist": "^1.2.0"
   },
@@ -40,8 +40,12 @@
     "test": "tsc && mocha build/test",
     "test:w": "tsc && concurrently \"tsc -w\" \"mocha build/test --watch\"",
     "update-specs": "UPDATE_SPECS=1 npm test",
-    "update-specs:w": "UPDATE_SPECS=1 npm test:w"
+    "update-specs:w": "UPDATE_SPECS=1 npm test:w",
+    "patch-release": "npm version patch && npm publish && git push --follow-tags"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "bin": {
+    "jstyper": "bin/jstyper.js"
+  }
 }
