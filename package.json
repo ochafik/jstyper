@@ -26,7 +26,7 @@
     "watch": "^1.0.1"
   },
   "name": "jstyper",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "main": "build/src/typer.js",
   "dependencies": {
     "minimist": "^1.2.0"
