@@ -3,4 +3,4 @@ global.fs = require('fs')
 global.path = require('path')
 global.ts = require('typescript')
 
-require('../build/main');
+require('../build/cli');
