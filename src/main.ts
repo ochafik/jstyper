@@ -2,11 +2,14 @@ import * as fs from "fs";
 import * as path from 'path';
 import {runTyper} from './typer';
 import {defaultOptions, Options} from './options';
+import {pseudoJson} from './utils/pseudo_json';
+import {mkdirsSync, getFile} from './utils/files';
 
 var argv = require('minimist')(process.argv.slice(2));
 // console.dir(argv);
 
 const outputDir = argv.outputDir || argv.o;
+const outputToStdout = outputDir == '-';
 
 const fileNames = argv['_'];
 
@@ -27,32 +30,20 @@ const options = <Options>{
 };
 const results = runTyper(inputContents, options);
 
-// const metadataComment = `// ${results.metadata.inferencePasses} inference passes`;
-    
-for (const fileName in results.outputs) {
-    let content = results.outputs[fileName];
-    // console.warn(content);
-    
-    // content += '\n\n' + metadataComment
-    
-    if (!fs.existsSync(fileName) || content != fs.readFileSync(fileName).toString()) {
-        let outputFile = fileName;
-        if (outputDir) {
-          outputFile = path.join(outputDir, path.relative(options.currentWorkingDir, fileName));
-        }
-        mkdirsSync(path.dirname(outputFile));
-        
-        console.warn(`${path.relative(options.currentWorkingDir, outputFile)}: ${results.metadata.inferencePasses} inference passes`);
-        fs.writeFileSync(outputFile, content);
-    }
-}
-
-function mkdirsSync(dir: string) {
-  dir.split(path.sep).reduce((d, component) => {
-    const dir = (d && d + '/' || '') + component;
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir);
-    }
-    return dir;
-  }, '');
+if (outputToStdout) {
+  console.log(pseudoJson(results));
+} else {
+  for (const fileName in results.outputs) {
+      const outputFile = getFile(fileName, {
+        outputDir: outputDir,
+        currentWorkingDir: options.currentWorkingDir
+      });
+      const content = results.outputs[fileName];
+      if (!fs.existsSync(outputFile) || content != fs.readFileSync(outputFile).toString()) {
+          mkdirsSync(path.dirname(outputFile));
+          
+          console.warn(`${outputFile}: ${results.metadata.inferencePasses} inference passes`);
+          fs.writeFileSync(outputFile, content);
+      }
+  }
 }
