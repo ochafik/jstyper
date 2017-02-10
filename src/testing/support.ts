@@ -22,8 +22,8 @@ export function typerTest(specFile: string): (this: mocha.ITestCallbackContext) 
     if (updateSpecs) {
       await writeSpec(specFile, actualSpec);
     } else {
-      //expect(annotatedOutput).to.be.equal(expected);
-      assert.deepEqual(actualSpec, spec);
+      expect(actualSpec).to.be.deep.equal(spec);
+      // assert.deepEqual(actualSpec, spec);
     }
   }
 }

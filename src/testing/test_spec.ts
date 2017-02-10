@@ -1,46 +1,23 @@
 import * as fs from 'fs';
 import * as promisify from 'es6-promisify';
-
-// const readFile = promisify(fs.readFile);
-const writeFile = promisify(fs.writeFile);
-
-
-import {TyperResult} from '../typer';
 import {Options} from '../options';
+import {TyperResult} from '../typer';
+import {pseudoJson} from '../utils/pseudo_json';
+import {mapValues} from '../utils/maps';
+import {deindent} from '../utils/strings';
+
+const writeFile = promisify(fs.writeFile);
 
 export interface TestSpec extends TyperResult {
   inputs: {[fileName: string]: string},
 }
 
-function mapValues<U, V>(obj: {[key: string]: U}, f: (U) => V): {[key: string]: V} {
-  const result = Object.create(null);
-  for (const key of Object.keys(obj)) {
-    result[key] = f(obj[key]);
-  }
-  return result;
-}
-
-export function deindentSpec(spec: TestSpec) {
+function deindentSpec(spec: TestSpec) {
   return {
     inputs: mapValues(spec.inputs, deindent),
     outputs: mapValues(spec.outputs, deindent),
     metadata: spec.metadata 
   }  
-}
-
-function deindent(src: string) {
-  src = src.replace(/\t/g, '  ');
-  const match = /^[ \t]*\n( +)([\s\S]*)$/m.exec(src);
-  if (match) {
-    const indent = match[1];
-    src = match[2].trim();
-    // console.warn(`INDENT = "${indent}"`);
-    // console.warn(`SRC = "${src}"`);
-    const result = src.replace(new RegExp(`^${indent}`, 'gm'), '');
-    // console.warn(`REP = "${result}"`);
-    return result;
-  }
-  return src;
 }
 
 export function readSpec(fileName: string) {
@@ -59,27 +36,4 @@ export async function writeSpec(fileName: string, spec: TestSpec) {
     `export default ${pseudoJson(spec)} as TestSpec\n`;
 
   await writeFile(fileName, src);
-}
-
-function pseudoJson(obj: any, indent: string = '') {
-  if (typeof obj == 'number' || typeof obj == 'boolean' || obj == null) {
-    return `${obj}`;
-  } else if (typeof obj == 'string') {
-    let str = obj;
-    if (obj.indexOf('\n') >= 0) {
-      const lineIndent = '\n' + indent;
-      str = lineIndent + '  ' + obj.replace(new RegExp('\n', 'g'), lineIndent + '  ') + lineIndent;
-    }
-    return '`' + str.replace(/([$`])/g, '\\$1') + '`';
-  } else {
-    const sub = indent + '  ';
-    if (obj instanceof Array) {
-      return '[\n' + indent + (obj as any[]).map(o => pseudoJson(o, sub)).join(',\n' + sub) + '\n' + indent + ']';
-    } else {
-      return '{\n' + sub + Object.keys(obj).map(key => {
-        const value = obj[key];
-        return (/[^\w]/.test(key) ? `'` + key.replace(/'\//, '\\$0') + `'` : key) + ': ' + pseudoJson(value, sub);
-      }).join(',\n' + sub) + '\n' + indent + '}';
-    }
-  }
 }
