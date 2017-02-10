@@ -73,6 +73,7 @@
     "jstyper": "bin/jstyper.js"
   },
   "files": [
+    "bin/jstyper.js",
     "build/cli.js",
     "build/demo.html",
     "build/demo.js.map"
