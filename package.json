@@ -38,7 +38,7 @@
     "rollup": "rollup -c",
     "rollup:w": "rollup -c -w",
     "build": "npm run rollup && inline-assets index.html build/index.html",
-    "update-tests": "UPDATE_GOLDENS=1 npm test",
+    "update-specs": "UPDATE_SPECS=1 npm test",
     "test:w": "tsc && concurrently \"tsc -w\" \"mocha build/test --watch\"",
     "test": "tsc && mocha build/test"
   },
