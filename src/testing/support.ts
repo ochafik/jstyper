@@ -10,6 +10,9 @@ export function typerTest(specFile: string): (this: mocha.ITestCallbackContext) 
   return async function() {
     const builtFile = process.cwd() + '/' + specFile.replace(/^(.*?)\.ts$/, 'build/$1.js');
     const spec = readSpec(builtFile);
+    if (!spec) {
+      throw new Error(`Unable to read ${builtFile}`);
+    }
 
     const result = <TestSpec>runTyper(spec.inputs);
 

@@ -13,7 +13,7 @@ export interface TestSpec extends TyperResult {
 }
 
 function deindentSpec(spec: TestSpec) {
-  return {
+  return spec && {
     inputs: mapValues(spec.inputs, deindent),
     outputs: mapValues(spec.outputs, deindent),
     metadata: spec.metadata 
@@ -21,7 +21,12 @@ function deindentSpec(spec: TestSpec) {
 }
 
 export function readSpec(fileName: string) {
-  return deindentSpec(<TestSpec>(module.require(fileName)['default']));
+  const mod = <TestSpec>(module.require(fileName));
+  const spec = mod['default'];
+  const deindented = deindentSpec(spec);
+  // console.warn('deindented');
+  // console.warn(deindented);
+  return deindented;
 }
 
 export async function writeSpec(fileName: string, spec: TestSpec) {
