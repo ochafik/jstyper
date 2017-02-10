@@ -18,6 +18,7 @@
         "rewriteTsconfig": true
     },
     "include": [
-        "src/**/*"
+        "src/**/*",
+        "test/**/*"
     ]
 }

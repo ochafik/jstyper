@@ -95,10 +95,10 @@ window.addEventListener('load', () => {
     options.debugPasses = true;
     options.maxIterations = getMaxIterations();
 
-    const {fileContents: {'file.ts': output}, inferencePasses} = runTyper({'file.ts': jsInput.value})
+    const {outputs: {'file.ts': output}, metadata} = runTyper({'file.ts': jsInput.value})
     tsOutput.value = output;
     const time = new Date().getTime() - start;
-    stats.textContent = `Execution time (${inferencePasses} passes): ${time} milliseconds`;
+    stats.textContent = `Execution time (${metadata.inferencePasses} passes): ${time} milliseconds`;
   }
   button.onclick = run;
 });

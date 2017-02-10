@@ -17,11 +17,10 @@ options.currentWorkingDir = process.cwd();
 // options.maxIterations = 1;
 const results = runTyper(inputContents, options);
 
-const metadataComment = `// ${results.inferencePasses} inference passes`;
+const metadataComment = `// ${results.metadata.inferencePasses} inference passes`;
     
-const outputContents = results.fileContents;
-for (const fileName in outputContents) {
-    let content = outputContents[fileName];
+for (const fileName in results.outputs) {
+    let content = results.outputs[fileName];
     // console.warn(`${fileName}:`);
     // console.warn(content);
     

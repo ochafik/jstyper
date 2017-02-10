@@ -7,9 +7,12 @@ import {updateImports} from './passes/update_imports';
 import {updateExports} from './passes/update_exports';
 import {Options, defaultOptions} from './options';
 
-export type TyperResult = {
-    fileContents: {[fileName: string]: string}, //Map<string, string>,
+export interface TyperMetadata {
     inferencePasses: number,
+}
+export interface TyperResult {
+    outputs: {[fileName: string]: string}, //Map<string, string>,
+    metadata: TyperMetadata,
 };
 
 export function runTyper(fileContents: {[fileName: string]: string}, options = defaultOptions): TyperResult {
@@ -25,7 +28,9 @@ export function runTyper(fileContents: {[fileName: string]: string}, options = d
   const inferrer = infer(options);
   let inferencePasses = 0;
   for (let i = 0; i < options.maxIterations; i++) {
-      console.warn(`Running incremental type inference (${i + 1} / ${options.maxIterations})...`);
+      if (options.debugPasses) {
+          console.warn(`Running incremental type inference (${i + 1} / ${options.maxIterations})...`);
+      }
       inferencePasses++;
       if (!reactor.react(inferrer)) {
           break;
@@ -44,7 +49,9 @@ export function runTyper(fileContents: {[fileName: string]: string}, options = d
   if (options.updateVars) reactor.react(updateVars);
 
   return {
-      fileContents: reactor.fileContents,
-      inferencePasses: inferencePasses
+      outputs: reactor.fileContents,
+      metadata: {
+          inferencePasses: inferencePasses
+      }
   }
 }
