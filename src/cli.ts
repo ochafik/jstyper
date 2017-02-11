@@ -4,12 +4,14 @@ import {runTyper} from './typer';
 import {defaultOptions, Options} from './options';
 import {pseudoJson} from './utils/pseudo_json';
 import {mkdirsSync, getFile} from './utils/files';
+import {writeSpec, TestSpec} from './testing/test_spec';
 
 var argv = require('minimist')(process.argv.slice(2));
 // console.dir(argv);
 
 const outputDir = argv.outputDir || argv.o;
 const outputToStdout = outputDir == '-';
+const testSpecDescription = argv.testSpec;
 
 const fileNames = argv['_'];
 
@@ -32,6 +34,12 @@ const results = runTyper(inputContents, options);
 
 if (outputToStdout) {
   console.log(pseudoJson(results));
+} else if (testSpecDescription) {
+  writeSpec(testSpecDescription, {
+    inputs: inputContents,
+    outputs: results.outputs,
+    metadata: results.metadata
+  });
 } else {
   for (const fileName in results.outputs) {
       const outputFile = getFile(fileName, {
