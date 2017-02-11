@@ -1,6 +1,6 @@
 import * as ts from "typescript";
 import {AddChangeCallback} from '../utils/language_service_reactor';
-import {traverse} from '../utils/nodes';
+import * as nodes from '../utils/nodes';
 
 export function turnToDeclarations(fileNames: string[], services: ts.LanguageService, addChange: AddChangeCallback) {
   
@@ -31,43 +31,31 @@ export function turnToDeclarations(fileNames: string[], services: ts.LanguageSer
     }
     
     function visit(node: ts.Node) {
-      // ts.forEachChild(node, visit);
-      
-      switch (node.kind) {
-        case ts.SyntaxKind.FunctionDeclaration:
-          mutator.insert(node.getStart(), 'declare ');
-          removeBody(<ts.FunctionDeclaration>node);
-          break;
-        case ts.SyntaxKind.ClassDeclaration:
-          mutator.insert(node.getStart(), 'declare ');
-          
-          const classDecl = <ts.ClassDeclaration>node;
-          for (const member of classDecl.members) {
-            if (member.kind == ts.SyntaxKind.PropertyDeclaration) {
-              removeInitializer(<ts.PropertyDeclaration>member);
-            } else if (member.kind == ts.SyntaxKind.MethodDeclaration ||
-                member.kind == ts.SyntaxKind.Constructor) {
-              removeBody(<ts.MethodDeclaration | ts.ConstructorDeclaration>member);
-            } else {
-              remove(member);
-            }
+      if (nodes.isFunctionLikeDeclaration(node)) {
+        mutator.insert(node.getStart(), 'declare ');
+        removeBody(node);
+      } else if (nodes.isClassDeclaration(node)) {
+        mutator.insert(node.getStart(), 'declare ');
+        for (const member of node.members) {
+          if (nodes.isPropertyDeclaration(member)) {
+            removeInitializer(member);
+          } else if (nodes.isFunctionLikeDeclaration(member)) {
+            removeBody(member);
+          } else {
+            remove(member);
           }
-          break;
-        case ts.SyntaxKind.VariableStatement:
-          mutator.insert(node.getStart(), 'declare ');
-          ts.forEachChild(node, visit);
-          break;
-        case ts.SyntaxKind.VariableDeclarationList:
-          ts.forEachChild(node, visit);
-          break;
-        case ts.SyntaxKind.VariableDeclaration:
-          removeInitializer(<ts.VariableDeclaration>node);
-          break;
-        case ts.SyntaxKind.ExpressionStatement:
-          visit((<ts.ExpressionStatement>node).expression);
-          break;
-        default:
-          remove(node);
+        }
+      } else if (nodes.isVariableStatement(node)) {
+        mutator.insert(node.getStart(), 'declare ');
+        ts.forEachChild(node, visit);
+      } else if (nodes.isVariableDeclarationList(node)) {
+        ts.forEachChild(node, visit);
+      } else if (nodes.isVariableDeclaration(node)) {
+        removeInitializer(node);
+      } else if (nodes.isExpressionStatement(node)) {
+        visit(node.expression);
+      } else {
+        remove(node);
       }
     }
   }
