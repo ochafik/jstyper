@@ -1,12 +1,11 @@
 import * as fs from 'fs';
-import * as promisify from 'es6-promisify';
 import {Options} from '../options';
 import {TyperResult} from '../typer';
 import {pseudoJson} from '../utils/pseudo_json';
 import {mapValues} from '../utils/maps';
 import {deindent} from '../utils/strings';
 
-const writeFile = promisify(fs.writeFile);
+// const writeFile = promisify(fs.writeFile);
 
 export interface TestSpec extends TyperResult {
   inputs: {[fileName: string]: string},
@@ -40,5 +39,10 @@ export async function writeSpec(fileName: string, spec: TestSpec) {
     `\n` +
     `export default ${pseudoJson(spec)} as TestSpec\n`;
 
-  await writeFile(fileName, src);
+  await new Promise((resolve, reject) => {
+    fs.writeFile(fileName, src, err => {
+      if (err) reject(err);
+      else resolve();
+    })
+  });
 }
