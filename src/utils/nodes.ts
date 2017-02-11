@@ -18,7 +18,8 @@ export function isCallTarget(n: ts.Node): boolean {
 
 export function findEnclosingFunctionLikeDeclaration(node: ts.Node) {
     return <ts.FunctionLikeDeclaration>findParentOfKind(node,
-        ts.SyntaxKind.FunctionDeclaration, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.FunctionExpression);
+        ts.SyntaxKind.FunctionDeclaration, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.FunctionExpression,
+        ts.SyntaxKind.MethodDeclaration | ts.SyntaxKind.Constructor | ts.SyntaxKind.GetAccessor | ts.SyntaxKind.SetAccessor);
 }
 
 export function findParentOfKind(node: ts.Node, ...kinds: ts.SyntaxKind[]) {

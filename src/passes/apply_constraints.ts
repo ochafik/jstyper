@@ -32,8 +32,10 @@ export function applyConstraints(allConstraints: Map<ts.Symbol, TypeConstraints>
       
       if (decl.kind == ts.SyntaxKind.Parameter || decl.kind == ts.SyntaxKind.VariableDeclaration) {
         handleVarConstraints(constraints, <ts.ParameterDeclaration | ts.VariableDeclaration>decl)
-      } else if (decl.kind === ts.SyntaxKind.FunctionDeclaration) {
-        const fun = <ts.FunctionDeclaration>decl;
+      } else if (decl.kind === ts.SyntaxKind.FunctionDeclaration ||
+            decl.kind === ts.SyntaxKind.MethodDeclaration ||
+            decl.kind === ts.SyntaxKind.Constructor) {
+        const fun = <ts.FunctionDeclaration | ts.MethodDeclaration | ts.ConstructorDeclaration>decl;
         if (constraints.hasCallConstraints()) {
             const callConstraints = constraints.getCallConstraints();
             callConstraints.argTypes.forEach((argConstraints, i) => {
@@ -46,7 +48,7 @@ export function applyConstraints(allConstraints: Map<ts.Symbol, TypeConstraints>
         }
       }
 
-      function handleReturnType(constraints: TypeConstraints, fun: ts.FunctionDeclaration) {
+      function handleReturnType(constraints: TypeConstraints, fun: ts.FunctionDeclaration | ts.MethodDeclaration | ts.ConstructorDeclaration) {
             // if (!constraints.hasChanges) {
             //     return;
             // }
