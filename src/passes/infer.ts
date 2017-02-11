@@ -21,39 +21,38 @@ export const infer: (options: Options) => ReactorCallback = (options) => (fileNa
         if (fileNames.indexOf(sourceFile.fileName) >= 0) {
             traverse(sourceFile, (node: ts.Node) => {
                 const nodeConstraints = constraintsCache.getNodeConstraints(node);
-                const ctxType = checker.getContextualType(<ts.Expression>node);
+                const ctxType = checker.getContextualType(<ts.Expression>node); // TODO: isExpression
                 if (nodeConstraints) {
                     // Don't propagate contextual type up of `test ? x : null`, as x will be inferred to be nullable.
-                    if (node.parent && node.parent.kind !== ts.SyntaxKind.ConditionalExpression) {
+                    if (node.parent && !nodes.isConditionalExpression(node.parent)) {
                         // console.log(`CTX(${nodeConstraints.description} = ${node.getFullText().trim()}) = ${ctxType && checker.typeToString(ctxType)}`);
                         nodeConstraints.isType(ctxType);
 
-                        if (node.parent.kind != ts.SyntaxKind.ExpressionStatement) {
+                        if (!nodes.isExpressionStatement(node.parent)) {
                             nodeConstraints.cannotBeVoid();
                         }
                     }
                 }
 
-                if (node.kind === ts.SyntaxKind.CallExpression) {
-                    const call = <ts.CallExpression>node;
-                    const calleeConstraints = constraintsCache.getNodeConstraints(call.expression);
+                if (nodes.isCallExpression(node)) {
+                    const calleeConstraints = constraintsCache.getNodeConstraints(node.expression);
 
                     if (calleeConstraints) {
                         const callConstraints = calleeConstraints.getCallConstraints();
                         
                         let returnType: ts.Type | undefined = ctxType;
-                        const argTypes = call.arguments.map(a => checker.getTypeAtLocation(a));
+                        const argTypes = node.arguments.map(a => checker.getTypeAtLocation(a));
                         
                         if (returnType) {
                             callConstraints.returnType.isType(returnType);
-                        } else if (node.parent && node.parent.kind == ts.SyntaxKind.ExpressionStatement) {
+                        } else if (node.parent && nodes.isExpressionStatement(node.parent)) {
                             callConstraints.returnType.isVoid();
                         }
                         // console.log(`CALL(${call.getFullText()}):`);
                         callConstraints.hasArity(argTypes.length);
                         argTypes.forEach((t, i) => {
                             const argConstraints = callConstraints.getArgType(i);
-                            const arg = call.arguments[i];
+                            const arg = node.arguments[i];
                             if (arg) {
                                 argConstraints.addNameHint(guessName(arg));
                             }
@@ -61,23 +60,21 @@ export const infer: (options: Options) => ReactorCallback = (options) => (fileNa
                             argConstraints.isType(t);
                         });
                     }
-                } else if (node.kind === ts.SyntaxKind.ReturnStatement) {
-                    const ret = <ts.ReturnStatement>node;
-                    if (ret.expression) {
-                        const exe = <ts.FunctionLikeDeclaration>nodes.findParent(ret, nodes.isFunctionLikeDeclaration);
+                } else if (nodes.isReturnStatement(node)) {
+                    if (node.expression) {
+                        const exe = <ts.FunctionLikeDeclaration>nodes.findParent(node, nodes.isFunctionLikeDeclaration);
                         const constraints = constraintsCache.getNodeConstraints(exe);
                         if (constraints) {
                             constraints.getCallConstraints().returnType.cannotBeVoid();
                         }
                     }
-                } else if (node.kind === ts.SyntaxKind.BinaryExpression) {
-                    const binExpr = <ts.BinaryExpression>node;
-                    const [leftType, rightType] = [binExpr.left, binExpr.right].map(e => checker.getTypeAtLocation(e));
+                } else if (nodes.isBinaryExpression(node)) {
+                    const [leftType, rightType] = [node.left, node.right].map(e => checker.getTypeAtLocation(e));
                     
-                    const leftConstraints = constraintsCache.getNodeConstraints(binExpr.left);
-                    const rightConstraints = constraintsCache.getNodeConstraints(binExpr.right);
+                    const leftConstraints = constraintsCache.getNodeConstraints(node.left);
+                    const rightConstraints = constraintsCache.getNodeConstraints(node.right);
 
-                    const op = binExpr.operatorToken.kind;
+                    const op = node.operatorToken.kind;
 
                     if (ops.binaryNumberOperators.has(op)) {
                         if (leftConstraints) {
@@ -121,23 +118,21 @@ export const infer: (options: Options) => ReactorCallback = (options) => (fileNa
                             leftConstraints.isType(rightType);
                         }
                     }
-                } else if (node.kind === ts.SyntaxKind.PostfixUnaryExpression ||
-                    node.kind == ts.SyntaxKind.PrefixUnaryExpression) {
-                    const expr = <ts.PrefixUnaryExpression | ts.PostfixUnaryExpression>node;
-                    const constraints = constraintsCache.getNodeConstraints(expr.operand);
-                    //   console.log(`leftConstraints for ${node.getFullText()}: ${leftConstraints} (op = ${expr.operator}, ops.unaryNumberOperators = ${[...ops.unaryNumberOperators.values()]})`);
+                } else if (nodes.isPostfixUnaryExpression(node) || nodes.isPrefixUnaryExpression(node)) {
+                    const constraints = constraintsCache.getNodeConstraints(node.operand);
+                    //   console.log(`leftConstraints for ${node.getFullText()}: ${leftConstraints} (op = ${node.operator}, ops.unaryNumberOperators = ${[...ops.unaryNumberOperators.values()]})`);
                     if (constraints) {
-                        const op = expr.operator;
+                        const op = node.operator;
                             if (ops.unaryNumberOperators.has(op)) {
                             constraints.isNumber();
                         } else if (ops.unaryBooleanOperators.has(op)) {
                             constraints.isBooleanLike();
                         }
                     }
-                } else if (node.kind === ts.SyntaxKind.IfStatement) {
-                constraintsCache.nodeIsBooleanLike((<ts.IfStatement>node).expression);
-                } else if (node.kind === ts.SyntaxKind.ConditionalExpression) {
-                constraintsCache.nodeIsBooleanLike((<ts.ConditionalExpression>node).condition);
+                } else if (nodes.isIfStatement(node)) {
+                    constraintsCache.nodeIsBooleanLike(node.expression);
+                } else if (nodes.isConditionalExpression(node)) {
+                    constraintsCache.nodeIsBooleanLike(node.condition);
                 }
             });
         }
