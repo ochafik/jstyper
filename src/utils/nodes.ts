@@ -1,5 +1,6 @@
 import * as ts from 'typescript';
 export * from './node_predicates';
+import * as nodes from './node_predicates';
 
 export function traverse(root: ts.Node, f: (node: ts.Node) => void): void {
   ts.forEachChild(root, visit);
@@ -10,7 +11,7 @@ export function traverse(root: ts.Node, f: (node: ts.Node) => void): void {
 }
 
 export function isCallTarget(n: ts.Node): boolean {
-    if (n.parent && n.parent.kind == ts.SyntaxKind.CallExpression) {
+    if (n.parent && nodes.isCallExpression(n.parent)) {
       const call = <ts.CallExpression>n.parent;
       return call.expression === n;
     }
@@ -26,10 +27,6 @@ export function findParent(node: ts.Node, predicate: (parent: ts.Node) => boolea
         parent = parent.parent;
     }
     return undefined;
-}
-
-export function isAnyKind(node: ts.Node, ...kinds: ts.SyntaxKind[]) {
-    return kinds.indexOf(node.kind) >= 0;
 }
 
 export function getNodeKindDebugDescription(node: ts.Node) {

@@ -1,6 +1,6 @@
 import * as ts from "typescript";
 import {AddChangeCallback} from '../utils/language_service_reactor';
-import {traverse} from '../utils/nodes';
+import * as nodes from '../utils/nodes';
 
 export function updateVars(fileNames: string[], services: ts.LanguageService, addChange: AddChangeCallback) {
   
@@ -9,14 +9,13 @@ export function updateVars(fileNames: string[], services: ts.LanguageService, ad
 
   for (const sourceFile of program.getSourceFiles()) {
     if (fileNames.indexOf(sourceFile.fileName) >= 0) {
-      traverse(sourceFile, (node: ts.Node) => {
-        if (node.kind == ts.SyntaxKind.VariableDeclarationList) {
-          const varDecls = <ts.VariableDeclarationList>node;
-          const text = varDecls.getFullText();
+      nodes.traverse(sourceFile, (node: ts.Node) => {
+        if (nodes.isVariableDeclarationList(node)) {
+          const text = node.getFullText();
           if (text.trim().startsWith('var')) {
             addChange(sourceFile.fileName, {
               span: {
-                start: varDecls.getStart(),
+                start: node.getStart(),
                 length: 'var'.length
               },
               newText: 'let'

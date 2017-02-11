@@ -1,13 +1,13 @@
 import * as ts from "typescript";
+import * as nodes from './nodes';
 
 export function guessName(node: ts.Node): string | undefined {
-  if (node.kind === ts.SyntaxKind.CallExpression) {
-    const call = <ts.CallExpression>node;
+  if (nodes.isCallExpression(node)) {
     let name: string | undefined;
-    if (call.name) {
-      name = guessName(call.name);
-    } else if (call.expression) {
-      name = guessName(call.expression);
+    if (node.name) {
+      name = guessName(node.name);
+    } else if (node.expression) {
+      name = guessName(node.expression);
     }
     if (name) {
       const exec = /^(?:(?:get|set|build|create|new)_*)(.*)$/.exec(name);
@@ -19,15 +19,14 @@ export function guessName(node: ts.Node): string | undefined {
       }
       return name;
     }
-  } else if (node.kind == ts.SyntaxKind.ElementAccessExpression) {
-    const access = <ts.ElementAccessExpression>node;
-    if (access.argumentExpression && access.argumentExpression.kind == ts.SyntaxKind.StringLiteral) {
-      return(<ts.StringLiteral>access.argumentExpression).text;
+  } else if (nodes.isElementAccessExpression(node)) {
+    if (node.argumentExpression && nodes.isStringLiteral(node.argumentExpression)) {
+      return node.argumentExpression.text;
     }
-  } else if (node.kind == ts.SyntaxKind.PropertyAccessExpression) {
-    return guessName((<ts.PropertyAccessExpression>node).name);
-  } else if (node.kind == ts.SyntaxKind.Identifier) {
-    return (<ts.Identifier>node).text;
+  } else if (nodes.isPropertyAccessExpression(node)) {
+    return guessName(node.name);
+  } else if (nodes.isIdentifier(node)) {
+    return node.text;
   }
   return undefined;
 }

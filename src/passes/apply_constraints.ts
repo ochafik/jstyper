@@ -30,8 +30,8 @@ export function applyConstraints(allConstraints: Map<ts.Symbol, TypeConstraints>
       }
       let [decl] = decls;
       
-      if (decl.kind == ts.SyntaxKind.Parameter || decl.kind == ts.SyntaxKind.VariableDeclaration) {
-        handleVarConstraints(constraints, <ts.ParameterDeclaration | ts.VariableDeclaration>decl)
+      if (nodes.isParameter(decl) || nodes.isVariableDeclaration(decl)) {
+        handleVarConstraints(constraints, decl);
       } else if (nodes.isFunctionLikeDeclaration(decl)) {
         const funDecl = decl;
         if (constraints.hasCallConstraints()) {

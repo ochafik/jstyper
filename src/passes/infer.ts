@@ -102,11 +102,11 @@ export const infer: (options: Options) => ReactorCallback = (options) => (fileNa
                         handle(leftConstraints, rightType);
                         handle(rightConstraints, leftType);
                     } else if (ops.binaryBooleanOperators.has(op)) {
-                        constraintsCache.nodeIsBooleanLike(binExpr.left);
+                        constraintsCache.nodeIsBooleanLike(node.left);
                         // In `a && b`, we know that `a` is bool-like but know absolutely nothing about `b`.
                         // But if that is embedded in `(a && b) && c`, then it's another game.
                         // TODO: propagate contextual type upwards.
-                        constraintsCache.nodeIsBooleanLike(binExpr.right);
+                        constraintsCache.nodeIsBooleanLike(node.right);
                     }
                     if (ops.assignmentOperators.has(op)) {
                         if (op == ts.SyntaxKind.PlusEqualsToken) {
