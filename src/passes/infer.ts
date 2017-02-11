@@ -64,7 +64,7 @@ export const infer: (options: Options) => ReactorCallback = (options) => (fileNa
                 } else if (node.kind === ts.SyntaxKind.ReturnStatement) {
                     const ret = <ts.ReturnStatement>node;
                     if (ret.expression) {
-                        const exe = nodes.findEnclosingFunctionLikeDeclaration(ret);
+                        const exe = <ts.FunctionLikeDeclaration>nodes.findParent(ret, nodes.isFunctionLikeDeclaration);
                         const constraints = constraintsCache.getNodeConstraints(exe);
                         if (constraints) {
                             constraints.getCallConstraints().returnType.cannotBeVoid();

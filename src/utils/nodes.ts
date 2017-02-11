@@ -1,4 +1,5 @@
 import * as ts from 'typescript';
+export * from './node_predicates';
 
 export function traverse(root: ts.Node, f: (node: ts.Node) => void): void {
   ts.forEachChild(root, visit);
@@ -16,16 +17,10 @@ export function isCallTarget(n: ts.Node): boolean {
     return false;
 }
 
-export function findEnclosingFunctionLikeDeclaration(node: ts.Node) {
-    return <ts.FunctionLikeDeclaration>findParentOfKind(node,
-        ts.SyntaxKind.FunctionDeclaration, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.FunctionExpression,
-        ts.SyntaxKind.MethodDeclaration | ts.SyntaxKind.Constructor | ts.SyntaxKind.GetAccessor | ts.SyntaxKind.SetAccessor);
-}
-
-export function findParentOfKind(node: ts.Node, ...kinds: ts.SyntaxKind[]) {
+export function findParent(node: ts.Node, predicate: (parent: ts.Node) => boolean) {
     let parent = node.parent;
     while (parent) {
-        if (isAnyKind(parent, ...kinds)) {
+        if (predicate(parent)) {
             return parent;
         }
         parent = parent.parent;

@@ -1,7 +1,7 @@
 import * as ts from "typescript";
 import {AddChangeCallback, ReactorCallback} from '../utils/language_service_reactor';
 import {TypeConstraints, CallConstraints} from '../utils/type_constraints';
-import {isCallTarget, traverse} from '../utils/nodes';
+import * as nodes from '../utils/nodes';
 import * as fl from "../utils/flags";
 import * as ops from '../utils/operators';
 import {Options} from '../options';
@@ -32,23 +32,21 @@ export function applyConstraints(allConstraints: Map<ts.Symbol, TypeConstraints>
       
       if (decl.kind == ts.SyntaxKind.Parameter || decl.kind == ts.SyntaxKind.VariableDeclaration) {
         handleVarConstraints(constraints, <ts.ParameterDeclaration | ts.VariableDeclaration>decl)
-      } else if (decl.kind === ts.SyntaxKind.FunctionDeclaration ||
-            decl.kind === ts.SyntaxKind.MethodDeclaration ||
-            decl.kind === ts.SyntaxKind.Constructor) {
-        const fun = <ts.FunctionDeclaration | ts.MethodDeclaration | ts.ConstructorDeclaration>decl;
+      } else if (nodes.isFunctionLikeDeclaration(decl)) {
+        const funDecl = decl;
         if (constraints.hasCallConstraints()) {
             const callConstraints = constraints.getCallConstraints();
             callConstraints.argTypes.forEach((argConstraints, i) => {
-                const param = fun.parameters[i];
+                const param = funDecl.parameters[i];
                 if (param) {
                     handleVarConstraints(argConstraints, param);
                 }
             });
-            handleReturnType(callConstraints.returnType, fun);
+            handleReturnType(callConstraints.returnType, decl);
         }
       }
 
-      function handleReturnType(constraints: TypeConstraints, fun: ts.FunctionDeclaration | ts.MethodDeclaration | ts.ConstructorDeclaration) {
+      function handleReturnType(constraints: TypeConstraints, fun: ts.FunctionLikeDeclaration) {
             // if (!constraints.hasChanges) {
             //     return;
             // }

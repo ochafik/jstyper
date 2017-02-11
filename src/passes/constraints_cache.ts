@@ -68,21 +68,23 @@ export class ConstraintsCache {
     } else if (node.kind === ts.SyntaxKind.Constructor ||
             node.kind === ts.SyntaxKind.ArrowFunction ||
             node.kind === ts.SyntaxKind.FunctionExpression) {
-        const sym = this.checker.getSymbolAtLocation(node);
+        const sym = node['symbol'];//this.checker.getSymbolAtLocation(node);
         if (sym) {
             return this.getSymbolConstraints(sym);
         }
     } else if (node.kind === ts.SyntaxKind.FunctionDeclaration ||
             node.kind === ts.SyntaxKind.MethodDeclaration ||
+            node.kind === ts.SyntaxKind.GetAccessor ||
+            node.kind === ts.SyntaxKind.SetAccessor ||
             node.kind == ts.SyntaxKind.InterfaceDeclaration ||
             node.kind == ts.SyntaxKind.VariableDeclaration) {
-        const decl = <ts.FunctionLikeDeclaration | ts.InterfaceDeclaration | ts.VariableDeclaration | ts.MethodDeclaration>node;
+        const decl = <ts.FunctionLikeDeclaration | ts.InterfaceDeclaration | ts.VariableDeclaration | ts.MethodDeclaration | ts.GetAccessorDeclaration | ts.SetAccessorDeclaration>node;
         const sym = decl.name && this.checker.getSymbolAtLocation(decl.name);
         if (sym) {
             return this.getSymbolConstraints(sym);
         }
     } else if (node.kind === ts.SyntaxKind.Parameter) {
-        const parentFun = <ts.FunctionDeclaration>nodes.findParentOfKind(node, ts.SyntaxKind.FunctionDeclaration, ts.SyntaxKind.MethodDeclaration, ts.SyntaxKind.Constructor);
+        const parentFun = <ts.FunctionDeclaration>nodes.findParent(node, nodes.isFunctionLikeDeclaration);
         if (parentFun) {
             const param = <ts.ParameterDeclaration>node;
             const paramIndex = parentFun.parameters.indexOf(param);

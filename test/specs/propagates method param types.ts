@@ -11,21 +11,31 @@ export default {
         constructor(x) {
           x.bar();
         }
+        foo(x) {
+          return x * 2;
+        }
+        set x(v) {
+          v == ' '; 
+        }
       }
-      
     `
   },
   outputs: {
     'example.ts': `
       class Foo {
-        constructor(x) {
+        constructor(x: {bar(): void}) {
           x.bar();
         }
+        foo(x: number): number {
+          return x * 2;
+        }
+        set x(v: string) {
+          v == ' ';
+        }
       }
-      
     `
   },
   metadata: {
-    inferencePasses: 1
+    inferencePasses: 2
   }
 } as TestSpec
