@@ -65,10 +65,11 @@
     "test:w": "tsc && concurrently \"tsc -w\" \"mocha build/test --watch\"",
     "update-specs": "UPDATE_SPECS=1 npm test",
     "update-specs:w": "UPDATE_SPECS=1 npm test:w",
-    "prepare-release": "npm test && npm build",
-    "major-release": "npm run prepare-release && npm version major && npm publish && git push --follow-tags",
-    "minor-release": "npm run prepare-release && npm version minor && npm publish && git push --follow-tags",
-    "patch-release": "npm run prepare-release && npm version patch && npm publish && git push --follow-tags"
+    "prepare-release": "npm test && npm run build",
+    "publish": "npm publish && git push --follow-tags && ./deploy.sh",
+    "major-release": "npm run prepare-release && npm version major && npm run publish",
+    "minor-release": "npm run prepare-release && npm version minor && npm run publish",
+    "patch-release": "npm run prepare-release && npm version patch && npm run publish"
   },
   "bin": {
     "jstyper": "bin/jstyper.js"
