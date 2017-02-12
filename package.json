@@ -67,7 +67,7 @@
     "update-specs:w": "UPDATE_SPECS=1 npm run test:w",
     "format": "clang-format --glob=src/**/*.ts -i -style=Google",
     "prepare-release": "npm test && npm run build",
-    "postpublish": "git push --follow-tags && ./deploy.sh",
+    "postpublish": "git push --follow-tags && echo \"Now please run ./deploy.sh\"",
     "major-release": "npm run prepare-release && npm version major && npm publish && npm run postpublish",
     "minor-release": "npm run prepare-release && npm version minor && npm publish && npm run postpublish",
     "patch-release": "npm run prepare-release && npm version patch && npm publish && npm run postpublish"
