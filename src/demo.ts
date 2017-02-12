@@ -96,9 +96,11 @@ window.addEventListener('load', () => {
     stats.textContent = `Analyzing...`;
     const start = new Date().getTime();
 
-    const options = <Options>new Object(defaultOptions);
-    options.debugPasses = true;
-    options.maxIterations = getMaxIterations();
+    const options = <Options>{
+      ...defaultOptions,
+      debugPasses: true,
+      maxIterations: getMaxIterations()
+    };
 
     const {files: {'file.ts': output}, metadata} =
         runTyper({'file.ts': jsInput.value})
