@@ -45,6 +45,8 @@ export function turnToDeclarations(fileNames: string[], services: ts.LanguageSer
             remove(member);
           }
         }
+      } else if (nodes.isTypeAliasDeclaration(node) || nodes.isInterfaceDeclaration(node)) {
+        // Do nothing.
       } else if (nodes.isVariableStatement(node)) {
         mutator.insert(node.getStart(), 'declare ');
         ts.forEachChild(node, visit);
