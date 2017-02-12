@@ -64,7 +64,7 @@
     "test": "tsc && mocha build/test",
     "test:w": "tsc && concurrently \"tsc -w\" \"mocha build/test --watch\"",
     "update-specs": "UPDATE_SPECS=1 npm test",
-    "update-specs:w": "UPDATE_SPECS=1 npm test:w",
+    "update-specs:w": "UPDATE_SPECS=1 npm run test:w",
     "format": "clang-format --glob=src/**/*.ts -i -style=Google",
     "prepare-release": "npm test && npm run build",
     "postpublish": "git push --follow-tags && ./deploy.sh",
