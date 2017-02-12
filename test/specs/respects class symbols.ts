@@ -20,9 +20,7 @@ export default {
       g7(new Foo());
     `
   },
-  options: {
-    
-  },
+  options: {},
   result: {
     files: {
       'input.js': `

@@ -14,15 +14,21 @@ export function pseudoJson(
   } else {
     const sub = indent + '  ';
     if (obj instanceof Array) {
+      if (obj.length == 0) {
+        return '[]';
+      }
       return '[\n' + indent +
           (obj as any[])
               .map(o => pseudoJson(o, sub, indentMultilineStrings))
               .join(',\n' + sub) +
           '\n' + indent + ']';
     } else {
+      const keys = Object.keys(obj);
+      if (keys.length == 0) {
+        return '{}';
+      }
       return '{\n' + sub +
-          Object.keys(obj)
-              .map(key => {
+          keys.map(key => {
                 const value = obj[key];
                 return (/[^\w]/.test(key) ?
                             `'` + key.replace(/'\//, '\\$0') + `'` :

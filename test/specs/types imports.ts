@@ -32,9 +32,7 @@ export default {
       }
     `
   },
-  options: {
-    
-  },
+  options: {},
   result: {
     files: {
       'input.js': `

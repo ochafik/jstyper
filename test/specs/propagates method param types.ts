@@ -20,9 +20,7 @@ export default {
       }
     `
   },
-  options: {
-    
-  },
+  options: {},
   result: {
     files: {
       'example.ts': `

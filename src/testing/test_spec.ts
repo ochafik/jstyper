@@ -8,7 +8,7 @@ import {deindent} from '../utils/strings';
 
 export declare interface TestSpec {
   files: {[fileName: string]: string},
-  options: Options,
+  options: Partial<Options>,
   result: TyperExecutionResult
 }
 

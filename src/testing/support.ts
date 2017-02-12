@@ -3,6 +3,7 @@ import {expect} from 'chai';
 import * as mocha from 'mocha';
 
 import {runTyper} from '../typer';
+import {defaultOptions} from '../options';
 
 import {readSpec, TestSpec, writeSpec} from './test_spec';
 
@@ -18,7 +19,7 @@ export function typerTest(specFile: string):
       throw new Error(`Unable to read ${builtFile}`);
     }
 
-    const result = runTyper(spec.files, spec.options);
+    const result = runTyper(spec.files, {...defaultOptions, ...spec.options});
 
     const actualSpec: TestSpec = {
       files: spec.files,
