@@ -62,11 +62,9 @@ function gg(x: number, y: {addValue: boolean, value: any, name: string}) {
 
 # TODO
 
-- add argument name hints (`f(a.getFoo())` -> `f.arguments[0].name == 'foo'`)
 - parse and output flow comment / flow types
-- Proper tests
+- Split large tests into smaller specs
 - Better propagate contextual types in expressions (e.g. in `(a && b && c`, `a ? b : c`)
 - Use type constraints instead of types to allow local inference passes
-- Support of nominal types in existing TS files
-- Generate .d.ts automagically
+- Support merging of symbols added after structural members `{x: number} | Foo`
 - Handle index operators
