@@ -12,18 +12,18 @@ export declare interface TestSpec {
   result: TyperExecutionResult
 }
 
-function deindentSpec(spec: TestSpec): TestSpec {
-  if (!spec.files) throw new Error(`O FILES in ${JSON.stringify(spec)}`);
-  if (!spec.result.files) throw new Error(`O RESULT FILES in ${JSON.stringify(spec)}`);
-  return {
-    files: mapValues(spec.files, deindent),
-    options: spec.options,
-    result: {
-      files: mapValues(spec.result.files, deindent),
-      metadata: spec.result.metadata
-    }
-  }
-}
+// function deindentSpec(spec: TestSpec): TestSpec {
+//   if (!spec.files) throw new Error(`O FILES in ${JSON.stringify(spec)}`);
+//   if (!spec.result.files) throw new Error(`O RESULT FILES in ${JSON.stringify(spec)}`);
+//   return {
+//     files: mapValues(spec.files, deindent),
+//     options: spec.options,
+//     result: {
+//       files: mapValues(spec.result.files, deindent),
+//       metadata: spec.result.metadata
+//     }
+//   }
+// }
 
 function isTestSpec(obj: any): obj is TestSpec {
   return 'files' in obj && 'options' in obj && 'result' in obj && 'files' in obj.result && 'metadata' in obj.result;
@@ -47,8 +47,10 @@ export function readSpec(fileName: string): TestSpec {
   if (!isTestSpec(spec)) {
     throw new Error(`Bad spec format: ${JSON.stringify(Object.keys(spec), null, 2)}`);
   }
-  const deindented = deindentSpec(spec);
-  return deindented;
+
+  return spec;
+  // const deindented = deindentSpec(spec);
+  // return deindented;
 }
 
 export async function writeSpec(fileName: string, spec: TestSpec) {

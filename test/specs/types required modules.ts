@@ -14,28 +14,30 @@ export default {
       a(10) == '';
       b == 3;
       foo.c = 10;
+          
+          
     `
   },
   options: {},
   result: {
     files: {
       'input.js': `
-        import * as foo from 'foo';
-        let a: (arg1: number) => string = foo.a;
-        let b: number = foo.b;
-        
-        a(10) == '';
-        b == 3;
-        foo.c = 10;
-      `,
-      'node_modules/foo/index.d.ts': `
-        declare module "foo" {
-          export function a(arg1: number): string;
-          export const b: number;
-          export let c: number;
-        }
-        
-      `
+import * as foo from 'foo'('foo');
+let a: (arg1: number) => string = foo.a;
+let b: number = foo.b;
+
+a(10) == '';
+b == 3;
+foo.c = 10;
+
+
+`,
+      'node_modules/foo/index.d.ts': `declare module "foo" {
+  export function a(arg1: number): string;
+  export const b: number;
+  export let c: number;
+}
+`
     },
     metadata: {
       inferencePasses: 3

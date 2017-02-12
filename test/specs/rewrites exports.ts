@@ -11,6 +11,8 @@ export default {
         f() { return 1 },
         n: 1
       };
+          
+          
     `,
     'independent exports.js': `
       module.exports = {
@@ -24,40 +26,50 @@ export default {
       function f() {}
       function g() {}
       function h() {}
+          
+          
     `,
     'exported vars in multiple declaration are too complex.js': `
       module.exports = {
         a: a
       };
       var a = 1, b = 2;
+          
+          
     `
   },
   options: {},
   result: {
     files: {
       'untransformable exports.js': `
-        export default {
-          f(): number {return 1},
-          n: 1
-        };
-      `,
+export default orts = {
+  f(): number {return 1},
+  n: 1
+};
+
+
+`,
       'independent exports.js': `
-        
-        
-        export let n: number = 1;
-        
-        function f(): void {}
-        export {f as foo};
-        
-        export function g(): void {}
-        function h(): void {}
-      `,
+
+
+export let n: number = 1;
+
+function f(): void {}
+export {f as foo};
+
+export function g(): void {}
+function h(): void {}
+
+
+`,
       'exported vars in multiple declaration are too complex.js': `
-        export default {
-          a: a
-        };
-        let a: number = 1, b: number = 2;
-      `
+export default orts = {
+  a: a
+};
+let a: number = 1, b: number = 2;
+
+
+`
     },
     metadata: {
       inferencePasses: 2

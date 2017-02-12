@@ -29,6 +29,8 @@ export default {
           this.x = v == 1 ? 2 : 3;
         }
       }
+          
+          
     `
   },
   options: {
@@ -37,19 +39,21 @@ export default {
   result: {
     files: {
       'input.d.ts': `
-        declare let x: number | ({readonly y: {z(): void}});
-        
-        
-        declare function f(x: number): boolean ;
-        
-        declare class Foo {
-          x: string;
-          constructor(x: {a(): void}) ;
-          foo(x: {b(): void}): void ;
-          get y() ;
-          set y(v) ;
-        }
-      `
+declare let x: number | ({readonly y: {z(): void}});
+
+
+declare function f(x: number): boolean ;
+
+declare class Foo {
+  x: string;
+  constructor(x: {a(): void}) ;
+  foo(x: {b(): void}): void ;
+  get y() ;
+  set y(v) ;
+}
+
+
+`
     },
     metadata: {
       inferencePasses: 2

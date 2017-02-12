@@ -15,21 +15,25 @@ export default {
       function g3(x) {
         return x + 1;
       }
+          
+          
     `
   },
   options: {},
   result: {
     files: {
       'input.js': `
-        function f3(x: number): void {
-          g3(1);
-          g3(x);
-        }
-        
-        function g3(x: number): number {
-          return x + 1;
-        }
-      `
+function f3(x: number): void {
+  g3(1);
+  g3(x);
+}
+
+function g3(x: number): number {
+  return x + 1;
+}
+
+
+`
     },
     metadata: {
       inferencePasses: 3

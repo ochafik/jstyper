@@ -5,7 +5,7 @@ export function pseudoJson(
     return `${obj}`;
   } else if (typeof obj == 'string') {
     let str = obj;
-    if (obj.indexOf('\n') >= 0) {
+    if (obj.indexOf('\n') >= 0 && indentMultilineStrings) {
       const lineIndent = '\n' + indent;
       str = lineIndent + '  ' +
           obj.replace(new RegExp('\n', 'g'), lineIndent + '  ') + lineIndent;
