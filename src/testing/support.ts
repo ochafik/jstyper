@@ -18,12 +18,12 @@ export function typerTest(specFile: string):
       throw new Error(`Unable to read ${builtFile}`);
     }
 
-    const result = <TestSpec>runTyper(spec.inputs);
+    const result = runTyper(spec.files, spec.options);
 
-    const actualSpec = {
-      inputs: spec.inputs,
-      outputs: result.outputs,
-      metadata: result.metadata
+    const actualSpec: TestSpec = {
+      files: spec.files,
+      options: spec.options,
+      result: result
     };
 
     if (updateSpecs) {

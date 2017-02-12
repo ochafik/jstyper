@@ -5,7 +5,7 @@
 import {TestSpec} from '../../src/testing/test_spec';
 
 export default {
-  inputs: {
+  files: {
     'example.ts': `
       class Foo {
         constructor(x) {
@@ -20,22 +20,27 @@ export default {
       }
     `
   },
-  outputs: {
-    'example.ts': `
-      class Foo {
-        constructor(x: {bar(): void}) {
-          x.bar();
-        }
-        foo(x: number): number {
-          return x * 2;
-        }
-        set x(v: string) {
-          v == ' ';
-        }
-      }
-    `
+  options: {
+    
   },
-  metadata: {
-    inferencePasses: 2
+  result: {
+    files: {
+      'example.ts': `
+        class Foo {
+          constructor(x: {bar(): void}) {
+            x.bar();
+          }
+          foo(x: number): number {
+            return x * 2;
+          }
+          set x(v: string) {
+            v == ' ';
+          }
+        }
+      `
+    },
+    metadata: {
+      inferencePasses: 2
+    }
   }
 } as TestSpec

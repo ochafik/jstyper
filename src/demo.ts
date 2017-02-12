@@ -100,7 +100,7 @@ window.addEventListener('load', () => {
     options.debugPasses = true;
     options.maxIterations = getMaxIterations();
 
-    const {outputs: {'file.ts': output}, metadata} =
+    const {files: {'file.ts': output}, metadata} =
         runTyper({'file.ts': jsInput.value})
     tsOutput.value = output;
     const time = new Date().getTime() - start;

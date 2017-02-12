@@ -5,7 +5,7 @@
 import {TestSpec} from '../../src/testing/test_spec';
 
 export default {
-  inputs: {
+  files: {
     'input.js': `
       var foo = require('foo');
       var foo1 = foo.foo1;
@@ -32,34 +32,39 @@ export default {
       }
     `
   },
-  outputs: {
-    'input.js': `
-      let foo: {foo1(arg1: number): string, foo2: number} = require('foo');
-      let foo1: (arg1: number) => string = foo.foo1;
-      let foo2: number = foo.foo2;
-      
-      modules.exports = {
-        f2: f2,
-        g2: g2,
-      };
-      
-      foo1(10) == '';
-      foo2 == 3;
-      
-      function f2(x, y: number) {
-        return x + 2 + g2(y) + g2(3);
-      }
-      
-      function g2(x: number): number {
-        return x + 1;
-      }
-      
-      function h2(x: number): number {
-        return ++x;
-      }
-    `
+  options: {
+    
   },
-  metadata: {
-    inferencePasses: 3
+  result: {
+    files: {
+      'input.js': `
+        let foo: {foo1(arg1: number): string, foo2: number} = require('foo');
+        let foo1: (arg1: number) => string = foo.foo1;
+        let foo2: number = foo.foo2;
+        
+        modules.exports = {
+          f2: f2,
+          g2: g2,
+        };
+        
+        foo1(10) == '';
+        foo2 == 3;
+        
+        function f2(x, y: number) {
+          return x + 2 + g2(y) + g2(3);
+        }
+        
+        function g2(x: number): number {
+          return x + 1;
+        }
+        
+        function h2(x: number): number {
+          return ++x;
+        }
+      `
+    },
+    metadata: {
+      inferencePasses: 3
+    }
   }
 } as TestSpec

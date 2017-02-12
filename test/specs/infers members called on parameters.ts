@@ -5,7 +5,7 @@
 import {TestSpec} from '../../src/testing/test_spec';
 
 export default {
-  inputs: {
+  files: {
     'input.js': `
       function f(x, y) {
         console.log(x, y);
@@ -21,23 +21,28 @@ export default {
       }
     `
   },
-  outputs: {
-    'input.js': `
-      function f(x: {call(arg1: number, arg2: number): number, memberOfX: number}, y: {(arg1: number, arg2: number, arg3: number): void, foo(): void}): void {
-        console.log(x, y);
-        let z: number = x.call(1, 2);
-        y.foo();
-        g(z);
-        g(x.memberOfX);
-        y(1, 2, 3);
-      }
-      
-      function g(x: number): number {
-        return x * 2;
-      }
-    `
+  options: {
+    
   },
-  metadata: {
-    inferencePasses: 4
+  result: {
+    files: {
+      'input.js': `
+        function f(x: {call(arg1: number, arg2: number): number, memberOfX: number}, y: {(arg1: number, arg2: number, arg3: number): void, foo(): void}): void {
+          console.log(x, y);
+          let z: number = x.call(1, 2);
+          y.foo();
+          g(z);
+          g(x.memberOfX);
+          y(1, 2, 3);
+        }
+        
+        function g(x: number): number {
+          return x * 2;
+        }
+      `
+    },
+    metadata: {
+      inferencePasses: 4
+    }
   }
 } as TestSpec

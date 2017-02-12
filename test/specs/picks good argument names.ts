@@ -5,7 +5,7 @@
 import {TestSpec} from '../../src/testing/test_spec';
 
 export default {
-  inputs: {
+  files: {
     'input.js': `
       function f8(x, y, z) {
         x.foo(y);
@@ -19,21 +19,26 @@ export default {
       }
     `
   },
-  outputs: {
-    'input.js': `
-      function f8(x: {foo(y: any): void, bar(baz: any): void, bam(yay: any): void, sum(count?: any): void}, y, z: {getBaz(): any}): void {
-        x.foo(y);
-        x.bar(z.getBaz());
-        x.bam(z['yay']);
-      
-        let count, superCount, megaCount;
-        x.sum(superCount);
-        x.sum(count);
-        x.sum(megaCount);
-      }
-    `
+  options: {
+    
   },
-  metadata: {
-    inferencePasses: 2
+  result: {
+    files: {
+      'input.js': `
+        function f8(x: {foo(y: any): void, bar(baz: any): void, bam(yay: any): void, sum(count?: any): void}, y, z: {getBaz(): any}): void {
+          x.foo(y);
+          x.bar(z.getBaz());
+          x.bam(z['yay']);
+        
+          let count, superCount, megaCount;
+          x.sum(superCount);
+          x.sum(count);
+          x.sum(megaCount);
+        }
+      `
+    },
+    metadata: {
+      inferencePasses: 2
+    }
   }
 } as TestSpec

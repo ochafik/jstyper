@@ -35,16 +35,16 @@ if (outputToStdout) {
   console.log(pseudoJson(results));
 } else if (testSpecDescription) {
   writeSpec(testSpecDescription, {
-    inputs: inputContents,
-    outputs: results.outputs,
-    metadata: results.metadata
+    files: inputContents,
+    options: options,
+    result: results
   });
 } else {
-  for (const fileName in results.outputs) {
+  for (const fileName in results.files) {
     const outputFile = getFile(
         fileName,
         {outputDir: outputDir, currentWorkingDir: options.currentWorkingDir});
-    const content = results.outputs[fileName];
+    const content = results.files[fileName];
     if (!fs.existsSync(outputFile) ||
         content != fs.readFileSync(outputFile).toString()) {
       mkdirsSync(path.dirname(outputFile));

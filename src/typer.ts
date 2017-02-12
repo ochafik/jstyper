@@ -10,16 +10,15 @@ import {updateVars} from './passes/update_vars';
 import {AddChangeCallback, LanguageServiceReactor} from './utils/language_service_reactor';
 import {mapKeys} from './utils/maps';
 
-export interface TyperMetadata { inferencePasses: number, }
-export interface TyperResult {
-  outputs: {[fileName: string]: string},  // Map<string, string>,
-      metadata: TyperMetadata,
+export interface TyperExecutionMetadata { inferencePasses: number, }
+export interface TyperExecutionResult {
+  files: {[fileName: string]: string},  // Map<string, string>,
+  metadata: TyperExecutionMetadata,
 }
-;
 
 export function runTyper(
     fileContents: {[fileName: string]: string},
-    options = defaultOptions): TyperResult {
+    options = defaultOptions): TyperExecutionResult {
   const reactor =
       new LanguageServiceReactor(fileContents, options.currentWorkingDir, {
         allowJs: true,
@@ -62,12 +61,12 @@ export function runTyper(
     reactor.react(turnToDeclarations);
 
     return {
-      outputs: mapKeys(reactor.fileContents, k => k.replace(/.[tj]s/, '.d.ts')),
+      files: mapKeys(reactor.fileContents, k => k.replace(/.[tj]s/, '.d.ts')),
       metadata
     };
   }
 
   return {
-    outputs: reactor.fileContents, metadata
+    files: reactor.fileContents, metadata
   }
 }

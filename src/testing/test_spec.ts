@@ -1,30 +1,53 @@
 import * as fs from 'fs';
 
-import {Options} from '../options';
-import {TyperResult} from '../typer';
+import {Options, defaultOptions} from '../options';
+import {TyperExecutionResult, TyperExecutionMetadata} from '../typer';
 import {mapValues} from '../utils/maps';
 import {pseudoJson} from '../utils/pseudo_json';
 import {deindent} from '../utils/strings';
 
-// const writeFile = promisify(fs.writeFile);
-
-export interface TestSpec extends TyperResult {
-  inputs: {[fileName: string]: string},
+export declare interface TestSpec {
+  files: {[fileName: string]: string},
+  options: Options,
+  result: TyperExecutionResult
 }
 
-function deindentSpec(spec: TestSpec) {
-  return spec && {
-    inputs: mapValues(spec.inputs, deindent),
-        outputs: mapValues(spec.outputs, deindent), metadata: spec.metadata
+function deindentSpec(spec: TestSpec): TestSpec {
+  if (!spec.files) throw new Error(`O FILES in ${JSON.stringify(spec)}`);
+  if (!spec.result.files) throw new Error(`O RESULT FILES in ${JSON.stringify(spec)}`);
+  return {
+    files: mapValues(spec.files, deindent),
+    options: spec.options,
+    result: {
+      files: mapValues(spec.result.files, deindent),
+      metadata: spec.result.metadata
+    }
   }
 }
 
-export function readSpec(fileName: string) {
-  const mod = <TestSpec>(module.require(fileName));
-  const spec = mod['default'];
+function isTestSpec(obj: any): obj is TestSpec {
+  return 'files' in obj && 'options' in obj && 'result' in obj && 'files' in obj.result && 'metadata' in obj.result;
+}
+// function isOldTestSpec(obj: any): obj is OldTestSpec {
+//   return 'inputs' in obj && 'outputs' in obj && 'metadata' in obj;
+// }
+export function readSpec(fileName: string): TestSpec {
+  const mod = module.require(fileName);
+  let spec = mod['default'];
+  // if (isOldTestSpec(spec)) {
+  //   spec = <TestSpec>{
+  //     files: spec.inputs,
+  //     options: Object.create(defaultOptions),
+  //     result: {
+  //       files: spec.outputs,
+  //       metadata: spec.metadata
+  //     }
+  //   }
+  // }
+  if (!isTestSpec(spec)) {
+    throw new Error(`Bad spec format: ${JSON.stringify(Object.keys(spec), null, 2)}`);
+  }
   const deindented = deindentSpec(spec);
-  // console.warn('deindented');
-  // console.warn(deindented);
   return deindented;
 }
 

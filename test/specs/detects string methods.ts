@@ -5,7 +5,7 @@
 import {TestSpec} from '../../src/testing/test_spec';
 
 export default {
-  inputs: {
+  files: {
     'input.js': `
       function f5(s) {
         return s.length == 0 ? '' : s.substring(1);
@@ -35,37 +35,42 @@ export default {
       }
     `
   },
-  outputs: {
-    'input.js': `
-      function f5(s: string) {
-        return s.length == 0 ? '' : s.substring(1);
-      }
-      
-      function ff5(s: string): string {
-        return s.length == 0 ? '' : s;
-      }
-      
-      function fff5(s: string) {
-        return s.substring(1);
-      }
-      
-      function g5(s: string): string {
-        return s ? s : '';
-      }
-      
-      function h5(x: string): void {
-        if (ff5(x) == '' && g5(x) == '') {
-          console.log('error');
-        }
-      }
-      
-      function i5(x1?: {y: any}, x2: {y: string}) {
-        if (x2.y) return x2.y.length;
-        return x1 ? x1.y : null;
-      }
-    `
+  options: {
+    
   },
-  metadata: {
-    inferencePasses: 4
+  result: {
+    files: {
+      'input.js': `
+        function f5(s: string) {
+          return s.length == 0 ? '' : s.substring(1);
+        }
+        
+        function ff5(s: string): string {
+          return s.length == 0 ? '' : s;
+        }
+        
+        function fff5(s: string) {
+          return s.substring(1);
+        }
+        
+        function g5(s: string): string {
+          return s ? s : '';
+        }
+        
+        function h5(x: string): void {
+          if (ff5(x) == '' && g5(x) == '') {
+            console.log('error');
+          }
+        }
+        
+        function i5(x1?: {y: any}, x2: {y: string}) {
+          if (x2.y) return x2.y.length;
+          return x1 ? x1.y : null;
+        }
+      `
+    },
+    metadata: {
+      inferencePasses: 4
+    }
   }
 } as TestSpec

@@ -5,7 +5,7 @@
 import {TestSpec} from '../../src/testing/test_spec';
 
 export default {
-  inputs: {
+  files: {
     'input.js': `
       function f3(x) {
         g3(1);
@@ -17,19 +17,24 @@ export default {
       }
     `
   },
-  outputs: {
-    'input.js': `
-      function f3(x: number): void {
-        g3(1);
-        g3(x);
-      }
-      
-      function g3(x: number): number {
-        return x + 1;
-      }
-    `
+  options: {
+    
   },
-  metadata: {
-    inferencePasses: 3
+  result: {
+    files: {
+      'input.js': `
+        function f3(x: number): void {
+          g3(1);
+          g3(x);
+        }
+        
+        function g3(x: number): number {
+          return x + 1;
+        }
+      `
+    },
+    metadata: {
+      inferencePasses: 3
+    }
   }
 } as TestSpec

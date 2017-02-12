@@ -40,10 +40,11 @@ export function normalize(flags: ts.TypeFlags) {
       flags = (flags & ~original) | replacement;
     }
   }
-  replaceFlag(ts.TypeFlags.BooleanLiteral, ts.TypeFlags.Boolean)
-  replaceFlag(ts.TypeFlags.StringLiteral, ts.TypeFlags.String)
-  replaceFlag(ts.TypeFlags.NumberLiteral, ts.TypeFlags.Number)
-  replaceFlag(ts.TypeFlags.EnumLiteral, ts.TypeFlags.Enum) return flags;
+  replaceFlag(ts.TypeFlags.BooleanLiteral, ts.TypeFlags.Boolean);
+  replaceFlag(ts.TypeFlags.StringLiteral, ts.TypeFlags.String);
+  replaceFlag(ts.TypeFlags.NumberLiteral, ts.TypeFlags.Number);
+  replaceFlag(ts.TypeFlags.EnumLiteral, ts.TypeFlags.Enum);
+  return flags;
 }
 
 // export function getFlagsDebugDescription(flags: ts.TypeFlags) {

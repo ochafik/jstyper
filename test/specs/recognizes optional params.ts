@@ -5,7 +5,7 @@
 import {TestSpec} from '../../src/testing/test_spec';
 
 export default {
-  inputs: {
+  files: {
     'input.js': `
       function f6(x) {
         return x && x.y(1) + x.y(1, 2);
@@ -16,18 +16,23 @@ export default {
       }
     `
   },
-  outputs: {
-    'input.js': `
-      function f6(x?: {y(arg1: number, arg2?: number): any}) {
-        return x && x.y(1) + x.y(1, 2);
-      }
-      
-      function g6(x?: {y?: (arg1: number) => boolean}): boolean {
-        return x && x.y && x.y(1);
-      }
-    `
+  options: {
+    
   },
-  metadata: {
-    inferencePasses: 3
+  result: {
+    files: {
+      'input.js': `
+        function f6(x?: {y(arg1: number, arg2?: number): any}) {
+          return x && x.y(1) + x.y(1, 2);
+        }
+        
+        function g6(x?: {y?: (arg1: number) => boolean}): boolean {
+          return x && x.y && x.y(1);
+        }
+      `
+    },
+    metadata: {
+      inferencePasses: 3
+    }
   }
 } as TestSpec

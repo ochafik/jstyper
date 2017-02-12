@@ -5,7 +5,7 @@
 import {TestSpec} from '../../src/testing/test_spec';
 
 export default {
-  inputs: {
+  files: {
     'input.js': `
       class Foo { x: number; }
       
@@ -20,22 +20,27 @@ export default {
       g7(new Foo());
     `
   },
-  outputs: {
-    'input.js': `
-      class Foo {x: number;}
-      
-      function f7(foo?: Foo): number | null {
-        return foo ? foo.x : null;
-      }
-      
-      function g7(foo?: Foo): number | null {
-        return foo ? foo.x : null;
-      }
-      
-      g7(new Foo());
-    `
+  options: {
+    
   },
-  metadata: {
-    inferencePasses: 3
+  result: {
+    files: {
+      'input.js': `
+        class Foo {x: number;}
+        
+        function f7(foo?: Foo): number | null {
+          return foo ? foo.x : null;
+        }
+        
+        function g7(foo?: Foo): number | null {
+          return foo ? foo.x : null;
+        }
+        
+        g7(new Foo());
+      `
+    },
+    metadata: {
+      inferencePasses: 3
+    }
   }
 } as TestSpec

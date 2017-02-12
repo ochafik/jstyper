@@ -15,7 +15,7 @@ export type Options = {
   methodThresholdAfterWhichAssumeString: number,
 };
 
-export const defaultOptions: Readonly<Options> = {
+export const defaultOptions: Readonly<Options> = Object.freeze({
   format: true,
   updateImports: true,
   updateExports: true,
@@ -26,4 +26,4 @@ export const defaultOptions: Readonly<Options> = {
   // maxSubInferenceCount: 5,
   currentWorkingDir: '.',
   methodThresholdAfterWhichAssumeString: 1,
-};
+});

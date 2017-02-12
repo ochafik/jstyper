@@ -5,7 +5,7 @@
 import {TestSpec} from '../../src/testing/test_spec';
 
 export default {
-  inputs: {
+  files: {
     'input.js': `
       function f(xx, y) {
         var zz1;
@@ -22,24 +22,29 @@ export default {
       }
     `
   },
-  outputs: {
-    'input.js': `
-      function f(xx, y: number) {
-        let zz1;
-        zz1 = z;
-        zz1 = '';
-      
-        let zz2 = z;
-        zz2 = '';
-        return x + 2 + g(y);
-      }
-      
-      function g(x: number): number {
-        return x * 2;
-      }
-    `
+  options: {
+    
   },
-  metadata: {
-    inferencePasses: 3
+  result: {
+    files: {
+      'input.js': `
+        function f(xx, y: number) {
+          let zz1;
+          zz1 = z;
+          zz1 = '';
+        
+          let zz2 = z;
+          zz2 = '';
+          return x + 2 + g(y);
+        }
+        
+        function g(x: number): number {
+          return x * 2;
+        }
+      `
+    },
+    metadata: {
+      inferencePasses: 3
+    }
   }
 } as TestSpec
