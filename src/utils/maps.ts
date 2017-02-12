@@ -21,3 +21,11 @@ export function mapValues<U, V>(obj: {[key: string]: U}, f: (U) => V): {[key: st
   }
   return result;
 }
+
+export function mapKeys<V>(obj: {[key: string]: V}, f: (key: string) => string): {[key: string]: V} {
+  const result = Object.create(null);
+  for (const key of Object.keys(obj)) {
+    result[f(key)] = obj[key];
+  }
+  return result;
+}

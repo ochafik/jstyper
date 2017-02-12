@@ -7,6 +7,7 @@ import {updateImports} from './passes/update_imports';
 import {updateExports} from './passes/update_exports';
 import {turnToDeclarations} from './passes/declarations';
 import {Options, defaultOptions} from './options';
+import {mapKeys} from './utils/maps';
 
 export interface TyperMetadata {
     inferencePasses: number,
@@ -46,14 +47,23 @@ export function runTyper(fileContents: {[fileName: string]: string}, options = d
       }
   }
 
+  const metadata = {
+    inferencePasses: inferencePasses
+  }
+        
   if (options.format) reactor.react(format);
   if (options.updateVars) reactor.react(updateVars);
-  if (options.declarations) reactor.react(turnToDeclarations);
+  if (options.declarations) {
+      reactor.react(turnToDeclarations);
+
+      return {
+        outputs: mapKeys(reactor.fileContents, k => k.replace(/.[tj]s/, '.d.ts')),
+        metadata
+      };
+  }
 
   return {
       outputs: reactor.fileContents,
-      metadata: {
-          inferencePasses: inferencePasses
-      }
+      metadata
   }
 }

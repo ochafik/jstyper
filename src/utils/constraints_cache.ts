@@ -3,7 +3,7 @@ import {TypeConstraints, CallConstraints} from '../utils/type_constraints';
 import * as fl from "../utils/flags";
 import * as nodes from "../utils/nodes";
 import {Options} from '../options';
-import {applyConstraints} from '../utils/apply_constraints';
+import {applyConstraints} from './apply_constraints';
 
 export class ConstraintsCache {
   
@@ -50,7 +50,6 @@ export class ConstraintsCache {
       node = node.expression;
     }
 
-        // || nodes.isElementAccessExpression(node)
     if (nodes.isPropertyAccessExpression(node)) {
         const constraints = this.getNodeConstraints(node.expression);
         if (constraints) {

@@ -58,13 +58,6 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
     }
     return result;
   }
-  // get fileContents(): Map<string, string> {
-  //   const result = new Map<string, string>();
-  //   for (const [fileName, file] of this.files) {
-  //     result.set(fileName, file.content);
-  //   }
-  //   return result;
-  // }
 
   react(callback: ReactorCallback): boolean {
     const pendingChanges = new Map<string, ts.TextChange[]>();
