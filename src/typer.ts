@@ -1,28 +1,31 @@
-import * as ts from "typescript";
-import {LanguageServiceReactor, AddChangeCallback} from './utils/language_service_reactor';
-import {infer} from './passes/infer';
-import {format} from './passes/format';
-import {updateVars} from './passes/update_vars';
-import {updateImports} from './passes/update_imports';
-import {updateExports} from './passes/update_exports';
+import * as ts from 'typescript';
+
+import {defaultOptions, Options} from './options';
 import {turnToDeclarations} from './passes/declarations';
-import {Options, defaultOptions} from './options';
+import {format} from './passes/format';
+import {infer} from './passes/infer';
+import {updateExports} from './passes/update_exports';
+import {updateImports} from './passes/update_imports';
+import {updateVars} from './passes/update_vars';
+import {AddChangeCallback, LanguageServiceReactor} from './utils/language_service_reactor';
 import {mapKeys} from './utils/maps';
 
-export interface TyperMetadata {
-    inferencePasses: number,
-}
+export interface TyperMetadata { inferencePasses: number, }
 export interface TyperResult {
-    outputs: {[fileName: string]: string}, //Map<string, string>,
-    metadata: TyperMetadata,
-};
+  outputs: {[fileName: string]: string},  // Map<string, string>,
+      metadata: TyperMetadata,
+}
+;
 
-export function runTyper(fileContents: {[fileName: string]: string}, options = defaultOptions): TyperResult {
-  const reactor = new LanguageServiceReactor(fileContents, options.currentWorkingDir, {
-      allowJs: true,
-      strictNullChecks: true,
-      removeComments: true,
-  });
+export function runTyper(
+    fileContents: {[fileName: string]: string},
+    options = defaultOptions): TyperResult {
+  const reactor =
+      new LanguageServiceReactor(fileContents, options.currentWorkingDir, {
+        allowJs: true,
+        strictNullChecks: true,
+        removeComments: true,
+      });
 
   if (options.updateImports) reactor.react(updateImports);
   if (options.updateExports) reactor.react(updateExports);
@@ -30,40 +33,41 @@ export function runTyper(fileContents: {[fileName: string]: string}, options = d
   const inferrer = infer(options);
   let inferencePasses = 0;
   for (let i = 0; i < options.maxIterations; i++) {
-      if (options.debugPasses) {
-          console.warn(`Running incremental type inference (${i + 1} / ${options.maxIterations})...`);
+    if (options.debugPasses) {
+      console.warn(
+          `Running incremental type inference (${i +
+          1} / ${options.maxIterations})...`);
+    }
+    inferencePasses++;
+    if (!reactor.react(inferrer)) {
+      break;
+    }
+    if (options.debugPasses) {
+      console.warn(`Partial result after inference pass ${i + 1}:`);
+      const fileContents = reactor.fileContents;
+      for (const fileName in fileContents) {
+        const contents = fileContents[fileName];
+        console.warn(`${fileName}:\n${contents}\n`);
       }
-      inferencePasses++;
-      if (!reactor.react(inferrer)) {
-          break;
-      }
-      if (options.debugPasses) {
-          console.warn(`Partial result after inference pass ${i + 1}:`);
-          const fileContents = reactor.fileContents;
-          for (const fileName in fileContents) {
-              const contents = fileContents[fileName];
-              console.warn(`${fileName}:\n${contents}\n`);
-          }
-      }
+    }
   }
 
   const metadata = {
     inferencePasses: inferencePasses
   }
-        
-  if (options.format) reactor.react(format);
+
+                   if (options.format) reactor.react(format);
   if (options.updateVars) reactor.react(updateVars);
   if (options.declarations) {
-      reactor.react(turnToDeclarations);
+    reactor.react(turnToDeclarations);
 
-      return {
-        outputs: mapKeys(reactor.fileContents, k => k.replace(/.[tj]s/, '.d.ts')),
-        metadata
-      };
+    return {
+      outputs: mapKeys(reactor.fileContents, k => k.replace(/.[tj]s/, '.d.ts')),
+      metadata
+    };
   }
 
   return {
-      outputs: reactor.fileContents,
-      metadata
+    outputs: reactor.fileContents, metadata
   }
 }

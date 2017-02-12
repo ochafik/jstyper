@@ -1,19 +1,21 @@
-import * as ts from "typescript";
+import * as ts from 'typescript';
 
 import {VersionedFile} from './versioned_file';
 
-export type AddChangeCallback = (fileName: string, change: ts.TextChange) => void;
-export type ReactorCallback = (fileNames: string[], services: ts.LanguageService, addChange: AddChangeCallback) => void;
+export type AddChangeCallback = (fileName: string, change: ts.TextChange) =>
+    void;
+export type ReactorCallback =
+    (fileNames: string[], services: ts.LanguageService,
+     addChange: AddChangeCallback) => void;
 
 export class LanguageServiceReactor implements ts.LanguageServiceHost {
   private files = new Map<string, VersionedFile>();
   private services: ts.LanguageService;
   private fileNames: string[];
-  
+
   constructor(
       fileContents: {[fileName: string]: string},
-      private currentWorkingDir = '.',
-      private options: ts.CompilerOptions) {
+      private currentWorkingDir = '.', private options: ts.CompilerOptions) {
     const fileNames: string[] = [];
     for (const fileName in fileContents) {
       const content = fileContents[fileName];

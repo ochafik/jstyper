@@ -1,9 +1,9 @@
-import * as ts from "typescript";
+import * as ts from 'typescript';
 import * as nodes from './nodes';
 
-export function guessName(node: ts.Node): string | undefined {
+export function guessName(node: ts.Node): string|undefined {
   if (nodes.isCallExpression(node)) {
-    let name: string | undefined;
+    let name: string|undefined;
     if (node.name) {
       name = guessName(node.name);
     } else if (node.expression) {
@@ -20,7 +20,8 @@ export function guessName(node: ts.Node): string | undefined {
       return name;
     }
   } else if (nodes.isElementAccessExpression(node)) {
-    if (node.argumentExpression && nodes.isStringLiteral(node.argumentExpression)) {
+    if (node.argumentExpression &&
+        nodes.isStringLiteral(node.argumentExpression)) {
       return node.argumentExpression.text;
     }
   } else if (nodes.isPropertyAccessExpression(node)) {

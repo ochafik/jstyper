@@ -11,10 +11,14 @@ export function mkdirsSync(dir: string) {
   }, '');
 }
 
-export function getFile(fileName: string, {outputDir, currentWorkingDir}: {outputDir?: string, currentWorkingDir?: string} = {}): string {
+export function getFile(
+    fileName: string,
+    {outputDir, currentWorkingDir}:
+        {outputDir?: string, currentWorkingDir?: string} = {}): string {
   let outputFile = fileName;
   if (outputDir) {
-    outputFile = path.join(outputDir, path.relative(currentWorkingDir || '.', fileName));
+    outputFile =
+        path.join(outputDir, path.relative(currentWorkingDir || '.', fileName));
   }
   mkdirsSync(path.dirname(outputFile));
   return outputFile;

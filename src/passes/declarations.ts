@@ -1,9 +1,10 @@
-import * as ts from "typescript";
+import * as ts from 'typescript';
 import {AddChangeCallback} from '../utils/language_service_reactor';
 import * as nodes from '../utils/nodes';
 
-export function turnToDeclarations(fileNames: string[], services: ts.LanguageService, addChange: AddChangeCallback) {
-  
+export function turnToDeclarations(
+    fileNames: string[], services: ts.LanguageService,
+    addChange: AddChangeCallback) {
   const program = services.getProgram();
   const checker = program.getTypeChecker();
 
@@ -16,20 +17,23 @@ export function turnToDeclarations(fileNames: string[], services: ts.LanguageSer
 
     ts.forEachChild(sourceFile, visit);
 
-    function removeBody(node: ts.Node & {body?: ts.Node}) {
+    function removeBody(node: ts.Node&{body?: ts.Node}) {
       if (node.body) {
-          mutator.remove(node.body.getStart(), node.body.getEnd(), ';');
+        mutator.remove(node.body.getStart(), node.body.getEnd(), ';');
       }
     }
-    function removeInitializer(node: ts.Node & {name: ts.Node, type?: ts.Node, initializer?: ts.Node}) {
+    function removeInitializer(
+        node: ts.Node&{name: ts.Node, type?: ts.Node, initializer?: ts.Node}) {
       if (node.initializer) {
-          mutator.remove(node.type ? node.type.getEnd() : node.name.getEnd(), node.initializer.getEnd());
+        mutator.remove(
+            node.type ? node.type.getEnd() : node.name.getEnd(),
+            node.initializer.getEnd());
       }
     }
     function remove(node: ts.Node) {
       mutator.remove(node.getStart(), node.getEnd());
     }
-    
+
     function visit(node: ts.Node) {
       if (nodes.isFunctionLikeDeclaration(node)) {
         mutator.insert(node.getStart(), 'declare ');
@@ -45,7 +49,9 @@ export function turnToDeclarations(fileNames: string[], services: ts.LanguageSer
             remove(member);
           }
         }
-      } else if (nodes.isTypeAliasDeclaration(node) || nodes.isInterfaceDeclaration(node)) {
+      } else if (
+          nodes.isTypeAliasDeclaration(node) ||
+          nodes.isInterfaceDeclaration(node)) {
         // Do nothing.
       } else if (nodes.isVariableStatement(node)) {
         mutator.insert(node.getStart(), 'declare ');
@@ -67,16 +73,13 @@ class Mutator {
   constructor(private fileName: string, private addChange: AddChangeCallback) {}
 
   insert(start: number, newText: string) {
-    this.addChange(this.fileName, {
-      span: {start: start, length: 0},
-      newText: newText
-    });
+    this.addChange(
+        this.fileName, {span: {start: start, length: 0}, newText: newText});
   }
 
   remove(start: number, end: number, newText: string = '') {
-    this.addChange(this.fileName, {
-      span: {start: start, length: end - start},
-      newText: newText
-    });
+    this.addChange(
+        this.fileName,
+        {span: {start: start, length: end - start}, newText: newText});
   }
 }

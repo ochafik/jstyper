@@ -1,7 +1,7 @@
-import {runTyper} from './typer';
-import {Options, defaultOptions} from './options';
 import {addTabIndentSupport} from './editor/indent';
 import {addUndoSupport} from './editor/undo';
+import {defaultOptions, Options} from './options';
+import {runTyper} from './typer';
 
 type State = {
   content?: string,
@@ -23,7 +23,8 @@ function readStateFromFragment(): State {
   if (location.hash.length > 0) {
     try {
       return <State>JSON.parse(decodeURIComponent(location.hash.substring(1)));
-    } catch (_) {}
+    } catch (_) {
+    }
   }
   return defaultState;
 }
@@ -38,35 +39,39 @@ window.addEventListener('load', () => {
   const button = <HTMLButtonElement>document.getElementById('run');
   const autoRunCheckBox = <HTMLInputElement>document.getElementById('autorun');
   const stats = <HTMLTextAreaElement>document.getElementById('stats');
-  const maxIterations = <HTMLInputElement>document.getElementById('maxIterations');
+  const maxIterations =
+      <HTMLInputElement>document.getElementById('maxIterations');
 
   const initialState = readStateFromFragment();
-  
+
   jsInput.value = 'content' in initialState ? initialState.content! : '';
   jsInput.addEventListener('input', (e) => {
     saveState();
     autoRun();
   });
 
-  maxIterations.value = String('maxIterations' in initialState ? initialState.maxIterations! : defaultState.maxIterations);
+  maxIterations.value = String(
+      'maxIterations' in initialState ? initialState.maxIterations! :
+                                        defaultState.maxIterations);
   maxIterations.addEventListener('input', () => {
     saveState();
     autoRun();
   });
-  
-  autoRunCheckBox.checked = 'autoRun' in initialState ? initialState.autoRun! : true;
+
+  autoRunCheckBox.checked =
+      'autoRun' in initialState ? initialState.autoRun! : true;
   autoRunCheckBox.addEventListener('change', () => {
     saveState();
     autoRun();
     updateRunVisibility();
   });
-  
+
   const manager = addUndoSupport(jsInput, autoRun);
   addTabIndentSupport(jsInput, (c) => {
     manager.content = c;
     autoRun();
   });
-  
+
   updateRunVisibility();
   autoRun();
 
@@ -95,10 +100,12 @@ window.addEventListener('load', () => {
     options.debugPasses = true;
     options.maxIterations = getMaxIterations();
 
-    const {outputs: {'file.ts': output}, metadata} = runTyper({'file.ts': jsInput.value})
+    const {outputs: {'file.ts': output}, metadata} =
+        runTyper({'file.ts': jsInput.value})
     tsOutput.value = output;
     const time = new Date().getTime() - start;
-    stats.textContent = `Execution time (${metadata.inferencePasses} passes): ${time} milliseconds`;
+    stats.textContent = `Execution time (${metadata.inferencePasses
+                        } passes): ${time} milliseconds`;
   }
   button.onclick = run;
 });

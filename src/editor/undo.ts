@@ -1,10 +1,13 @@
-export function addUndoSupport(textArea: HTMLTextAreaElement, contentChanged: (content: string) => void): UndoManager {
+export function addUndoSupport(
+    textArea: HTMLTextAreaElement,
+    contentChanged: (content: string) => void): UndoManager {
   const manager = new UndoManager(textArea.value);
   textArea.addEventListener('input', (e) => {
     manager.content = textArea.value;
   });
   textArea.addEventListener('keydown', (e) => {
-    // console.log(`KEYDOWN e.charCode = ${e.charCode}, ${e.keyCode} (e.metaKey = ${e.metaKey}, e.ctrlKey = ${e.ctrlKey})`);
+    // console.log(`KEYDOWN e.charCode = ${e.charCode}, ${e.keyCode} (e.metaKey
+    // = ${e.metaKey}, e.ctrlKey = ${e.ctrlKey})`);
     if ((e.ctrlKey || e.metaKey) && e.keyCode == 90) {
       e.preventDefault();
       if (e.shiftKey) {
@@ -60,15 +63,15 @@ export class UndoManager {
 
   applyEdit(edit: Edit) {
     // console.log(`APPLYING EDIT: ${JSON.stringify(edit, null, 2)}`);
-    this._content = this._content.substring(0, edit.offset) + edit.nextText + this._content.substring(edit.offset + edit.previousText.length);
+    this._content = this._content.substring(0, edit.offset) + edit.nextText +
+        this._content.substring(edit.offset + edit.previousText.length);
   }
 }
 
 function invertEdit(diff: Edit) {
   return {
-    offset: diff.offset,
-    previousText: diff.nextText,
-    nextText: diff.previousText
+    offset: diff.offset, previousText: diff.nextText,
+        nextText: diff.previousText
   }
 }
 function inferDiff(a: string, b: string): Edit {
@@ -81,7 +84,8 @@ function inferDiff(a: string, b: string): Edit {
       break;
     }
   }
-  for (let i = a.length - 1, j = b.length - 1; i >= 0 && i >= diffStart && j >= 0; i--, j--) {
+  for (let i = a.length - 1, j = b.length - 1;
+       i >= 0 && i >= diffStart && j >= 0; i--, j--) {
     if (a[i] == b[j]) {
       diffEnd = i;
     } else {

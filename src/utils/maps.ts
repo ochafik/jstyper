@@ -14,7 +14,8 @@ export function objectToMap<V>(obj: Map<string, V>): Map<string, V> {
   return result;
 }
 
-export function mapValues<U, V>(obj: {[key: string]: U}, f: (U) => V): {[key: string]: V} {
+export function mapValues<U, V>(
+    obj: {[key: string]: U}, f: (U) => V): {[key: string]: V} {
   const result = Object.create(null);
   for (const key of Object.keys(obj)) {
     result[key] = f(obj[key]);
@@ -22,7 +23,8 @@ export function mapValues<U, V>(obj: {[key: string]: U}, f: (U) => V): {[key: st
   return result;
 }
 
-export function mapKeys<V>(obj: {[key: string]: V}, f: (key: string) => string): {[key: string]: V} {
+export function mapKeys<V>(
+    obj: {[key: string]: V}, f: (key: string) => string): {[key: string]: V} {
   const result = Object.create(null);
   for (const key of Object.keys(obj)) {
     result[f(key)] = obj[key];
