@@ -30,6 +30,9 @@ export function typerTest(specFile: string):
     if (updateSpecs) {
       await writeSpec(specFile, actualSpec);
     } else {
+      for (const fileName in actualSpec.result.files) {
+        expect(actualSpec.result.files[fileName]).to.be.deep.equal(spec.result.files[fileName]);  
+      }
       expect(actualSpec).to.be.deep.equal(spec);
       // assert.deepEqual(actualSpec, spec);
     }
