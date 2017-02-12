@@ -7,6 +7,9 @@ JsTyper adds {TypeScript, Flow, Closure} types to JavaScript programs using iter
 
 * [Interactive online demo](http://ochafik.com/assets/typer-demo.html)
 * `npm i -g jstyper` then `jstyper input.js`
+  * Noteworthy flags:
+    * `-o <outputDir>` (or `--outputDir=<outputDir>`): where files should be generated
+    * `--declarations`: only generate interface files (`*.d.ts`)
 
 # Example
 
@@ -50,11 +53,12 @@ function gg(x: number, y: {addValue: boolean, value: any, name: string}) {
 }
 ```
 
-# Run it
+# Hack it
 
 - Clone this repo
 - Run `npm i`
-- Run `node build/main.js <your .js files>`
+- Debug the demo `npm start` (will auto-reload and auto-run tests after any changes made to the TypeScript sources)
+- More options: take a look at [package.json's script entries](./package.json)
 
 # TODO
 
