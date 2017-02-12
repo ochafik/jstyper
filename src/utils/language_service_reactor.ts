@@ -4,9 +4,11 @@ import {VersionedFile} from './versioned_file';
 
 export type AddChangeCallback = (fileName: string, change: ts.TextChange) =>
     void;
+export type AddRequirementCallback = (moduleName: string, decls: string) => void
 export type ReactorCallback =
     (fileNames: string[], services: ts.LanguageService,
-     addChange: AddChangeCallback) => void;
+     addChange: AddChangeCallback,
+     addRequirement: AddRequirementCallback) => void;
 
 export class LanguageServiceReactor implements ts.LanguageServiceHost {
   private files = new Map<string, VersionedFile>();
@@ -62,24 +64,42 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
   }
 
   react(callback: ReactorCallback): boolean {
+    let changed = false;
     const pendingChanges = new Map<string, ts.TextChange[]>();
 
-    callback(this.fileNames, this.services, (fileName, change) => {
+    const addChange: AddChangeCallback = (fileName, change) => {
       const changes = pendingChanges.get(fileName);
       if (changes) {
         changes.push(change);
       } else {
         pendingChanges.set(fileName, [change]);
       }
+    };
+    callback(this.fileNames, this.services, addChange, (moduleName, decls) => {
+      const moduleFileName = `node_modules/${moduleName}/index.d.ts`;
+      let file = this.files.get(moduleFileName);
+      if (!file) {
+        file = new VersionedFile('');
+        this.files.set(moduleFileName, file);
+      }
+      const oldVersion = file.version;
+      file.content = decls;
+      if (file.version != oldVersion) {
+        changed = true;
+      }
+      // addChange(moduleFileName, {
+      //   span: {start: 0, length: 0},
+      //   newText: decls
+      // });
     });
 
-    if (pendingChanges.size == 0) {
-      return false;
-    }
-
-    let changed = false;
     for (const [fileName, changes] of pendingChanges) {
-      if (this.files.get(fileName)!.commitChanges(changes)) {
+      let file = this.files.get(fileName);
+      if (!file) {
+        file = new VersionedFile('');
+        this.files.set(fileName, file);
+      }
+      if (file.commitChanges(changes)) {
         changed = true;
       }
     }

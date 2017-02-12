@@ -13,15 +13,22 @@ export class VersionedFile {
   }
 
   commitChanges(changes: ts.TextChange[]): boolean {
-    this._version++;
-    const oldContent = this._content;
+    const oldContent = this.content;
     const newContent = applyTextChanges(oldContent, changes);
-    this._content = newContent;
+    this.content = newContent;
     return newContent != oldContent;
   }
 
   get content() {
     return this._content;
+  }
+
+  set content(newContent: string) {
+    if (this._content == newContent) {
+      return;
+    }
+    this._version++;
+    this._content = newContent;
   }
 }
 

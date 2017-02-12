@@ -27,11 +27,11 @@ export default {
     files: {
       'input.js': `
         function f(xx, y: number) {
-          let zz1;
+          let zz1: string;
           zz1 = z;
           zz1 = '';
         
-          let zz2 = z;
+          let zz2: string = z;
           zz2 = '';
           return x + 2 + g(y);
         }

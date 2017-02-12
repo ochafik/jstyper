@@ -2,7 +2,7 @@ import * as ts from 'typescript';
 
 import {Options} from '../options';
 import * as fl from '../utils/flags';
-import {AddChangeCallback, ReactorCallback} from '../utils/language_service_reactor';
+import {AddChangeCallback, AddRequirementCallback, ReactorCallback} from '../utils/language_service_reactor';
 import * as nodes from '../utils/nodes';
 import * as ops from '../utils/operators';
 import {CallConstraints, TypeConstraints} from '../utils/type_constraints';
@@ -10,8 +10,11 @@ import {CallConstraints, TypeConstraints} from '../utils/type_constraints';
 // TODO: check if a constraint has seen any new info, then as long as some do,
 // do our own loop to avoid writing files.
 export function applyConstraints(
-    allConstraints: Map<ts.Symbol, TypeConstraints>, checker: ts.TypeChecker,
-    _addChange: AddChangeCallback) {
+    allConstraints: Map<ts.Symbol, TypeConstraints>,
+    requireConstraints: Map<string, TypeConstraints>,
+    checker: ts.TypeChecker,
+    _addChange: AddChangeCallback,
+    addRequirement: AddRequirementCallback) {
   function addChange(sourceFile: ts.SourceFile, change: ts.TextChange) {
     if (change.span.length > 0) {
       const source = sourceFile.getFullText();
@@ -21,6 +24,24 @@ export function applyConstraints(
       }
     }
     _addChange(sourceFile.fileName, change);
+  }
+
+  for (const [moduleName, constraints] of requireConstraints) {
+    let decls = `declare module "${moduleName}" {\n`;
+    
+    for (const field of constraints.fieldNames) {
+      const fieldConstraints = constraints.getFieldConstraints(field);
+      if (fieldConstraints.isPureFunction) {
+        const [argList, retType] = fieldConstraints.resolveCallableArgListAndReturnType()!;
+        decls += `  export function ${field}(${argList}): ${retType};\n`;  
+      } else {
+        const resolved = fieldConstraints.resolve() || 'any';
+        decls += `  export ${fieldConstraints.settable ? 'let' : 'const'} ${field}: ${resolved};\n`;
+      }
+    }
+
+    decls += '}\n';
+    addRequirement(moduleName, decls);
   }
   for (const [sym, constraints] of allConstraints) {
     //   if (!constraints.hasChanges) {

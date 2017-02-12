@@ -12,7 +12,7 @@ import * as ops from '../utils/operators';
 import {CallConstraints, TypeConstraints} from '../utils/type_constraints';
 
 export const infer: (options: Options) => ReactorCallback = (options) => (
-    fileNames, services, addChange) => {
+    fileNames, services, addChange, addRequirement) => {
 
   const program = services.getProgram();
   const checker = program.getTypeChecker();
@@ -42,34 +42,23 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
           }
 
           if (nodes.isCallExpression(node)) {
-            const calleeConstraints =
-                constraintsCache.getNodeConstraints(node.expression);
-
-            if (calleeConstraints) {
-              const callConstraints = calleeConstraints.getCallConstraints();
-
-              let returnType: ts.Type|undefined = ctxType;
-              const argTypes =
-                  node.arguments.map(a => checker.getTypeAtLocation(a));
-
-              if (returnType) {
-                callConstraints.returnType.isType(returnType);
-              } else if (
-                  node.parent && nodes.isExpressionStatement(node.parent)) {
-                callConstraints.returnType.isVoid();
-              }
-              // console.log(`CALL(${call.getFullText()}):`);
-              callConstraints.hasArity(argTypes.length);
-              argTypes.forEach((t, i) => {
-                const argConstraints = callConstraints.getArgType(i);
-                const arg = node.arguments[i];
-                if (arg) {
-                  argConstraints.addNameHint(guessName(arg));
-                }
-                // console.log(`  ARG(${i}): ${checker.typeToString(t)}`);
-                argConstraints.isType(t);
-              });
+            const constraints = constraintsCache.getNodeConstraints(node.expression);
+            if (constraints) {
+              fillCallConstraints(
+                  constraints.getCallConstraints(),
+                  ctxType,
+                  node.parent != null && nodes.isExpressionStatement(node.parent),
+                  node.arguments);
             }
+          // } else if (nodes.isNewExpression(node)) {
+          //   const constraints = constraintsCache.getNodeConstraints(node.expression);
+          //   if (constraints) {
+          //     fillCallConstraints(
+          //         constraints.getNewSignature(),
+          //         ctxType,
+          //         node.parent != null && nodes.isExpressionStatement(node.parent),
+          //         node.arguments);
+          //   }
           } else if (nodes.isReturnStatement(node)) {
             if (node.expression) {
               const exe = <ts.FunctionLikeDeclaration>nodes.findParent(
@@ -127,6 +116,9 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
               constraintsCache.nodeIsBooleanLike(node.right);
             }
             if (ops.assignmentOperators.has(op)) {
+              if (leftConstraints) {
+                leftConstraints.canBeSet();
+              }
               if (op == ts.SyntaxKind.PlusEqualsToken) {
                 if (leftConstraints && fl.isNumber(leftConstraints.flags) &&
                     rightConstraints) {
@@ -137,6 +129,7 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
                 leftConstraints.isType(rightType);
               }
             }
+          // } else if (nodes.isAssignment)
           } else if (
               nodes.isPostfixUnaryExpression(node) ||
               nodes.isPrefixUnaryExpression(node)) {
@@ -164,6 +157,30 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
     }
   }
 
+  function fillCallConstraints(callConstraints: CallConstraints, returnType: ts.Type | undefined, isVoid: boolean, args: ts.Node[]) {
+      const argTypes =
+          args.map(a => checker.getTypeAtLocation(a));
+
+      if (returnType) {
+        callConstraints.returnType.isType(returnType);
+      } else if (isVoid) {
+        callConstraints.returnType.isVoid();
+      }
+      
+      // console.log(`CALL(${call.getFullText()}):`);
+      callConstraints.hasArity(argTypes.length);
+      argTypes.forEach((t, i) => {
+        const argConstraints = callConstraints.getArgType(i);
+        const arg = args[i];
+        if (arg) {
+          argConstraints.addNameHint(guessName(arg));
+        }
+        // console.log(`  ARG(${i}): ${checker.typeToString(t)}`);
+        argConstraints.isType(t);
+      });
+  }
+
+
   // TODO: check if a constraint has seen any new info, then as long as some do,
   // do our own loop to avoid writing files.
   //   for (let i = 0; i < options.maxSubInferenceCount; i++) {
@@ -173,5 +190,5 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
   //     }
   //   }
 
-  applyConstraints(constraintsCache.allConstraints, checker, addChange);
+  applyConstraints(constraintsCache.allConstraints, constraintsCache.requireConstraints, checker, addChange, addRequirement);
 }

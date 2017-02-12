@@ -1,10 +1,8 @@
 import * as ts from 'typescript';
-import {AddChangeCallback} from '../utils/language_service_reactor';
+import {ReactorCallback} from '../utils/language_service_reactor';
 import {traverse} from '../utils/nodes';
 
-export function updateExports(
-    fileNames: string[], services: ts.LanguageService,
-    addChange: AddChangeCallback) {
+export const updateExports: ReactorCallback = (fileNames, services, addChange, addRequirement) => {
   const program = services.getProgram();
   const checker = program.getTypeChecker();
 
@@ -18,4 +16,4 @@ export function updateExports(
           });
     }
   }
-}
+};

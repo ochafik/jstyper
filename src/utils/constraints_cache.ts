@@ -9,6 +9,7 @@ import {applyConstraints} from './apply_constraints';
 
 export class ConstraintsCache {
   allConstraints = new Map<ts.Symbol, TypeConstraints>();
+  requireConstraints = new Map<string, TypeConstraints>();
 
   constructor(
       private services: ts.LanguageService, private options: Options,
@@ -25,6 +26,24 @@ export class ConstraintsCache {
     if (constraints) {
       constraints.isBooleanLike();
     }
+  }
+
+  private getRequireConstraints(requirePath: string): TypeConstraints {
+    let constraints = this.requireConstraints.get(requirePath);
+    if (!constraints) {
+      // console.log(`Building constraints for
+      // ${this.checker.symbolToString(sym)}`);
+      constraints = new TypeConstraints(
+          `require(${requirePath})`, this.services, this.checker,
+          this.options, undefined);
+      this.requireConstraints.set(requirePath, constraints);
+    }
+    return constraints;
+  }
+
+  private getSymbolConstraintsAtLocation(node?: ts.Node): TypeConstraints | undefined {
+    const sym = node && this.checker.getSymbolAtLocation(node);
+    return sym && this.getSymbolConstraints(sym);
   }
 
   private getSymbolConstraints(sym: ts.Symbol): TypeConstraints {
@@ -69,14 +88,22 @@ export class ConstraintsCache {
       if (sym) {
         return this.getSymbolConstraints(sym);
       }
-    } else if (
-        nodes.isFunctionLikeDeclaration(node) ||
-        nodes.isInterfaceDeclaration(node) ||
-        nodes.isVariableDeclaration(node)) {
-      const sym = node.name && this.checker.getSymbolAtLocation(node.name);
-      if (sym) {
-        return this.getSymbolConstraints(sym);
+    } else if (nodes.isVariableDeclaration(node)) {
+      if (nodes.isCallExpression(node.initializer) &&
+          nodes.isIdentifier(node.initializer.expression) &&
+          node.initializer.expression.text == 'require' &&
+          node.initializer.arguments.length == 1) {
+        const requireArg = node.initializer.arguments[0];
+        if (nodes.isStringLiteral(requireArg)) {
+          const requirePath = requireArg.text;
+          if (!requirePath.startsWith('.')) {
+            return this.getRequireConstraints(requirePath);
+          }
+        }
       }
+      return this.getSymbolConstraintsAtLocation(node.name);
+    } else if (nodes.isFunctionLikeDeclaration(node) || nodes.isInterfaceDeclaration(node)) {
+      return this.getSymbolConstraintsAtLocation(node.name);
     } else if (nodes.isParameter(node)) {
       if (node.parent && nodes.isFunctionLikeDeclaration(node.parent)) {
         const paramIndex = node.parent.parameters.indexOf(node);
@@ -84,6 +111,23 @@ export class ConstraintsCache {
         // console.log(`FUN constraints: ${funConstraints}`);
         if (funConstraints) {
           return funConstraints.getCallConstraints().getArgType(paramIndex);
+        }
+      }
+    } else if (nodes.isImportSpecifier(node)) {
+      if (node.parent) {
+        const constraints = this.getNodeConstraints(node.parent);
+        if (constraints) {
+          const name = (node.propertyName || node.name).text;
+          return constraints.getFieldConstraints(name);
+        }
+      }
+    } else if (nodes.isNamedImports(node)) {
+      return node.parent && this.getNodeConstraints(node.parent);
+    } else if (nodes.isImportClause(node)) {
+      if (node.parent && nodes.isImportDeclaration(node.parent)) {
+        const mod = node.parent.moduleSpecifier;
+        if (nodes.isStringLiteral(mod)) {
+          return this.getRequireConstraints(mod.text);
         }
       }
     } else if (nodes.isIdentifier(node)) {

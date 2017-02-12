@@ -37,7 +37,7 @@ export default {
   result: {
     files: {
       'input.d.ts': `
-        declare let x: number | {y: {z(): void}};
+        declare let x: number | ({readonly y: {z(): void}});
         
         
         declare function f(x: number): boolean ;

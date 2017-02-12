@@ -36,7 +36,7 @@ export default {
   result: {
     files: {
       'input.js': `
-        let foo: {foo1(arg1: number): string, foo2: number} = require('foo');
+        let foo = require('foo');
         let foo1: (arg1: number) => string = foo.foo1;
         let foo2: number = foo.foo2;
         
@@ -59,6 +59,13 @@ export default {
         function h2(x: number): number {
           return ++x;
         }
+      `,
+      'node_modules/foo/index.d.ts': `
+        declare module "foo" {
+          export function foo1(arg1: number): string;
+          export const foo2: number;
+        }
+        
       `
     },
     metadata: {

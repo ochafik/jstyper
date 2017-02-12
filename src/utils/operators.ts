@@ -56,6 +56,7 @@ export const unaryBooleanOperators = set([
 ]);
 
 export const assignmentOperators = set([
+  ts.SyntaxKind.EqualsToken,
   ts.SyntaxKind.MinusEqualsToken,
   ts.SyntaxKind.AsteriskEqualsToken,
   ts.SyntaxKind.AsteriskAsteriskEqualsToken,

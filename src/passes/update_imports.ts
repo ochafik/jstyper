@@ -1,10 +1,8 @@
 import * as ts from 'typescript';
-import {AddChangeCallback} from '../utils/language_service_reactor';
+import {ReactorCallback} from '../utils/language_service_reactor';
 import * as nodes from '../utils/nodes';
 
-export function updateImports(
-    fileNames: string[], services: ts.LanguageService,
-    addChange: AddChangeCallback) {
+export const updateImports: ReactorCallback = (fileNames, services, addChange, addRequirement) => {
   const program = services.getProgram();
   const checker = program.getTypeChecker();
 
@@ -20,7 +18,7 @@ export function updateImports(
       });
     }
   }
-}
+};
 
 function getRequiredPath(node: ts.Node): ts.StringLiteral|undefined {
   if (nodes.isCallExpression(node)) {

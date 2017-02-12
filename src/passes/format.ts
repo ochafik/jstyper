@@ -1,14 +1,12 @@
 import * as ts from 'typescript';
-import {AddChangeCallback} from '../utils/language_service_reactor';
+import {ReactorCallback} from '../utils/language_service_reactor';
 
-export function format(
-    fileNames: string[], services: ts.LanguageService,
-    addChange: AddChangeCallback) {
+export const format: ReactorCallback = (fileNames, services, addChange, addRequirement) => {
   for (const fileName of fileNames) {
     services.getFormattingEditsForDocument(fileName, formattingOptions)
         .forEach(c => addChange(fileName, c));
   }
-}
+};
 
 const formattingOptions: ts.FormatCodeOptions = {
   IndentStyle: ts.IndentStyle.Smart,

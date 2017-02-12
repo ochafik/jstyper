@@ -1,11 +1,9 @@
 import * as ts from 'typescript';
-import {AddChangeCallback} from '../utils/language_service_reactor';
+import {ReactorCallback} from '../utils/language_service_reactor';
 import * as nodes from '../utils/nodes';
 import {Mutator} from '../utils/mutator';
 
-export function turnToDeclarations(
-    fileNames: string[], services: ts.LanguageService,
-    addChange: AddChangeCallback) {
+export const turnToDeclarations: ReactorCallback = (fileNames, services, addChange, addRequirement) => {
   const program = services.getProgram();
   const checker = program.getTypeChecker();
 
@@ -66,4 +64,4 @@ export function turnToDeclarations(
       }
     }
   }
-}
+};

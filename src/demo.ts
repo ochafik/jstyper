@@ -102,8 +102,15 @@ window.addEventListener('load', () => {
       maxIterations: getMaxIterations()
     };
 
-    const {files: {'file.ts': output}, metadata} =
-        runTyper({'file.ts': jsInput.value})
+    const inputFileName = 'file.js';
+    const {files, metadata} = runTyper({[inputFileName]: jsInput.value}, options)
+    let output = '';
+    for (const fileName in files) {
+      if (fileName != inputFileName) {
+        output += `${files[fileName]}\n`;
+      }
+    }
+    output += files[inputFileName];
     tsOutput.value = output;
     const time = new Date().getTime() - start;
     stats.textContent = `Execution time (${metadata.inferencePasses

@@ -61,7 +61,7 @@ export default {
           }
         }
         
-        function i5(x1?: {y: any}, x2: {y: string}) {
+        function i5(x1?: {readonly y: any}, x2: {readonly y: string}) {
           if (x2.y) return x2.y.length;
           return x1 ? x1.y : null;
         }

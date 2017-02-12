@@ -76,6 +76,7 @@ export class TypeConstraints {
   private _isBooleanLike = false;
   private _isNumberOrString = false;
   private _cannotBeVoid = false;
+  private _canBeSet = false;
 
   private _hasChanges = false;
   // private _isBuilding = true;
@@ -90,6 +91,10 @@ export class TypeConstraints {
     }
     // console.log(`TypeConstraints: ${description}`);
     // this._isBuilding = false;
+  }
+
+  get fieldNames(): string[] {
+    return [...this.fields.keys()];
   }
 
   addName(name?: string) {
@@ -114,6 +119,7 @@ export class TypeConstraints {
   get isPureFunction(): boolean {
     return this.callConstraints != null && !this._isBooleanLike &&
         !this._isNumberOrString && (this._flags === ts.TypeFlags.Object) &&
+        !this._canBeSet &&
         this.fields.size == 0;
   }
 
@@ -221,10 +227,13 @@ export class TypeConstraints {
         // known declaration`);
         continue;
       }
-      this.getFieldConstraints(this.checker.symbolToString(prop), markChanges)
-          .isType(
-              this.checker.getTypeOfSymbolAtLocation(prop, decls[0]),
-              markChanges);
+      const fieldConstraints = this.getFieldConstraints(this.checker.symbolToString(prop), markChanges);
+      if (prop.flags & ts.SymbolFlags.SetAccessor) {
+        fieldConstraints.canBeSet();
+      }
+      fieldConstraints.isType(
+          this.checker.getTypeOfSymbolAtLocation(prop, decls[0]),
+          markChanges);
     }
 
     this.hasFlags(type.flags, markChanges);
@@ -280,6 +289,17 @@ export class TypeConstraints {
   }
   isVoid(markChanges: boolean = true) {
     this.hasFlags(ts.TypeFlags.Void, markChanges);
+  }
+  
+  get settable(): boolean {
+    return this._canBeSet;
+  }
+  canBeSet(markChanges: boolean = true) {
+    if (this._canBeSet) return;
+    this._canBeSet = true;
+    if (markChanges) {
+      this.markChange();
+    }
   }
   cannotBeVoid(markChanges: boolean = true) {
     if (this._cannotBeVoid) return;
@@ -361,15 +381,21 @@ export class TypeConstraints {
     return {resolved: resolved, isUndefined: isUndefined};
   }
 
-  private resolveKeyValueDecl(name: string, valueType: TypeConstraints):
+  private resolveKeyValueDecl(name: string, valueType: TypeConstraints, {isMember}: {isMember?: boolean} = {}):
       string {
     valueType.normalize();
-    const {isUndefined, resolved} = valueType.resolveMaybeUndefined();
-    return `${name}${isUndefined ? '?' :
-                                   ''
-                                   }: ${resolved ||
-            'any'
-            }`;
+    let {isUndefined, resolved} = valueType.resolveMaybeUndefined();
+    resolved = resolved || 'any';
+    if (isUndefined) {
+      return `${name}?: ${resolved}`;
+    } else {
+      if (this._canBeSet || !isMember) {
+        return `${name}: ${resolved}`;
+      } else {
+        return `readonly ${name}: ${resolved}`;
+        // return `get ${name}(): ${resolved}`;
+      }
+    }
   }
 
   get bestName(): string|undefined {
@@ -402,7 +428,7 @@ export class TypeConstraints {
       this.callConstraints.argTypes
           .map((t, i) => {
             const name = t.bestName || `arg${i + 1}`;
-            return this.resolveKeyValueDecl(name, t);
+            return this.resolveKeyValueDecl(name, t, {isMember: false});
           })
           .join(', '),
       this.callConstraints.returnType.resolve() || 'any'
@@ -491,6 +517,7 @@ export class TypeConstraints {
 
     if (this.callConstraints) {
       let [argList, retType] = this.resolveCallableArgListAndReturnType()!;
+      retType = retType || 'any';
       if (retType.indexOf(' ') >= 0) {
         retType = `(${retType})`;
       }
@@ -519,7 +546,7 @@ export class TypeConstraints {
             constraints!.resolveCallableArgListAndReturnType()!;
         members.push(`${name}(${argList}): ${retType}`);
       } else {
-        members.push(this.resolveKeyValueDecl(name, constraints));
+        members.push(this.resolveKeyValueDecl(name, constraints, {isMember: true}));
       }
     }
 
@@ -548,7 +575,7 @@ export class TypeConstraints {
     if (union.length == 0 && fl.isVoid(flags)) {
       union.push('void');
     }
-    const result = union.length == 0 ? null : union.join(' | ');
+    const result = union.length == 0 ? null : union.map(u => u.indexOf(' ') < 0 || union.length == 1 ? u : `(${u})`).join(' | ');
     // console.log(`result = "${result}" (members = [${members}], types =
     // [${this.types.map(t => this.checker.typeToString(t))}], flags =
     // ${this._flags}, missingFlags = ${missingFlags}`);
