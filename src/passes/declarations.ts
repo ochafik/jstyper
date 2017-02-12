@@ -61,8 +61,6 @@ export function turnToDeclarations(
         ts.forEachChild(node, visit);
       } else if (nodes.isVariableDeclaration(node)) {
         removeInitializer(node);
-      } else if (nodes.isExpressionStatement(node)) {
-        visit(node.expression);
       } else {
         remove(node);
       }
