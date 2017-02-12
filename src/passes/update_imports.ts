@@ -1,6 +1,7 @@
 import * as ts from 'typescript';
 import {ReactorCallback} from '../utils/language_service_reactor';
 import * as nodes from '../utils/nodes';
+import {Mutator} from '../utils/mutator';
 
 export const updateImports: ReactorCallback = (fileNames, services, addChange, addRequirement) => {
   const program = services.getProgram();
@@ -8,31 +9,20 @@ export const updateImports: ReactorCallback = (fileNames, services, addChange, a
 
   for (const sourceFile of program.getSourceFiles()) {
     if (fileNames.indexOf(sourceFile.fileName) >= 0) {
-      nodes.traverse(sourceFile, (node: ts.Node) => {
+      const mutator = new Mutator(sourceFile.fileName, addChange);
 
-        const path = getRequiredPath(node);
-        if (path) {
-          // TODO
-          console.warn(`FOUND require of ${path.text}`);
+      nodes.traverse(sourceFile, (node: ts.Node) => {
+        if (nodes.isVariableDeclarationList(node) && node.declarations.length == 1) {
+          const [decl] = node.declarations;
+          if (nodes.isIdentifier(decl.name)) {
+            const requiredPath = nodes.getRequiredPath(decl.initializer);
+            if (requiredPath) {
+              const start = node.getStart();
+              mutator.remove(start, node.getEnd() - start, `import * as ${decl.name.text} from '${requiredPath}'`);
+            }
+          }
         }
       });
     }
   }
 };
-
-function getRequiredPath(node: ts.Node): ts.StringLiteral|undefined {
-  if (nodes.isCallExpression(node)) {
-    const call = <ts.CallExpression>node;
-    if (nodes.isIdentifier(call.expression)) {
-      const id = <ts.Identifier>(call.expression);
-      if (id.text == 'require' && call.arguments.length == 1 &&
-          !call.typeArguments) {
-        const [arg] = call.arguments;
-        if (nodes.isStringLiteral(arg)) {
-          return <ts.StringLiteral>arg;
-        }
-      }
-    }
-  }
-  return undefined;
-}

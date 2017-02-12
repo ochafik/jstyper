@@ -68,3 +68,4 @@ function gg(x: number, y: {addValue: boolean, value: any, name: string}) {
 - Use type constraints instead of types to allow local inference passes
 - Support merging of symbols added after structural members `{x: number} | Foo`
 - Handle index operators
+- Infer `x: Promise<T>` from `(await x): T`

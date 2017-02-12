@@ -20,7 +20,7 @@ export default {
   result: {
     files: {
       'input.js': `
-        let foo = require('foo');
+        import * as foo from 'foo';
         let a: (arg1: number) => string = foo.a;
         let b: number = foo.b;
         

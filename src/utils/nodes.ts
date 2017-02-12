@@ -33,3 +33,18 @@ export function findParent(
 export function getNodeKindDebugDescription(node: ts.Node) {
   return Object.keys(ts.SyntaxKind).find(k => ts.SyntaxKind[k] == node.kind);
 }
+
+export function getRequiredPath(node?: ts.Node): string|undefined {
+  if (node &&
+      nodes.isCallExpression(node) &&
+      nodes.isIdentifier(node.expression) &&
+      node.expression.text == 'require' &&
+      !node.typeArguments &&
+      node.arguments.length == 1) {
+    const [arg] = node.arguments;
+    if (nodes.isStringLiteral(arg)) {
+      return arg.text;
+    }
+  }
+  return undefined;
+}

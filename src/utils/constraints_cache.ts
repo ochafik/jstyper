@@ -89,17 +89,9 @@ export class ConstraintsCache {
         return this.getSymbolConstraints(sym);
       }
     } else if (nodes.isVariableDeclaration(node)) {
-      if (nodes.isCallExpression(node.initializer) &&
-          nodes.isIdentifier(node.initializer.expression) &&
-          node.initializer.expression.text == 'require' &&
-          node.initializer.arguments.length == 1) {
-        const requireArg = node.initializer.arguments[0];
-        if (nodes.isStringLiteral(requireArg)) {
-          const requirePath = requireArg.text;
-          if (!requirePath.startsWith('.')) {
-            return this.getRequireConstraints(requirePath);
-          }
-        }
+      let requiredPath = nodes.getRequiredPath(node.initializer);
+      if (requiredPath && !requiredPath.startsWith('.')) {
+        return this.getRequireConstraints(requiredPath);
       }
       return this.getSymbolConstraintsAtLocation(node.name);
     } else if (nodes.isFunctionLikeDeclaration(node) || nodes.isInterfaceDeclaration(node)) {
@@ -113,6 +105,8 @@ export class ConstraintsCache {
           return funConstraints.getCallConstraints().getArgType(paramIndex);
         }
       }
+    } else if (nodes.isNamespaceImport(node)) {
+      return node.parent && this.getNodeConstraints(node.parent);
     } else if (nodes.isImportSpecifier(node)) {
       if (node.parent) {
         const constraints = this.getNodeConstraints(node.parent);
