@@ -3,7 +3,7 @@ import {TypeConstraints, CallConstraints} from '../utils/type_constraints';
 import * as fl from "../utils/flags";
 import * as nodes from "../utils/nodes";
 import {Options} from '../options';
-import {applyConstraints} from './apply_constraints';
+import {applyConstraints} from '../utils/apply_constraints';
 
 export class ConstraintsCache {
   

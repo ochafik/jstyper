@@ -7,8 +7,8 @@ import * as ops from '../utils/operators';
 import * as nodes from '../utils/nodes';
 import {guessName} from '../utils/name_guesser';
 import {Options} from '../options';
-import {applyConstraints} from './apply_constraints';
-import {ConstraintsCache} from './constraints_cache';
+import {applyConstraints} from '../utils/apply_constraints';
+import {ConstraintsCache} from '../utils/constraints_cache';
 
 export const infer: (options: Options) => ReactorCallback = (options) => (fileNames, services, addChange) => {
   
