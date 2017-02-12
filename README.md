@@ -35,7 +35,7 @@ function gg(x, y) {
 
 example.ts:
 
-```typescript    
+```js    
 function f(x: number): number {
   return x * 2;
 }
