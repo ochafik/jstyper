@@ -11,6 +11,18 @@ JsTyper adds {TypeScript, Flow, Closure} types to JavaScript programs using iter
     * `-o <outputDir>` (or `--outputDir=<outputDir>`): where files should be generated
     * `--declarations`: only generate interface files (`*.d.ts`)
 
+# Features
+
+- Assumes your JS code is correct, and propagates inferred types globally (across different files):
+  - From call sites: if you call `f(1)`, it will assume `function f` can take a `number` argument. If you call `f()` somewhere else, it will assume that argument is optional.
+  - From function bodies: in `function f(x) { return x * 2 }` it's obvious `x` must be a `number`. Similar constraints appear when you test arguments for nullity or for equality with other values, etc.
+  - From call shapes: from `x.y() * x.n;` it infers `x: {y(): void, readonly n: number}`
+- Rewrites `require` calls to ES2016 (ES6) imports.
+- Rewrites `module.exports` to ES2016 (ES6) exports.
+- Supports writing declarations (`*.d.ts`) files only with the `--declarations` flag.
+- Writes a summary of imported / required module interfaces in `dependencies.d.ts` (e.g. if you `var foo = require('foo'); foo.bar()` it will infer `declare module "foo" { export function bar(): void }`)
+- Rewrites `var` to `let`
+
 # Example
 
 example.js:
@@ -52,18 +64,6 @@ function gg(x: number, y: {addValue: boolean, value: any, name: string}) {
   return v;
 }
 ```
-
-# Features
-
-- Assumes your JS code is correct, and propagates inferred types globally (across different files):
-  - From call sites: if you call `f(1)`, it will assume `function f` can take a `number` argument. If you call `f()` somewhere else, it will assume that argument is optional.
-  - From function bodies: in `function f(x) { return x * 2 }` it's obvious `x` must be a `number`. Similar constraints appear when you test arguments for nullity or for equality with other values, etc.
-  - From call shapes: from `x.y() * x.n;` it infers `x: {y(): void, readonly n: number}`
-- Rewrites `require` calls to ES2016 (ES6) imports.
-- Rewrites `module.exports` to ES2016 (ES6) exports.
-- Supports writing declarations (`*.d.ts`) files only with the `--declarations` flag.
-- Writes a summary of imported / required module interfaces in `dependencies.d.ts` (e.g. if you `var foo = require('foo'); foo.bar()` it will infer `declare module "foo" { export function bar(): void }`)
-- Rewrites `var` to `let`
 
 # TODO
 
