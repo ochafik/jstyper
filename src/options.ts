@@ -1,6 +1,3 @@
-function f(x: number) {
-  return x ? 1 : 2;
-}
 
 export type Options = {
   format: boolean,

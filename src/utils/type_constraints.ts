@@ -12,7 +12,6 @@ export type Signature = {
 };
 
 export class CallConstraints {
-  // private arities: number[] = [];
   private minArity: number|undefined;
 
   constructor(
@@ -25,10 +24,7 @@ export class CallConstraints {
   get hasChanges() {
     return this.returnType.hasChanges || this.argTypes.some(c => c.hasChanges);
   }
-  // clearHasChanges() {
-  //   this.returnType.clearHasChanges();
-  //   this.argTypes.forEach(c => c.clearHasChanges());
-  // }
+  
   private ensureArity(arity: number, markChanges: boolean = true) {
     let updated = false;
     for (let i = 0; i < arity; i++) {
@@ -67,9 +63,10 @@ export class CallConstraints {
 };
 
 export class TypeConstraints {
-  private fields = new Map<string, TypeConstraints>();
+  fields = new Map<string, TypeConstraints>();
+  computedFields = new Map<string, TypeConstraints>();
+  
   private callConstraints?: CallConstraints;
-  // private types: ts.Type[] = [];
   private symbols: ts.Symbol[] = [];
   private names: Set<string>|undefined;
   private nameHints: Set<string>|undefined;
@@ -80,7 +77,6 @@ export class TypeConstraints {
   private _isWritable = false;
 
   private _hasChanges = false;
-  // private _isBuilding = true;
 
   constructor(
       public readonly description: string, private services: ts.LanguageService,
@@ -88,14 +84,7 @@ export class TypeConstraints {
       initialType?: ts.Type) {
     if (initialType) {
       this.isType(initialType);
-      // this.clearHasChanges();
     }
-    // console.log(`TypeConstraints: ${description}`);
-    // this._isBuilding = false;
-  }
-
-  get fieldNames(): string[] {
-    return [...this.fields.keys()];
   }
 
   addName(name?: string) {
@@ -121,7 +110,8 @@ export class TypeConstraints {
     return this.callConstraints != null && !this._isBooleanLike &&
         !this._isNumberOrString && (this._flags === ts.TypeFlags.Object) &&
         // !this._isWritable &&
-        this.fields.size == 0;
+        this.fields.size == 0 &&
+        this.computedFields.size == 0;
   }
 
   getFieldConstraints(name: string, markChanges: boolean = true):
@@ -134,6 +124,20 @@ export class TypeConstraints {
         constraints.markChange();
       }
       this.fields.set(name, constraints);
+    }
+    return constraints;
+  }
+
+  getComputedFieldConstraints(name: string, markChanges: boolean = true):
+      TypeConstraints {
+    this.isObject(markChanges);
+    let constraints = this.computedFields.get(name);
+    if (!constraints) {
+      constraints = this.createConstraints(`${this.description}['${name}']`);
+      if (markChanges) {
+        constraints.markChange();
+      }
+      this.computedFields.set(name, constraints);
     }
     return constraints;
   }
@@ -180,20 +184,6 @@ export class TypeConstraints {
         return;
       }
     }
-
-    // this.types.push(type);
-
-    // function isType(c: TypeConstraints, t: ts.Type) {
-    //   if (isNamedSymbol) {
-    //     const hadChanges = c.hasChanges;
-    //     c.isType(t);
-    //     if (!hadChanges) {
-    //       c.clearHasChanges();
-    //     }
-    //   } else {
-    //     c.isType(t);
-    //   }
-    // }
 
     for (const sig of type.getCallSignatures()) {
       const params = sig.getDeclaration().parameters;
@@ -350,11 +340,9 @@ export class TypeConstraints {
     if (this._hasChanges) {
       return true;
     }
-    for (const c of this.fields.values()) {
-      if (c.hasChanges) {
-        this._hasChanges = true;
-        return true;
-      }
+    if ([...this.fields.values(), ...this.computedFields.values()].some(f => f.hasChanges)) {
+      this._hasChanges = true;
+      return true;
     }
     if (this.callConstraints && this.callConstraints.hasChanges) {
       this._hasChanges = true;
@@ -362,17 +350,7 @@ export class TypeConstraints {
     }
     return false;
   }
-
-  // clearHasChanges() {
-  //   this._hasChanges = false;
-  //   for (const c of this.fields.values()) {
-  //     c.clearHasChanges();
-  //   }
-  //   if (this.callConstraints) {
-  //     this.callConstraints.clearHasChanges();
-  //   }
-  // }
-
+  
   private typeToString(t: ts.Type|null): string|null {
     return t == null ? null : this.checker.typeToString(t);
   }
@@ -381,26 +359,26 @@ export class TypeConstraints {
     this.normalize();
     const isUndefined = fl.isUndefined(this.flags);
 
-    // console.log(`isUndefined(${name}) = ${isUndefined} (Flags =
-    // ${constraints.flags})`);
     const resolved =
         this.resolve({ignoreFlags: isUndefined ? ts.TypeFlags.Undefined : 0});
     return {resolved: resolved, isUndefined: isUndefined};
   }
 
-  private resolveKeyValueDecl(name: string, valueType: TypeConstraints, {isMember}: {isMember?: boolean} = {}):
+  private resolveKeyValueDecl(name: string, valueType: TypeConstraints, {isComputed, isMember}: {isComputed?: boolean, isMember?: boolean} = {}):
       string {
     valueType.normalize();
     let {isUndefined, resolved} = valueType.resolveMaybeUndefined();
     resolved = resolved || 'any';
+
+    const key = isComputed ? `['${name}']` : name;
     if (isUndefined) {
-      return `${name}?: ${resolved}`;
+      return `${key}?: ${resolved}`;
     } else {
       if (valueType._isWritable || !isMember) {
-        return `${name}: ${resolved}`;
+        return `${key}: ${resolved}`;
       } else {
-        return `readonly ${name}: ${resolved}`;
-        // return `get ${name}(): ${resolved}`;
+        return `readonly ${key}: ${resolved}`;
+        // return `get ${key}(): ${resolved}`;
       }
     }
   }
@@ -425,12 +403,6 @@ export class TypeConstraints {
   }
 
   resolveCallableArgListAndReturnType(): [string, string]|undefined {
-    // const isUndefined = fl.isUndefined(constraints.flags);
-    //     // console.log(`isUndefined(${name}) = ${isUndefined} (Flags =
-    //     ${constraints.flags})`);
-    //     const resolved = constraints.resolve({ignoreFlags: isUndefined ?
-    //     ts.TypeFlags.Undefined : 0});
-
     return this.callConstraints && [
       this.callConstraints.argTypes
           .map((t, i) => {
@@ -448,12 +420,13 @@ export class TypeConstraints {
     // let fieldsToRemove = new Set([...this.fields.keys()]);
     function removeFields(names: string[]) {
       names.forEach(n => this.fields.remove(n));
+      names.forEach(n => this.computedFields.remove(n));
     }
     if (fl.isString(flags)) {
       removeFields(Object.keys(String.prototype));
     }
 
-    const fieldNames = [...this.fields.keys()];
+    const fieldNames = [...this.fields.keys(), ...this.computedFields.keys()];
     const allFieldsAreStringMembers =
         fieldNames.every(k => k in String.prototype);
     const allFieldsAreArrayMembers =
@@ -481,6 +454,7 @@ export class TypeConstraints {
       flags &= ~ts.TypeFlags.Boolean;
       flags |= ts.TypeFlags.String;
       this.fields.clear();
+      this.computedFields.clear();
     }
 
     if (this._isNumberOrString || fl.isNumber(flags) || fl.isString(flags)) {
@@ -490,6 +464,7 @@ export class TypeConstraints {
       if (fieldNames.length > 0 && allFieldsAreStringMembers) {
         flags |= ts.TypeFlags.String;
         this.fields.clear();
+        this.computedFields.clear();
       } else if (!fl.isNumber(flags) && !fl.isString(flags)) {
         flags |= ts.TypeFlags.String | ts.TypeFlags.Number;
       }
@@ -541,29 +516,23 @@ export class TypeConstraints {
       union.push(this.checker.symbolToString(sym));
     }
 
-    for (const [name, constraints] of this.fields) {
-      if (!constraints.hasChanges) {
-        // console.log(`NO CHANGE for ${constraints.description}`);
-        continue;
+    const handleFields = (fields: Map<string, TypeConstraints>, isComputed: boolean) => {
+      for (const [name, constraints] of fields) {
+        if (!constraints.hasChanges) continue;
+        constraints.normalize();
+
+        if (constraints.isPureFunction) {
+          const [argList, retType] =
+              constraints!.resolveCallableArgListAndReturnType()!;
+          members.push(`${isComputed ? `['${name}']` : name}(${argList}): ${retType}`);
+        } else {
+          members.push(this.resolveKeyValueDecl(name, constraints, {isComputed, isMember: true}));
+        }
       }
-      constraints.normalize();
+    };
+    handleFields(this.fields, false);
+    handleFields(this.computedFields, true);
 
-      if (constraints.isPureFunction) {
-        const [argList, retType] =
-            constraints!.resolveCallableArgListAndReturnType()!;
-        members.push(`${name}(${argList}): ${retType}`);
-      } else {
-        members.push(this.resolveKeyValueDecl(name, constraints, {isMember: true}));
-      }
-    }
-
-    // for (const type of this.types) {
-    //   union.push(this.checker.typeToString(type));
-    // }
-
-    // const typesFlags = this.types.reduce((flags, type) => flags | type.flags,
-    // 0);
-    // const missingFlags = this._flags & ~typesFlags;
     let flags = this._flags;
     if (ignoreFlags) {
       flags &= ~ignoreFlags;
@@ -575,7 +544,6 @@ export class TypeConstraints {
     }
     if (members.length > 0) {
       union.push('{' + members.join(', ') + '}');
-      // union.push('{ ' + members.map(m => m + ';').join(' ') + ' }');
     }
 
     // Skip void if there's any other type.

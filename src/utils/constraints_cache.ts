@@ -76,6 +76,11 @@ export class ConstraintsCache {
       if (constraints) {
         return constraints.getFieldConstraints(node.name.text);
       }
+    } else if (nodes.isElementAccessExpression(node) && nodes.isStringLiteral(node.argumentExpression)) {
+      const constraints = this.getNodeConstraints(node.expression);
+      if (constraints) {
+        return constraints.getComputedFieldConstraints(node.argumentExpression.text);
+      }
     } else if (nodes.isCallExpression(node)) {
       let constraints = this.getNodeConstraints(node.expression);
       if (constraints) {
