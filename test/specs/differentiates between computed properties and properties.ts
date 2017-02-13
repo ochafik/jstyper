@@ -7,27 +7,33 @@ import {TestSpec} from '../../src/testing/test_spec';
 export default {
   files: {
     'input.js': `
-      function f(x) {
+      function f(x, z) {
         x.a == 1;
         x['a'] == '';
         x.b();
         x['b']();
         x.c = true;
         x['c'] = '';
+ 
+        z['yay'];
       }    
     `
   },
-  options: {},
+  options: {
+    differentiateComputedProperties: true
+  },
   result: {
     files: {
       'input.js': `
-function f(x: {readonly a: number, b(): void, c: boolean, readonly ['a']: number | string, ['b'](): void, ['c']: string}): void {
+function f(x: {readonly a: number, b(): void, c: boolean, readonly ['a']: number | string, ['b'](): void, ['c']: string}, z: {readonly ['yay']: any}): void {
   x.a == 1;
   x['a'] == '';
   x.b();
   x['b']();
   x.c = true;
   x['c'] = '';
+
+  z['yay'];
 }
 `
     },

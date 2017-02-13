@@ -38,14 +38,14 @@ function f4(x: number): number {
   return x * 2;
 }
 
-function g4(x: number, o: {readonly addValue: boolean, readonly value: any, readonly name: string}) {
+function g4(x: number, o: {readonly addValue: boolean, readonly name: string, readonly value: any}) {
   if (o.addValue) {
     return f4(x) + o.value;
   }
   return o.name == 'default' ? x : 'y';
 }
 
-function gg4(x: number, y: {readonly addValue: boolean, readonly value: any, readonly name: string}) {
+function gg4(x: number, y: {readonly addValue: boolean, readonly name: string, readonly value: any}) {
   let v = g4(x, y);
   return v;
 }

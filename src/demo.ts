@@ -99,6 +99,7 @@ window.addEventListener('load', () => {
     const options = <Options>{
       ...defaultOptions,
       debugPasses: true,
+      // differentiateComputedProperties: true,
       maxIterations: getMaxIterations()
     };
 

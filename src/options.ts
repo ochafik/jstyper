@@ -1,6 +1,7 @@
 
 export type Options = {
   format: boolean,
+  differentiateComputedProperties: boolean,
   updateImports: boolean,
   updateExports: boolean,
   declarations: boolean,
@@ -15,6 +16,7 @@ export type Options = {
 
 export const defaultOptions: Readonly<Options> = Object.freeze({
   format: true,
+  differentiateComputedProperties: false,
   updateImports: true,
   updateExports: true,
   declarations: false,

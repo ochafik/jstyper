@@ -130,6 +130,10 @@ export class TypeConstraints {
 
   getComputedFieldConstraints(name: string, markChanges: boolean = true):
       TypeConstraints {
+    if (!this.options.differentiateComputedProperties) {
+      return this.getFieldConstraints(name, markChanges);
+    }
+
     this.isObject(markChanges);
     let constraints = this.computedFields.get(name);
     if (!constraints) {
@@ -218,9 +222,29 @@ export class TypeConstraints {
         // known declaration`);
         continue;
       }
-      const fieldConstraints = this.getFieldConstraints(this.checker.symbolToString(prop), markChanges);
+      // const fieldConstraints = this.getFieldConstraints(this.checker.symbolToString(prop), markChanges);
       
       for (const decl of decls) {
+        if (!nodes.isPropertySignature(decl) &&
+            !nodes.isPropertyDeclaration(decl)) {
+          continue;
+        }
+        //const name = this.checker.symbolToString(prop);
+        let name: string | undefined;
+        let fieldConstraints: TypeConstraints | undefined;
+        if (nodes.isComputedPropertyName(decl.name)) {
+          if (nodes.isStringLiteral(decl.name.expression)) {
+            name = decl.name.expression.text;
+            fieldConstraints = this.getComputedFieldConstraints(name, markChanges);
+          }
+        } else {
+          name = this.checker.symbolToString(prop);
+          fieldConstraints = this.getFieldConstraints(name, markChanges);
+        }
+        if (!name || !fieldConstraints) {
+          continue;
+        }
+      
         const type = this.checker.getTypeOfSymbolAtLocation(prop, decl);
         if (//(prop.flags & ts.SymbolFlags.SetAccessor) ||
             !nodes.isReadonly(decl)) {
@@ -418,10 +442,17 @@ export class TypeConstraints {
     let flags = this._flags;
 
     // let fieldsToRemove = new Set([...this.fields.keys()]);
-    function removeFields(names: string[]) {
-      names.forEach(n => this.fields.remove(n));
-      names.forEach(n => this.computedFields.remove(n));
-    }
+    const removeFields = (names: string[]) => {
+      for (const n of names) {
+        this.fields.delete(n);
+        this.computedFields.delete(n);
+      }
+    };
+    const removeAllFields = () => {
+      this.fields.clear();
+      this.computedFields.clear();
+    };
+
     if (fl.isString(flags)) {
       removeFields(Object.keys(String.prototype));
     }
@@ -453,8 +484,7 @@ export class TypeConstraints {
       this._isNumberOrString = false;
       flags &= ~ts.TypeFlags.Boolean;
       flags |= ts.TypeFlags.String;
-      this.fields.clear();
-      this.computedFields.clear();
+      removeAllFields();
     }
 
     if (this._isNumberOrString || fl.isNumber(flags) || fl.isString(flags)) {
@@ -463,8 +493,7 @@ export class TypeConstraints {
 
       if (fieldNames.length > 0 && allFieldsAreStringMembers) {
         flags |= ts.TypeFlags.String;
-        this.fields.clear();
-        this.computedFields.clear();
+        removeAllFields();
       } else if (!fl.isNumber(flags) && !fl.isString(flags)) {
         flags |= ts.TypeFlags.String | ts.TypeFlags.Number;
       }
@@ -505,7 +534,7 @@ export class TypeConstraints {
       }
 
       const sigSig = `(${argList})${retType}`;
-      if (this.fields.size > 0) {
+      if (this.fields.size > 0 || this.computedFields.size > 0) {
         members.push(`(${argList}): ${retType}`)
       } else {
         union.push(`(${argList}) => ${retType}`);
@@ -517,8 +546,10 @@ export class TypeConstraints {
     }
 
     const handleFields = (fields: Map<string, TypeConstraints>, isComputed: boolean) => {
-      for (const [name, constraints] of fields) {
-        if (!constraints.hasChanges) continue;
+      for (const [name, constraints] of [...fields].sort(([a], [b]) => a < b ? -1 : 1)) {
+        if (!constraints.hasChanges) {
+          continue;
+        }
         constraints.normalize();
 
         if (constraints.isPureFunction) {
