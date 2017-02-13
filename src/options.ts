@@ -13,6 +13,7 @@ export type Options = {
   // maxSubInferenceCount: number,
   currentWorkingDir: string,
   methodThresholdAfterWhichAssumeString: number,
+  dependenciesFileName: string,
 };
 
 export const defaultOptions: Readonly<Options> = Object.freeze({
@@ -26,4 +27,5 @@ export const defaultOptions: Readonly<Options> = Object.freeze({
   // maxSubInferenceCount: 5,
   currentWorkingDir: '.',
   methodThresholdAfterWhichAssumeString: 1,
+  dependenciesFileName: 'dependencies.d.ts',
 });

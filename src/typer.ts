@@ -20,7 +20,7 @@ export function runTyper(
     fileContents: {[fileName: string]: string},
     options = defaultOptions): TyperExecutionResult {
   const reactor =
-      new LanguageServiceReactor(fileContents, options.currentWorkingDir, {
+      new LanguageServiceReactor(fileContents, options.currentWorkingDir, options.dependenciesFileName, {
         allowJs: true,
         strictNullChecks: true,
         removeComments: true,

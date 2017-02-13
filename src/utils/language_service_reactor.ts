@@ -17,7 +17,9 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
 
   constructor(
       fileContents: {[fileName: string]: string},
-      private currentWorkingDir = '.', private options: ts.CompilerOptions) {
+      private currentWorkingDir = '.',
+      private dependenciesFileName: string,
+      private options: ts.CompilerOptions) {
     const fileNames: string[] = [];
     for (const fileName in fileContents) {
       const content = fileContents[fileName];
@@ -66,6 +68,8 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
   react(callback: ReactorCallback): boolean {
     let changed = false;
     const pendingChanges = new Map<string, ts.TextChange[]>();
+    // const dependenciesFileName = this.options.dependenciesFileName;
+    const dependencies: string[] = [];
 
     const addChange: AddChangeCallback = (fileName, change) => {
       const changes = pendingChanges.get(fileName);
@@ -76,30 +80,36 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
       }
     };
     callback(this.fileNames, this.services, addChange, (moduleName, decls) => {
-      const moduleFileName = `node_modules/${moduleName}/index.d.ts`;
-      let file = this.files.get(moduleFileName);
-      if (!file) {
-        file = new VersionedFile('');
-        this.files.set(moduleFileName, file);
-      }
-      const oldVersion = file.version;
-      file.content = decls;
-      if (file.version != oldVersion) {
-        changed = true;
-      }
-      // addChange(moduleFileName, {
-      //   span: {start: 0, length: 0},
-      //   newText: decls
-      // });
+      dependencies.push(decls);
+      // const moduleFileName = `node_modules/${moduleName}/index.d.ts`;
+      // let file = getFile(moduleFileName);
+      // const oldVersion = file.version;
+      // file.content = decls;
+      // if (file.version != oldVersion) {
+      //   changed = true;
+      // }
     });
 
-    for (const [fileName, changes] of pendingChanges) {
+    const getFile = (fileName: string) => {
       let file = this.files.get(fileName);
       if (!file) {
         file = new VersionedFile('');
         this.files.set(fileName, file);
       }
-      if (file.commitChanges(changes)) {
+      return file;
+    };
+    
+    if (dependencies.length > 0) {
+      let dependenciesFile = getFile(this.dependenciesFileName);
+      const oldVersion = dependenciesFile.version;
+      dependenciesFile.content = dependencies.join('\n\n');
+      if (dependenciesFile.version != oldVersion) {
+        changed = true;
+      }
+    }
+
+    for (const [fileName, changes] of pendingChanges) {
+      if (getFile(fileName).commitChanges(changes)) {
         changed = true;
       }
     }
