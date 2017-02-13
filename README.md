@@ -58,6 +58,7 @@ function gg(x: number, y: {addValue: boolean, value: any, name: string}) {
 - Assumes your JS code is correct, and propagates inferred types globally (across different files):
   - From call sites: if you call `f(1)`, it will assume `function f` can take a `number` argument. If you call `f()` somewhere else, it will assume that argument is optional.
   - From function bodies: in `function f(x) { return x * 2 }` it's obvious `x` must be a `number`. Similar constraints appear when you test arguments for nullity or for equality with other values, etc.
+  - From call shapes: from `x.y() * x.n;` it infers `x: {y(): void, readonly n: number}`
 - Rewrites `require` calls to ES2016 (ES6) imports.
 - Rewrites `module.exports` to ES2016 (ES6) exports.
 - Supports writing declarations (`*.d.ts`) files only with the `--declarations` flag.
