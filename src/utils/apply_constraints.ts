@@ -36,7 +36,7 @@ export function applyConstraints(
         decls += `  export function ${field}(${argList}): ${retType};\n`;  
       } else {
         const resolved = fieldConstraints.resolve() || 'any';
-        decls += `  export ${fieldConstraints.settable ? 'let' : 'const'} ${field}: ${resolved};\n`;
+        decls += `  export ${fieldConstraints.writable ? 'let' : 'const'} ${field}: ${resolved};\n`;
       }
     }
 

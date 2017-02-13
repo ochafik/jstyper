@@ -48,3 +48,10 @@ export function getRequiredPath(node?: ts.Node): string|undefined {
   }
   return undefined;
 }
+
+export function isReadonly(node: ts.Node): boolean {
+  return hasModifier(node, nodes.isReadonlyKeyword);
+}
+export function hasModifier(node: ts.Node, predicate: (mod: ts.Modifier) => boolean): boolean {
+  return nodes.isPropertySignature(node) && node.modifiers != null && node.modifiers.some(predicate);
+}

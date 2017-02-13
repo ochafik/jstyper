@@ -117,7 +117,7 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
             }
             if (ops.assignmentOperators.has(op)) {
               if (leftConstraints) {
-                leftConstraints.canBeSet();
+                leftConstraints.isWritable();
               }
               if (op == ts.SyntaxKind.PlusEqualsToken) {
                 if (leftConstraints && fl.isNumber(leftConstraints.flags) &&
@@ -146,6 +146,12 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
               } else if (ops.unaryBooleanOperators.has(op)) {
                 constraints.isBooleanLike();
               }
+            }
+          } else if (nodes.isDeleteExpression(node)) {
+            const constraints = constraintsCache.getNodeConstraints(node.expression);
+            if (constraints) {
+              constraints.isWritable();
+              constraints.isUndefined();
             }
           } else if (nodes.isIfStatement(node)) {
             constraintsCache.nodeIsBooleanLike(node.expression);

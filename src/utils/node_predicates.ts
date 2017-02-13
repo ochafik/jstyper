@@ -795,6 +795,41 @@ export function isJSDocLiteralType(node?: ts.Node): node is ts.JSDocLiteralType 
 export function isSyntaxList(node?: ts.Node): node is ts.SyntaxList {
   return node != null && node.kind === ts.SyntaxKind.SyntaxList;
 }
+
+export function isAbstractKeyword(node?: ts.Node): node is ts.Token<ts.SyntaxKind.AbstractKeyword> {
+  return node != null && node.kind === ts.SyntaxKind.AbstractKeyword;
+}
+export function isAsyncKeyword(node?: ts.Node): node is ts.Token<ts.SyntaxKind.AsyncKeyword> {
+  return node != null && node.kind === ts.SyntaxKind.AsyncKeyword;
+}
+export function isConstKeyword(node?: ts.Node): node is ts.Token<ts.SyntaxKind.ConstKeyword> {
+  return node != null && node.kind === ts.SyntaxKind.ConstKeyword;
+}
+export function isDeclareKeyword(node?: ts.Node): node is ts.Token<ts.SyntaxKind.DeclareKeyword> {
+  return node != null && node.kind === ts.SyntaxKind.DeclareKeyword;
+}
+export function isDefaultKeyword(node?: ts.Node): node is ts.Token<ts.SyntaxKind.DefaultKeyword> {
+  return node != null && node.kind === ts.SyntaxKind.DefaultKeyword;
+}
+export function isExportKeyword(node?: ts.Node): node is ts.Token<ts.SyntaxKind.ExportKeyword> {
+  return node != null && node.kind === ts.SyntaxKind.ExportKeyword;
+}
+export function isPublicKeyword(node?: ts.Node): node is ts.Token<ts.SyntaxKind.PublicKeyword> {
+  return node != null && node.kind === ts.SyntaxKind.PublicKeyword;
+}
+export function isPrivateKeyword(node?: ts.Node): node is ts.Token<ts.SyntaxKind.PrivateKeyword> {
+  return node != null && node.kind === ts.SyntaxKind.PrivateKeyword;
+}
+export function isProtectedKeyword(node?: ts.Node): node is ts.Token<ts.SyntaxKind.ProtectedKeyword> {
+  return node != null && node.kind === ts.SyntaxKind.ProtectedKeyword;
+}
+export function isReadonlyKeyword(node?: ts.Node): node is ts.Token<ts.SyntaxKind.ReadonlyKeyword> {
+  return node != null && node.kind === ts.SyntaxKind.ReadonlyKeyword;
+}
+export function isStaticKeyword(node?: ts.Node): node is ts.Token<ts.SyntaxKind.StaticKeyword> {
+  return node != null && node.kind === ts.SyntaxKind.StaticKeyword;
+}
+
 // export function isNotEmittedStatement(node: ts.Node): node is
 // ts.NotEmittedStatement {
 //   return node.kind === ts.SyntaxKind.NotEmittedStatement;

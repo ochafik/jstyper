@@ -1,6 +1,7 @@
 import * as ts from 'typescript';
 
 import {Options} from '../options';
+import * as nodes from './nodes';
 
 import * as fl from './flags';
 import {guessName} from './name_guesser';
@@ -76,7 +77,7 @@ export class TypeConstraints {
   private _isBooleanLike = false;
   private _isNumberOrString = false;
   private _cannotBeVoid = false;
-  private _canBeSet = false;
+  private _isWritable = false;
 
   private _hasChanges = false;
   // private _isBuilding = true;
@@ -119,7 +120,7 @@ export class TypeConstraints {
   get isPureFunction(): boolean {
     return this.callConstraints != null && !this._isBooleanLike &&
         !this._isNumberOrString && (this._flags === ts.TypeFlags.Object) &&
-        !this._canBeSet &&
+        // !this._isWritable &&
         this.fields.size == 0;
   }
 
@@ -228,12 +229,18 @@ export class TypeConstraints {
         continue;
       }
       const fieldConstraints = this.getFieldConstraints(this.checker.symbolToString(prop), markChanges);
-      if (prop.flags & ts.SymbolFlags.SetAccessor) {
-        fieldConstraints.canBeSet();
+      
+      for (const decl of decls) {
+        const type = this.checker.getTypeOfSymbolAtLocation(prop, decl);
+        if (//(prop.flags & ts.SymbolFlags.SetAccessor) ||
+            !nodes.isReadonly(decl)) {
+          fieldConstraints.isWritable(markChanges);
+        }
+        if (nodes.isPropertySignature(decl) && decl.questionToken) {
+          fieldConstraints.isUndefined();
+        }
+        fieldConstraints.isType(type, markChanges);
       }
-      fieldConstraints.isType(
-          this.checker.getTypeOfSymbolAtLocation(prop, decls[0]),
-          markChanges);
     }
 
     this.hasFlags(type.flags, markChanges);
@@ -291,12 +298,12 @@ export class TypeConstraints {
     this.hasFlags(ts.TypeFlags.Void, markChanges);
   }
   
-  get settable(): boolean {
-    return this._canBeSet;
+  get writable(): boolean {
+    return this._isWritable;
   }
-  canBeSet(markChanges: boolean = true) {
-    if (this._canBeSet) return;
-    this._canBeSet = true;
+  isWritable(markChanges: boolean = true) {
+    if (this._isWritable) return;
+    this._isWritable = true;
     if (markChanges) {
       this.markChange();
     }
@@ -389,7 +396,7 @@ export class TypeConstraints {
     if (isUndefined) {
       return `${name}?: ${resolved}`;
     } else {
-      if (this._canBeSet || !isMember) {
+      if (valueType._isWritable || !isMember) {
         return `${name}: ${resolved}`;
       } else {
         return `readonly ${name}: ${resolved}`;
