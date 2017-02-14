@@ -21,6 +21,9 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
 
   function inferOnce() {
     for (const sourceFile of program.getSourceFiles()) {
+      if (fileNames.indexOf(sourceFile.fileName) < 0) {
+        console.warn(`SKIPPING ${sourceFile.fileName}`);
+      }
       if (fileNames.indexOf(sourceFile.fileName) >= 0) {
         traverse(sourceFile, (node: ts.Node) => {
           const nodeConstraints = constraintsCache.getNodeConstraints(node);
@@ -83,19 +86,22 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
               if (rightConstraints && nodes.isStringLiteral(node.left)) {
                 rightConstraints.getComputedFieldConstraints(node.left.text).isUndefined();
               }
-            } else if (ops.binaryNumberOperators.has(op)) {
+            }
+            if (ops.binaryNumberOperators.has(op)) {
               if (leftConstraints) {
                 leftConstraints.isNumber();
               }
               if (rightConstraints) {
                 rightConstraints.isNumber();
               }
-            } else if (ops.binaryNumberOrStringOperators.has(op)) {
+            }
+            if (ops.binaryNumberOrStringOperators.has(op)) {
               if (fl.isNumber(ctxType)) {
                 leftConstraints && leftConstraints.isNumber();
                 rightConstraints && rightConstraints.isNumber();
               }
-            } else if (ops.equalityLikeOperators.has(op)) {
+            }
+            if (ops.equalityLikeOperators.has(op)) {
               // This is a bit bold: we assume if things can be equatable, then
               // they have the same type.
               function handle(
@@ -110,7 +116,8 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
               }
               handle(leftConstraints, rightType);
               handle(rightConstraints, leftType);
-            } else if (ops.binaryBooleanOperators.has(op)) {
+            } 
+            if (ops.binaryBooleanOperators.has(op)) {
               constraintsCache.nodeIsBooleanLike(node.left);
               // In `a && b`, we know that `a` is bool-like but know absolutely
               // nothing about `b`.

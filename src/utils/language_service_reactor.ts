@@ -69,7 +69,7 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
     let changed = false;
     const pendingChanges = new Map<string, ts.TextChange[]>();
     // const dependenciesFileName = this.options.dependenciesFileName;
-    const dependencies: string[] = [];
+    // const dependencies: string[] = [];
 
     const addChange: AddChangeCallback = (fileName, change) => {
       const changes = pendingChanges.get(fileName);
@@ -83,6 +83,9 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
     const getFile = (fileName: string) => {
       let file = this.files.get(fileName);
       if (!file) {
+        // if (this.fileNames.indexOf(fileName) < 0) {
+        //   this.fileNames.push(fileName);
+        // }
         file = new VersionedFile('');
         this.files.set(fileName, file);
       }
@@ -91,7 +94,7 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
 
     callback(this.fileNames, this.services, addChange, (moduleName, decls) => {
       // dependencies.push(decls);
-      const moduleFileName = `node_modules/${moduleName}/index.d.ts`;
+      const moduleFileName = `node_modules/@types/${moduleName}/index.d.ts`;
       let file = getFile(moduleFileName);
       const oldVersion = file.version;
       file.content = decls;
@@ -100,14 +103,14 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
       }
     });
     
-    if (dependencies.length > 0) {
-      let dependenciesFile = getFile(this.dependenciesFileName);
-      const oldVersion = dependenciesFile.version;
-      dependenciesFile.content = dependencies.join('\n\n');
-      if (dependenciesFile.version != oldVersion) {
-        changed = true;
-      }
-    }
+    // if (dependencies.length > 0) {
+    //   let dependenciesFile = getFile(this.dependenciesFileName);
+    //   const oldVersion = dependenciesFile.version;
+    //   dependenciesFile.content = dependencies.join('\n\n');
+    //   if (dependenciesFile.version != oldVersion) {
+    //     changed = true;
+    //   }
+    // }
 
     for (const [fileName, changes] of pendingChanges) {
       if (getFile(fileName).commitChanges(changes)) {
