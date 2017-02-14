@@ -88,7 +88,7 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
       }
       return file;
     };
-    
+
     callback(this.fileNames, this.services, addChange, (moduleName, decls) => {
       // dependencies.push(decls);
       const moduleFileName = `node_modules/${moduleName}/index.d.ts`;

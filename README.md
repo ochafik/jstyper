@@ -67,6 +67,7 @@ function gg(x: number, y: {addValue: boolean, value: any, name: string}) {
 
 # TODO
 
+- Support `var foo = require('./bar').foo` pattern
 - Parse and output flow comment / flow types (+ compare with Flow)
 - Lint mode
 - Split large tests into smaller specs
