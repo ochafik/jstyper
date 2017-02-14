@@ -7,9 +7,11 @@ export default {
   entry: './src/cli.ts',
   dest: 'build/cli.js',
   format: 'iife',
-  external: ['typescript'],
+  external: ['typescript', 'fs', 'path'],
   globals: {
-    typescript: 'ts'
+    typescript: 'ts',
+    fs: 'fs',
+    path: 'path',
   },
   plugins: [
     typescript({typescript: require('typescript')}),
