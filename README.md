@@ -77,7 +77,6 @@ function gg(x: number, y: {addValue: boolean, value: any, name: string}) {
 - Infer `x: Promise<T>` from `(await x): T`
 - WebDriver test for demo
 - Support literal types
-- Support `key in obj`, `obj[key]`
 - Support `new F()`
 - Use `const` when appropriate in `var` rewrite.
 - Support `Object.setProperty`

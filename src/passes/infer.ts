@@ -79,7 +79,11 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
 
             const op = node.operatorToken.kind;
 
-            if (ops.binaryNumberOperators.has(op)) {
+            if (nodes.isInKeyword(node.operatorToken)) {
+              if (rightConstraints && nodes.isStringLiteral(node.left)) {
+                rightConstraints.getComputedFieldConstraints(node.left.text).isUndefined();
+              }
+            } else if (ops.binaryNumberOperators.has(op)) {
               if (leftConstraints) {
                 leftConstraints.isNumber();
               }

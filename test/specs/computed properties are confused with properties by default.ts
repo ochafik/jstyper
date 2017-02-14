@@ -12,6 +12,7 @@ export default {
         x['a'].bar;
         x.b().foo;
         x['b']().bar;
+        'z' in x;
       }    
     `
   },
@@ -19,11 +20,12 @@ export default {
   result: {
     files: {
       'input.js': `
-function f(x: {readonly a: {readonly bar: any, readonly foo: any}, b(): {readonly bar: any, readonly foo: any}}): void {
+function f(x: {readonly a: {readonly bar: any, readonly foo: any}, b(): {readonly bar: any, readonly foo: any}, z?: any}): void {
   x.a.foo;
   x['a'].bar;
   x.b().foo;
   x['b']().bar;
+  'z' in x;
 }
 `
     },
