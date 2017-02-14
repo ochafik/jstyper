@@ -5,10 +5,10 @@ cache:
   bundler: true
   directories:
     - node_modules
-    - $HOME/.nvm
-    - $HOME/.npm
+    # - $HOME/.nvm
+    # - $HOME/.npm
 
 before_cache:
   - du -h -d 1 node_modules
-  - du -h -d 1 $HOME/.nvm
-  - du -h -d 1 $HOME/.npm
+  # - du -h -d 1 $HOME/.nvm
+  # - du -h -d 1 $HOME/.npm
