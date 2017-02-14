@@ -30,7 +30,7 @@ new Bar('').y = 1;
 function Baz(x: boolean): void {}
 new Baz(true).z = 1;
 `,
-      'node_modules/foo/index.d.ts': `declare module "foo" {
+      'node_modules/@types/foo/index.d.ts': `declare module "foo" {
   export class Foo {
     constructor(arg1: number);
   }

@@ -19,12 +19,25 @@ export interface TyperExecutionResult {
 export function runTyper(
     fileContents: {[fileName: string]: string},
     options = defaultOptions): TyperExecutionResult {
+
+  // fileContents = {
+  //   ...fileContents,
+  //   // 'node_modules/typescript/lib/lib.dom.d.ts': `
+  //   //   declare var document: {
+  //   //     getElementById(id: string): number;
+  //   //   };
+  //   // `
+  // }
   const reactor =
       new LanguageServiceReactor(fileContents, options.currentWorkingDir, options.dependenciesFileName, {
+        // target: ts.ScriptTarget.ES2017,
+        // module: ts.ModuleKind.ES2015,
+        // moduleResolution: ts.ModuleResolutionKind.NodeJs,
+        //lib: ["dom", "es2017"],
         allowJs: true,
         strictNullChecks: true,
         removeComments: true,
-      });
+      } as ts.CompilerOptions);
 
   if (options.updateImports) reactor.react(updateImports);
   if (options.updateExports) reactor.react(updateExports);
@@ -55,7 +68,7 @@ export function runTyper(
     inferencePasses: inferencePasses
   }
 
-                   if (options.format) reactor.react(format);
+  if (options.format) reactor.react(format);
   if (options.updateVars) reactor.react(updateVars);
   if (options.declarations) {
     reactor.react(turnToDeclarations);

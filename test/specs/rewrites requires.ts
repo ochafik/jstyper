@@ -44,7 +44,7 @@ var bar3: {default: {x: number, y: number}, readonly x: any, readonly y: any} = 
       'bar.js': `
 export default {x: 1, y: 2};
 `,
-      'node_modules/./bar/index.d.ts': `declare module "./bar" {
+      'node_modules/@types/./bar/index.d.ts': `declare module "./bar" {
   export const x: any;
 }
 `
