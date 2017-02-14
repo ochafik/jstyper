@@ -19,7 +19,7 @@ export function typerTest(specFile: string):
       throw new Error(`Unable to read ${builtFile}`);
     }
 
-    const result = runTyper(spec.files, {...defaultOptions, ...spec.options});
+    const result = runTyper(spec.files, {...defaultOptions, format: false, ...spec.options});
 
     const actualSpec: TestSpec = {
       files: spec.files,

@@ -20,14 +20,14 @@ export default {
   result: {
     files: {
       'input.js': `
-import {a, b, c} from 'foo';
-
-a && a();
-b(1) == 2;
-c = 2;
-
-
-`,
+      import {a, b, c} from 'foo';
+      
+      a && a();
+      b(1) == 2;
+      c = 2;
+          
+          
+    `,
       'node_modules/@types/foo/index.d.ts': `declare module "foo" {
   export const a: (() => boolean) | undefined;
   export function b(arg1: number): number;

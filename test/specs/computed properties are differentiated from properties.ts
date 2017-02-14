@@ -26,18 +26,18 @@ export default {
   result: {
     files: {
       'input.js': `
-function f(x: {readonly a: number, b(): void, c: boolean, readonly ['a']: number | string, ['b'](): void, ['c']: string, ['z']?: any}, z: {readonly ['yay']: any}): void {
-  x.a == 1;
-  x['a'] == '';
-  x.b();
-  x['b']();
-  x.c = true;
-  x['c'] = '';
-  'z' in x;
-
-  z['yay'];
-}
-`
+      function f(x: {readonly a: number, b(): void, c: boolean, readonly ['a']: number | string, ['b'](): void, ['c']: string, ['z']?: any}, z: {readonly ['yay']: any}): void {
+        x.a == 1;
+        x['a'] == '';
+        x.b();
+        x['b']();
+        x.c = true;
+        x['c'] = '';
+        'z' in x;
+ 
+        z['yay'];
+      }    
+    `
     },
     metadata: {
       inferencePasses: 3

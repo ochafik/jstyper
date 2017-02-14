@@ -34,28 +34,28 @@ export default {
   result: {
     files: {
       'input.js': `
-function f4(x: number): number {
-  return x * 2;
-}
-
-function g4(x: number, o: {readonly addValue: boolean, readonly name: string, readonly value: any}) {
-  if (o.addValue) {
-    return f4(x) + o.value;
-  }
-  return o.name == 'default' ? x : 'y';
-}
-
-function gg4(x: number, y: {readonly addValue: boolean, readonly name: string, readonly value: any}) {
-  var v = g4(x, y);
-  return v;
-}
-
-function h4(x: string) {
-  return x ? x.length : 0;
-}
-
-
-`
+      function f4(x: number): number {
+        return x * 2;
+      }
+      
+      function g4(x: number, o: {readonly addValue: boolean, readonly name: string, readonly value: any}) {
+        if (o.addValue) {
+          return f4(x) + o.value;
+        }
+        return o.name == 'default' ? x : 'y';
+      }
+      
+      function gg4(x: number, y: {readonly addValue: boolean, readonly name: string, readonly value: any}) {
+        var v = g4(x, y);
+        return v;
+      }
+      
+      function h4(x: string) {
+        return x ? x.length : 0;
+      }
+          
+          
+    `
     },
     metadata: {
       inferencePasses: 4

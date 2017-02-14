@@ -42,34 +42,34 @@ export default {
   result: {
     files: {
       'untransformable exports.js': `
-export default {
-  f(): number {return 1},
-  n: 1
-};
-
-
-`,
+      export default {
+        f(): number { return 1 },
+        n: 1
+      };
+          
+          
+    `,
       'independent exports.js': `
-
-
-export var n: number = 1;
-
-function f(): void {}
+      
+      
+      export var n: number = 1;
+      
+      function f(): void {}
 export {f as foo};
 
-export function g(): void {}
-function h(): void {}
-
-
-`,
+      export function g(): void {}
+      function h(): void {}
+          
+          
+    `,
       'exported vars in multiple declaration are too complex.js': `
-export default {
-  a: a
-};
-var a: number = 1, b: number = 2;
-
-
-`
+      export default {
+        a: a
+      };
+      var a: number = 1, b: number = 2;
+          
+          
+    `
     },
     metadata: {
       inferencePasses: 2

@@ -22,16 +22,16 @@ export default {
   result: {
     files: {
       'input.js': `
-import * as foo from 'foo';
-var a: (arg1: number) => string = foo.a;
-var b: number = foo.b;
-
-a(10) == '';
-b == 3;
-foo.c = 10;
-
-
-`,
+      import * as foo from 'foo';
+      var a: (arg1: number) => string = foo.a;
+      var b: number = foo.b;
+      
+      a(10) == '';
+      b == 3;
+      foo.c = 10;
+          
+          
+    `,
       'node_modules/@types/foo/index.d.ts': `declare module "foo" {
   export function a(arg1: number): string;
   export const b: number;

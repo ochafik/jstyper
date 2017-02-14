@@ -28,22 +28,22 @@ export default {
   result: {
     files: {
       'foo.js': `
-var x = require('./bar').x;
-var x1 = require('./bar').x;
+      var x = require('./bar').x;
+      var x1 = require('./bar').x;
 
-import * as bar from './bar';
-var barx = bar.x;
+      import * as bar from './bar';
+      var barx = bar.x;
 
-import * as bar2 from './bar';
-var bar2x = bar2.x;
+      import * as bar2 from './bar';
+      var bar2x = bar2.x;
 
-var bar3: {default: {x: number, y: number}, readonly x: any, readonly y: any} = require('./bar'),
-  bar3x = bar3.x,
-  bar3y = bar3.y;
-`,
+      var bar3: {default: {x: number, y: number}, readonly x: any, readonly y: any} = require('./bar'),
+          bar3x = bar3.x,
+          bar3y = bar3.y;
+    `,
       'bar.js': `
-export default {x: 1, y: 2};
-`,
+      export default { x: 1, y: 2 };
+    `,
       'node_modules/@types/./bar/index.d.ts': `declare module "./bar" {
   export const x: any;
 }

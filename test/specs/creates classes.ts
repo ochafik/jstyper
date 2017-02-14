@@ -21,15 +21,15 @@ export default {
   result: {
     files: {
       'input.js': `
-import {Foo} from 'foo';
-new Foo(1).x = 1;
+      import {Foo} from 'foo';
+      new Foo(1).x = 1;
 
-var Bar: new (x: string) => void = function (x: string): void {};
-new Bar('').y = 1;
+      var Bar: new(x: string) => void = function(x: string): void {};
+      new Bar('').y = 1;
 
-function Baz(x: boolean): void {}
-new Baz(true).z = 1;
-`,
+      function Baz(x: boolean): void {}
+      new Baz(true).z = 1;
+    `,
       'node_modules/@types/foo/index.d.ts': `declare module "foo" {
   export class Foo {
     constructor(arg1: number);

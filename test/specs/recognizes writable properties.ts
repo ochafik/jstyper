@@ -23,17 +23,17 @@ export default {
   result: {
     files: {
       'input.js': `
-function f(x: {readonly a: any, b: number, c?: () => void, d?: any}): void {
-  x.a;
-  x.b = 1;
-  if (x.c) x.c();
-  delete x.d;
-}
+      function f(x: {readonly a: any, b: number, c?: () => void, d?: any}): void {
+        x.a;
+        x.b = 1;
+        if (x.c) x.c();
+        delete x.d;
+      }
 
-function g(x: {readonly a: any, b: number, c?: () => void, d?: any}): void {
-  f(x);
-}
-`
+      function g(x: {readonly a: any, b: number, c?: () => void, d?: any}): void {
+        f(x);
+      } 
+    `
     },
     metadata: {
       inferencePasses: 3

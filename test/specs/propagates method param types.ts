@@ -26,20 +26,20 @@ export default {
   result: {
     files: {
       'example.ts': `
-class Foo {
-  constructor(x: {bar(): void}) {
-    x.bar();
-  }
-  foo(x: number): number {
-    return x * 2;
-  }
-  set x(v: string) {
-    v == ' ';
-  }
-}
-
-
-`
+      class Foo {
+        constructor(x: {bar(): void}) {
+          x.bar();
+        }
+        foo(x: number): number {
+          return x * 2;
+        }
+        set x(v: string) {
+          v == ' '; 
+        }
+      }
+          
+          
+    `
     },
     metadata: {
       inferencePasses: 2

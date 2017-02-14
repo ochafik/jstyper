@@ -27,21 +27,21 @@ export default {
   result: {
     files: {
       'input.js': `
-function f(xx, y: number) {
-  var zz1: string;
-  zz1 = z;
-  zz1 = '';
-
-  var zz2: string = z;
-  zz2 = '';
-  return x + 2 + g(y);
-}
-
-function g(x: number): number {
-  return x * 2;
-}
-
-`
+      function f(xx, y: number) {
+        var zz1: string;
+        zz1 = z;
+        zz1 = '';
+      
+        var zz2: string = z;
+        zz2 = '';
+        return x + 2 + g(y);
+      }
+      
+      function g(x: number): number {
+        return x * 2;
+      }
+          
+    `
     },
     metadata: {
       inferencePasses: 3

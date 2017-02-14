@@ -34,28 +34,28 @@ export default {
   result: {
     files: {
       'input.js': `
-class Foo {
-  get x() {return 1}
-  y: number;
-}
+      class Foo {
+        get x() { return 1 }
+        y: number;
+      }
 
-function f(foo: Foo): void {
-  foo.x == 1;
-  foo.y == 1;
-}
+      function f(foo: Foo): void {
+        foo.x == 1;
+        foo.y == 1;
+      }
 
-function f7(foo?: Foo): number | null {
-  return foo ? foo.x : null;
-}
-
-function g7(foo?: Foo | ({x: number})): number | null {
-  return foo ? foo.x : null;
-}
-
-g7(new Foo());
-
-
-`
+      function f7(foo?: Foo): number | null {
+        return foo ? foo.x : null;
+      }
+      
+      function g7(foo?: Foo | ({x: number})): number | null {
+        return foo ? foo.x : null;
+      }
+      
+      g7(new Foo());
+          
+          
+    `
     },
     metadata: {
       inferencePasses: 3
