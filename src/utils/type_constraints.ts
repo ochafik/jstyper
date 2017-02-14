@@ -225,10 +225,13 @@ export class TypeConstraints {
       // const fieldConstraints = this.getFieldConstraints(this.checker.symbolToString(prop), markChanges);
       
       for (const decl of decls) {
-        if (!nodes.isPropertySignature(decl) &&
-            !nodes.isPropertyDeclaration(decl)) {
-          continue;
-        }
+//         if (!nodes.isPropertySignature(decl) &&
+//             !nodes.isPropertyDeclaration(decl) &&
+//             !nodes.isGetAccessor(decl) &&
+//             !nodes.isSetAccessor(decl) &&
+//             !nodes.isMethodDeclaration(decl)) {
+//           continue;
+//         }
         //const name = this.checker.symbolToString(prop);
         let name: string | undefined;
         let fieldConstraints: TypeConstraints | undefined;
@@ -251,7 +254,7 @@ export class TypeConstraints {
           fieldConstraints.isWritable(markChanges);
         }
         if (nodes.isPropertySignature(decl) && decl.questionToken) {
-          fieldConstraints.isUndefined();
+          fieldConstraints.isUndefined(markChanges);
         }
         fieldConstraints.isType(type, markChanges);
       }
@@ -323,7 +326,7 @@ export class TypeConstraints {
     }
   }
   cannotBeVoid(markChanges: boolean = true) {
-    if (this._cannotBeVoid) return;
+    if (this._cannotBeVoid || this._flags & ~ts.TypeFlags.Void) return;
 
     this._cannotBeVoid = true;
     if (markChanges) {
