@@ -33,7 +33,11 @@ export function applyConstraints(
       const fieldConstraints = constraints.getFieldConstraints(field);
       if (fieldConstraints.isPureFunction) {
         const [argList, retType] = fieldConstraints.resolveCallableArgListAndReturnType()!;
-        decls += `  export function ${field}(${argList}): ${retType};\n`;  
+        if (fieldConstraints.getCallConstraints().constructible) {
+          decls += `  export class ${field} {\n    constructor(${argList});\n  }\n`;  
+        } else {
+          decls += `  export function ${field}(${argList}): ${retType};\n`;  
+        }
       } else {
         const resolved = fieldConstraints.resolve() || 'any';
         decls += `  export ${fieldConstraints.writable ? 'let' : 'const'} ${field}: ${resolved};\n`;
@@ -59,15 +63,16 @@ export function applyConstraints(
       handleVarConstraints(constraints, decl);
     } else if (nodes.isFunctionLikeDeclaration(decl)) {
       const funDecl = decl;
-      if (constraints.hasCallConstraints()) {
+      if (constraints.hasCallConstraints) {
         const callConstraints = constraints.getCallConstraints();
+        // TODO: if (callConstraints.constructible)
         callConstraints.argTypes.forEach((argConstraints, i) => {
           const param = funDecl.parameters[i];
           if (param) {
             handleVarConstraints(argConstraints, param);
           }
         });
-        handleReturnType(callConstraints.returnType, decl);
+        handleReturnType(callConstraints.returnType, funDecl);
       }
     }
 

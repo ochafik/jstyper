@@ -1,4 +1,3 @@
-
 export type Options = {
   format: boolean,
   differentiateComputedProperties: boolean,

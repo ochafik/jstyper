@@ -13,8 +13,11 @@ export type Signature = {
 
 export class CallConstraints {
   private minArity: number|undefined;
+  private _constructible = false;
+  private _hasChanges = false;
 
   constructor(
+      private checker: ts.TypeChecker,
       private calleeDescription: string,
       private createConstraints: (description: string) => TypeConstraints,
       public readonly returnType:
@@ -22,7 +25,42 @@ export class CallConstraints {
       public readonly argTypes: TypeConstraints[] = []) {}
 
   get hasChanges() {
-    return this.returnType.hasChanges || this.argTypes.some(c => c.hasChanges);
+    return this._hasChanges || this.returnType.hasChanges || this.argTypes.some(c => c.hasChanges);
+  }
+
+  get constructible() {
+    return this._constructible;
+  }
+
+  isConstructible(markChanges = false) {
+    if (this._constructible) return;
+    this._constructible = true;
+    if (markChanges) {
+      this._hasChanges = true;
+    }
+  }
+
+  hasSignature(sig: ts.Signature, markChanges = true) {
+    const params = sig.getDeclaration().parameters;
+    const paramTypes = params.map(p => this.checker.getTypeAtLocation(p));
+
+    this.returnType.isType(sig.getReturnType(), markChanges);
+
+    let minArity = 0;
+    for (let paramType of paramTypes) {
+      if (fl.isUndefined(paramType.flags)) {
+        break;
+      }
+      minArity++;
+    }
+    this.hasArity(minArity, markChanges);
+
+    paramTypes.forEach((paramType, i) => {
+      const param = params[i];
+      const paramConstraints = this.getArgType(i, markChanges);
+      paramConstraints.isType(paramType, markChanges);
+      paramConstraints.addName(guessName(param.name));
+    });
   }
   
   private ensureArity(arity: number, markChanges: boolean = true) {
@@ -66,7 +104,8 @@ export class TypeConstraints {
   fields = new Map<string, TypeConstraints>();
   computedFields = new Map<string, TypeConstraints>();
   
-  private callConstraints?: CallConstraints;
+  // private constructConstraints?: CallConstraints;
+  private _callConstraints?: CallConstraints;
   private symbols: ts.Symbol[] = [];
   private names: Set<string>|undefined;
   private nameHints: Set<string>|undefined;
@@ -107,8 +146,11 @@ export class TypeConstraints {
   }
 
   get isPureFunction(): boolean {
-    return this.callConstraints != null && !this._isBooleanLike &&
+    return this._callConstraints != null &&
+        //!this._callConstraints.constructible &&
+        !this._isBooleanLike &&
         !this._isNumberOrString && (this._flags === ts.TypeFlags.Object) &&
+        // this.constructConstraints == null &&
         // !this._isWritable &&
         this.fields.size == 0 &&
         this.computedFields.size == 0;
@@ -190,29 +232,16 @@ export class TypeConstraints {
     }
 
     for (const sig of type.getCallSignatures()) {
-      const params = sig.getDeclaration().parameters;
-      const callConstraints = this.getCallConstraints(markChanges);
-
-      const paramTypes = params.map(p => this.checker.getTypeAtLocation(p));
-
-      callConstraints.returnType.isType(sig.getReturnType(), markChanges);
-
-      let minArity = 0;
-      for (let paramType of paramTypes) {
-        if (fl.isUndefined(paramType.flags)) {
-          break;
-        }
-        minArity++;
-      }
-      callConstraints.hasArity(minArity, markChanges);
-
-      paramTypes.forEach((paramType, i) => {
-        const param = params[i];
-        const paramConstraints = callConstraints!.getArgType(i, markChanges);
-        paramConstraints.isType(paramType, markChanges);
-        paramConstraints.addName(guessName(param.name));
-      });
+      const cc = this.getCallConstraints(markChanges);
+      cc.hasSignature(sig, markChanges);
     }
+
+    for (const sig of type.getConstructSignatures()) {
+      const cc = this.getCallConstraints(markChanges);
+      cc.hasSignature(sig, markChanges);
+      cc.isConstructible(markChanges);
+    }
+
     for (const prop of type.getProperties()) {
       const decls = prop.getDeclarations();
       if (decls == null || decls.length == 0) {
@@ -283,18 +312,33 @@ export class TypeConstraints {
     }
   }
 
-  hasCallConstraints(): boolean {
-    return !!this.callConstraints;
+  get hasCallConstraints(): boolean {
+    return !!this._callConstraints;
   }
+
+  // get hasConstructConstraints(): boolean {
+  //   return !!this.constructConstraints;
+  // }
 
   getCallConstraints(markChanges: boolean = true): CallConstraints {
     this.isObject(markChanges);
-    if (!this.callConstraints) {
-      this.callConstraints = new CallConstraints(
-          this.description, (d) => this.createConstraints(d));
+    if (!this._callConstraints) {
+      this._callConstraints = new CallConstraints(
+          this.checker, this.description,
+          (d) => this.createConstraints(`${this.description}.call.${d}`));
     }
-    return this.callConstraints;
+    return this._callConstraints;
   }
+
+  // getConstructConstraints(markChanges: boolean = true): CallConstraints {
+  //   this.isObject(markChanges);
+  //   if (!this.constructConstraints) {
+  //     this.constructConstraints = new CallConstraints(
+  //         this.checker, this.description,
+  //         (d) => this.createConstraints(`${this.description}.new.${d}`));
+  //   }
+  //   return this.constructConstraints;
+  // }
 
   isNumber(markChanges: boolean = true) {
     this.hasFlags(ts.TypeFlags.Number, markChanges);
@@ -371,7 +415,7 @@ export class TypeConstraints {
       this._hasChanges = true;
       return true;
     }
-    if (this.callConstraints && this.callConstraints.hasChanges) {
+    if (this._callConstraints && this._callConstraints.hasChanges) {
       this._hasChanges = true;
       return true;
     }
@@ -430,14 +474,14 @@ export class TypeConstraints {
   }
 
   resolveCallableArgListAndReturnType(): [string, string]|undefined {
-    return this.callConstraints && [
-      this.callConstraints.argTypes
+    return this._callConstraints && [
+      this._callConstraints.argTypes
           .map((t, i) => {
             const name = t.bestName || `arg${i + 1}`;
             return this.resolveKeyValueDecl(name, t, {isMember: false});
           })
           .join(', '),
-      this.callConstraints.returnType.resolve() || 'any'
+      this._callConstraints.returnType.resolve() || 'any'
     ];
   }
 
@@ -529,18 +573,19 @@ export class TypeConstraints {
     const union: string[] = [];
     const members: string[] = [];
 
-    if (this.callConstraints) {
+    if (this._callConstraints) {
       let [argList, retType] = this.resolveCallableArgListAndReturnType()!;
       retType = retType || 'any';
       if (retType.indexOf(' ') >= 0) {
         retType = `(${retType})`;
       }
 
-      const sigSig = `(${argList})${retType}`;
+      // const sigSig = `(${argList})${retType}`;
+      const prefix = this._callConstraints.constructible ? 'new' : '';
       if (this.fields.size > 0 || this.computedFields.size > 0) {
-        members.push(`(${argList}): ${retType}`)
+        members.push(`${prefix}(${argList}): ${retType}`)
       } else {
-        union.push(`(${argList}) => ${retType}`);
+        union.push(`${prefix}(${argList}) => ${retType}`);
       }
     }
 

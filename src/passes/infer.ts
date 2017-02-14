@@ -50,15 +50,15 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
                   node.parent != null && nodes.isExpressionStatement(node.parent),
                   node.arguments);
             }
-          // } else if (nodes.isNewExpression(node)) {
-          //   const constraints = constraintsCache.getNodeConstraints(node.expression);
-          //   if (constraints) {
-          //     fillCallConstraints(
-          //         constraints.getNewSignature(),
-          //         ctxType,
-          //         node.parent != null && nodes.isExpressionStatement(node.parent),
-          //         node.arguments);
-          //   }
+          } else if (nodes.isNewExpression(node)) {
+            const constraints = constraintsCache.getNodeConstraints(node.expression);
+            if (constraints) {
+              fillCallConstraints(
+                  constraints.getCallConstraints(),
+                  ctxType,
+                  node.parent != null && nodes.isExpressionStatement(node.parent),
+                  node.arguments).isConstructible();
+            }
           } else if (nodes.isReturnStatement(node)) {
             if (node.expression) {
               const exe = <ts.FunctionLikeDeclaration>nodes.findParent(
@@ -167,9 +167,11 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
     }
   }
 
-  function fillCallConstraints(callConstraints: CallConstraints, returnType: ts.Type | undefined, isVoid: boolean, args: ts.Node[]) {
-      const argTypes =
-          args.map(a => checker.getTypeAtLocation(a));
+  function fillCallConstraints(callConstraints: CallConstraints, returnType: ts.Type | undefined, isVoid: boolean, args?: ts.Node[]) {
+      if (!args) {
+        args = [];
+      }
+      const argTypes = args.map(a => checker.getTypeAtLocation(a)) || [];
 
       if (returnType) {
         callConstraints.returnType.isType(returnType);
@@ -181,13 +183,15 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
       callConstraints.hasArity(argTypes.length);
       argTypes.forEach((t, i) => {
         const argConstraints = callConstraints.getArgType(i);
-        const arg = args[i];
+        const arg = args![i];
         if (arg) {
           argConstraints.addNameHint(guessName(arg));
         }
         // console.log(`  ARG(${i}): ${checker.typeToString(t)}`);
         argConstraints.isType(t);
       });
+
+      return callConstraints;
   }
 
 
