@@ -62,7 +62,7 @@ export const assignmentOperators = set([
   ts.SyntaxKind.AsteriskAsteriskEqualsToken,
   ts.SyntaxKind.SlashEqualsToken,
   ts.SyntaxKind.PercentEqualsToken,
-  ts.SyntaxKind.LessThanEqualsToken,
+  // ts.SyntaxKind.LessThanEqualsToken,
   ts.SyntaxKind.AmpersandEqualsToken,
   ts.SyntaxKind.BarEqualsToken,
   ts.SyntaxKind.CaretEqualsToken,
