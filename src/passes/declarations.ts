@@ -18,19 +18,20 @@ export const turnToDeclarations: ReactorCallback = (fileNames, services, addChan
 
     function removeBody(node: ts.Node&{body?: ts.Node}) {
       if (node.body) {
-        mutator.remove(node.body.getStart(), node.body.getEnd(), ';');
+        mutator.removeNode(node.body, ';');
       }
     }
     function removeInitializer(
         node: ts.Node&{name: ts.Node, type?: ts.Node, initializer?: ts.Node}) {
       if (node.initializer) {
-        mutator.remove(
-            node.type ? node.type.getEnd() : node.name.getEnd(),
-            node.initializer.getEnd());
+        mutator.remove({
+          start: node.type ? node.type.getEnd() : node.name.getEnd(),
+          end: node.initializer.getEnd()
+        });
       }
     }
     function remove(node: ts.Node) {
-      mutator.remove(node.getStart(), node.getEnd());
+      mutator.removeNode(node);
     }
 
     function visit(node: ts.Node) {

@@ -42,7 +42,7 @@ export default {
   result: {
     files: {
       'untransformable exports.js': `
-export default orts = {
+export default {
   f(): number {return 1},
   n: 1
 };
@@ -52,7 +52,7 @@ export default orts = {
       'independent exports.js': `
 
 
-export let n: number = 1;
+export var n: number = 1;
 
 function f(): void {}
 export {f as foo};
@@ -63,10 +63,10 @@ function h(): void {}
 
 `,
       'exported vars in multiple declaration are too complex.js': `
-export default orts = {
+export default {
   a: a
 };
-let a: number = 1, b: number = 2;
+var a: number = 1, b: number = 2;
 
 
 `

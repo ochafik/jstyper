@@ -19,7 +19,7 @@ export const defaultOptions: Readonly<Options> = Object.freeze({
   updateImports: true,
   updateExports: true,
   declarations: false,
-  updateVars: true,
+  updateVars: false, // Not ready!
   maxIterations: 5,
   debugPasses: false,
   // maxSubInferenceCount: 5,

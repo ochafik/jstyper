@@ -29,7 +29,7 @@ export default {
       'input.js': `
 function f(x: {call(arg1: number, arg2: number): number, readonly memberOfX: number}, y: {(arg1: number, arg2: number, arg3: number): void, foo(): void}): void {
   console.log(x, y);
-  let z: number = x.call(1, 2);
+  var z: number = x.call(1, 2);
   y.foo();
   g(z);
   g(x.memberOfX);

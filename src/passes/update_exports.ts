@@ -45,11 +45,10 @@ export const updateExports: ReactorCallback = (fileNames, services, addChange, a
                 canExportSeparately = false;
               }
 
-              const start = node.getStart();
               if (canExportSeparately) {
-                mutator.remove(start, node.getFullWidth());
+                mutator.removeNode(node);
               } else {
-                mutator.remove(start, right.getStart() - start, `export default `);
+                mutator.remove({start: node.getStart(), end: right.getStart()}, `export default `);
                 exports.clear();
               }
             }

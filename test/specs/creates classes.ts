@@ -24,7 +24,7 @@ export default {
 import {Foo} from 'foo';
 new Foo(1).x = 1;
 
-let Bar: new (x: string) => void = function (x: string): void {};
+var Bar: new (x: string) => void = function (x: string): void {};
 new Bar('').y = 1;
 
 function Baz(x: boolean): void {}

@@ -22,9 +22,9 @@ export default {
   result: {
     files: {
       'input.js': `
-import * as foo from 'foo'('foo');
-let a: (arg1: number) => string = foo.a;
-let b: number = foo.b;
+import * as foo from 'foo';
+var a: (arg1: number) => string = foo.a;
+var b: number = foo.b;
 
 a(10) == '';
 b == 3;

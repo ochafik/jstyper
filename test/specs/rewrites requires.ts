@@ -28,30 +28,21 @@ export default {
   result: {
     files: {
       'foo.js': `
-let x = require('./bar').x;
-let x1 = require('./bar').x;
+var x = require('./bar').x;
+var x1 = require('./bar').x;
 
-import * as bar from './bar'bar').x;
-let x1 = require('./bar').x;
+import * as bar from './bar';
+var barx = bar.x;
 
-let bar = require('./bar');
-let barx = bar.x;
+import * as bar2 from './bar';
+var bar2x = bar2.x;
 
-import * as bar2 from './bar'ar').x;
-let x1 = require('./bar').x;
-
-let bar = require('./bar');
-let barx = bar.x;
-
-let bar2 = require('./bar');
-let bar2x = bar2.x;
-
-let bar3: {default: {x: number, y: number}, readonly x: any, readonly y: any} = require('./bar'),
+var bar3: {default: {x: number, y: number}, readonly x: any, readonly y: any} = require('./bar'),
   bar3x = bar3.x,
   bar3y = bar3.y;
 `,
       'bar.js': `
-export default orts = {x: 1, y: 2};
+export default {x: 1, y: 2};
 `,
       'node_modules/./bar/index.d.ts': `declare module "./bar" {
   export const x: any;

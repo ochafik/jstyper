@@ -12,13 +12,12 @@ export const updateImports: ReactorCallback = (fileNames, services, addChange, a
       const mutator = new Mutator(sourceFile.fileName, addChange);
 
       nodes.traverse(sourceFile, (node: ts.Node) => {
-        if (nodes.isVariableDeclarationList(node) && node.declarations.length == 1) {
-          const [decl] = node.declarations;
+        if (nodes.isVariableStatement(node) && node.declarationList.declarations.length == 1) {
+          const [decl] = node.declarationList.declarations;
           if (nodes.isIdentifier(decl.name)) {
             const requiredPath = nodes.getRequiredPath(decl.initializer);
             if (requiredPath) {
-              const start = node.getStart();
-              mutator.remove(start, node.getEnd() - start, `import * as ${decl.name.text} from '${requiredPath}'`);
+              mutator.removeNode(node, `import * as ${decl.name.text} from '${requiredPath}';`);
             }
           }
         }

@@ -8,7 +8,11 @@ export class Mutator {
         this.fileName, {span: {start: start, length: 0}, newText: newText});
   }
 
-  remove(start: number, end: number, newText: string = '') {
+  removeNode(node: {getStart(): number, getEnd(): number}, newText: string = '') {
+    this.remove({start: node.getStart(), end: node.getEnd()}, newText);
+  }
+  
+  remove({start, end}: {start: number, end: number}, newText: string = '') {
     this.addChange(
         this.fileName,
         {span: {start: start, length: end - start}, newText: newText});

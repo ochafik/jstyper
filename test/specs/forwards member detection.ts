@@ -46,7 +46,7 @@ function g4(x: number, o: {readonly addValue: boolean, readonly name: string, re
 }
 
 function gg4(x: number, y: {readonly addValue: boolean, readonly name: string, readonly value: any}) {
-  let v = g4(x, y);
+  var v = g4(x, y);
   return v;
 }
 

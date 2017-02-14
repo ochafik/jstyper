@@ -900,6 +900,11 @@ export function isStaticKeyword(node?: ts.Node): node is ts.Token<ts.SyntaxKind.
 // {
 //   return node.kind === ts.SyntaxKind.LastPunctuation;
 // }
+
+export function isVarKeyword(node?: ts.Node):
+    node is ts.Token<ts.SyntaxKind.VarKeyword> {
+  return node != null && node.kind === ts.SyntaxKind.VarKeyword;
+}
 export function isInKeyword(node?: ts.Node):
     node is ts.Token<ts.SyntaxKind.InKeyword> {
   return node != null && node.kind === ts.SyntaxKind.InKeyword;
