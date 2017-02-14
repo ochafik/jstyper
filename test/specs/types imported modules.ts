@@ -28,7 +28,7 @@ c = 2;
 
 
 `,
-      'dependencies.d.ts': `declare module "foo" {
+      'node_modules/foo/index.d.ts': `declare module "foo" {
   export const a: (() => boolean) | undefined;
   export function b(arg1: number): number;
   export let c: number;

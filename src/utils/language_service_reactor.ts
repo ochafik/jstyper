@@ -79,16 +79,6 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
         pendingChanges.set(fileName, [change]);
       }
     };
-    callback(this.fileNames, this.services, addChange, (moduleName, decls) => {
-      dependencies.push(decls);
-      // const moduleFileName = `node_modules/${moduleName}/index.d.ts`;
-      // let file = getFile(moduleFileName);
-      // const oldVersion = file.version;
-      // file.content = decls;
-      // if (file.version != oldVersion) {
-      //   changed = true;
-      // }
-    });
 
     const getFile = (fileName: string) => {
       let file = this.files.get(fileName);
@@ -98,6 +88,17 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
       }
       return file;
     };
+    
+    callback(this.fileNames, this.services, addChange, (moduleName, decls) => {
+      // dependencies.push(decls);
+      const moduleFileName = `node_modules/${moduleName}/index.d.ts`;
+      let file = getFile(moduleFileName);
+      const oldVersion = file.version;
+      file.content = decls;
+      if (file.version != oldVersion) {
+        changed = true;
+      }
+    });
     
     if (dependencies.length > 0) {
       let dependenciesFile = getFile(this.dependenciesFileName);

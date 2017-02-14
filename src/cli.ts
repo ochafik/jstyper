@@ -10,7 +10,8 @@ import {pseudoJson} from './utils/pseudo_json';
 var argv = require('minimist')(process.argv.slice(2));
 // console.dir(argv);
 
-const outputDir = argv.outputDir || argv.o;
+const force = argv.force || argv.f;
+const outputDir = argv.outputDir || argv.o || 'build';
 const outputToStdout = outputDir == '-';
 const testSpecDescription = argv.testSpec;
 
@@ -31,6 +32,8 @@ const options =
     <Options>{...defaultOptions, currentWorkingDir: process.cwd(), ...argv};
 const results = runTyper(inputContents, options);
 
+console.warn(`${results.metadata.inferencePasses} inference passes`);
+
 if (outputToStdout) {
   console.log(pseudoJson(results));
 } else if (testSpecDescription) {
@@ -40,17 +43,26 @@ if (outputToStdout) {
     result: results
   });
 } else {
+  const filesToWrite: [string, string][] = [];
   for (const fileName in results.files) {
     const outputFile = getFile(
         fileName,
         {outputDir: outputDir, currentWorkingDir: options.currentWorkingDir});
     const content = results.files[fileName];
+
+    if (fs.existsSync(outputFile) && !force) {
+      console.warn(`${outputFile} already exists. Choose another --outputDir or --force overwrite.`);
+      process.exit(1);
+    }
+    console.warn(`${outputFile}`);
+
+    filesToWrite.push([outputFile, content]);
+  }
+  for (const [outputFile, content] of filesToWrite) {
     if (!fs.existsSync(outputFile) ||
         content != fs.readFileSync(outputFile).toString()) {
       mkdirsSync(path.dirname(outputFile));
 
-      console.warn(`${outputFile}: ${results.metadata.inferencePasses
-                   } inference passes`);
       fs.writeFileSync(outputFile, content);
     }
   }

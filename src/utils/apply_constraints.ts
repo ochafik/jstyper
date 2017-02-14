@@ -30,7 +30,7 @@ export function applyConstraints(
     let decls = `declare module "${moduleName}" {\n`;
     
     for (const [field, fieldConstraints] of [...constraints.fields, ...constraints.computedFields]) {
-      const fieldConstraints = constraints.getFieldConstraints(field);
+      // const fieldConstraints = constraints.getFieldConstraints(field);
       if (fieldConstraints.isPureFunction) {
         const [argList, retType] = fieldConstraints.resolveCallableArgListAndReturnType()!;
         if (fieldConstraints.getCallConstraints().constructible) {

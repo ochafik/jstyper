@@ -32,7 +32,7 @@ foo.c = 10;
 
 
 `,
-      'dependencies.d.ts': `declare module "foo" {
+      'node_modules/foo/index.d.ts': `declare module "foo" {
   export function a(arg1: number): string;
   export const b: number;
   export let c: number;
