@@ -115,25 +115,20 @@ export function applyConstraints(
       //       return;
       //   }
       // const resolved = constraints.resolve();
-      const {isUndefined, resolved} = constraints.resolveMaybeUndefined();
+      const {isUndefined, resolved} = nodes.isParameter(varDecl)
+          ? constraints.resolveMaybeUndefined()
+          : {isUndefined: false, resolved: constraints.resolve()};
+
       if (resolved == null) {
-        // console.log(`No changes for var ${varDecl.getFullText()}:
-        // ${resolved}`);
         return;
       }
+      const newText = (isUndefined ? '?: ' : ': ') + resolved;
 
       const start = varDecl.name.getEnd();
-      let length: number;
-      let pre = isUndefined ? '?: ' : ': ';
-
-      if (varDecl.type) {
-        length = varDecl.type.getEnd() - start;
-      } else {
-        length = 0;
-      }
+      const length = varDecl.type ?  varDecl.type.getEnd() - start : 0;
       addChange(
           decl.getSourceFile(),
-          {span: {start: start, length: length}, newText: pre + resolved});
+          {span: {start: start, length: length}, newText});
     }
   }
 }

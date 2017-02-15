@@ -8,10 +8,18 @@ export default {
   files: {
     'input.js': `
       { let a, b; a in b; }
+      { let a; 'foo' in a; }
+
       { let a, b; a instanceof b; }
       { let a, b; a = b; }
+      { let a, b = 1; a = b; }
       { let a, b; a + b; }
+      { let a, b, c = 1; c = a + b; }
+      { let a, b = 1, c = ''; c = a + b; }
+      
       { let a, b; a += b; }
+      { let a = 1, b; a += b; }
+
       { let a, b; a - b; }
       { let a, b; a -= b; }
       { let a, b; a * b; }
@@ -61,33 +69,41 @@ export default {
   result: {
     files: {
       'input.js': `
-      { let a, b; a in b; }
+      { let a: string, b; a in b; }
+      { let a: {foo?: any}; 'foo' in a; }
+
       { let a, b; a instanceof b; }
-      { let a, b; a = b; }
+      { let a: undefined, b: undefined; a = b; }
+      { let a: number, b: number = 1; a = b; }
       { let a, b; a + b; }
-      { let a, b; a += b; }
+      { let a: number, b: number, c: number = 1; c = a + b; }
+      { let a, b: number = 1, c: number | string = ''; c = a + b; }
+      
+      { let a, b: undefined; a += b; }
+      { let a: number = 1, b: number; a += b; }
+
       { let a: number, b: number; a - b; }
-      { let a?: number?: number?: number?: number?: number, b?: number?: number?: number?: number?: number; a -= b; }
+      { let a: number | undefined, b: number | undefined; a -= b; }
       { let a: number, b: number; a * b; }
-      { let a?: number?: number?: number?: number?: number, b?: number?: number?: number?: number?: number; a *= b; }
+      { let a: number | undefined, b: number | undefined; a *= b; }
       { let a: number, b: number; a ** b; }
-      { let a?: number?: number?: number?: number?: number, b?: number?: number?: number?: number?: number; a **= b; }
+      { let a: number | undefined, b: number | undefined; a **= b; }
       { let a: number, b: number; a / b; }
-      { let a?: number?: number?: number?: number?: number, b?: number?: number?: number?: number?: number; a /= b; }
+      { let a: number | undefined, b: number | undefined; a /= b; }
       { let a: number, b: number; a % b; }
-      { let a?: number?: number?: number?: number?: number, b?: number?: number?: number?: number?: number; a %= b; }
+      { let a: number | undefined, b: number | undefined; a %= b; }
       { let a: number, b: number; a << b; }
-      { let a: number, b: number?: number; a <<= b; }
+      { let a: number | undefined, b: number | undefined; a <<= b; }
       { let a: number, b: number; a >> b; }
-      { let a, b; a >>= b; }
+      { let a: number | undefined, b: number | undefined; a >>= b; }
       { let a: number, b: number; a >>> b; }
-      { let a, b; a >>>= b; }
+      { let a: number | undefined, b: number | undefined; a >>>= b; }
       { let a: number, b: number; a & b; }
-      { let a?: number?: number?: number?: number?: number, b?: number?: number?: number?: number?: number; a &= b; }
+      { let a: number | undefined, b: number | undefined; a &= b; }
       { let a: number, b: number; a | b; }
-      { let a?: number?: number?: number?: number?: number, b?: number?: number?: number?: number?: number; a |= b; }
+      { let a: number | undefined, b: number | undefined; a |= b; }
       { let a: number, b: number; a ^ b; }
-      { let a?: number?: number?: number?: number?: number, b?: number?: number?: number?: number?: number; a ^= b; }
+      { let a: number | undefined, b: number | undefined; a ^= b; }
 
       { let a, b; a == b; }
       { let a, b; a === b; }
@@ -105,14 +121,14 @@ export default {
       { let a: number; ++a; }
       { let a: number; a--; }
       { let a: number; --a; }
-      { let a; -a; }
-      { let a; +a; }
+      { let a: number; -a; }
+      { let a: number; +a; }
       { let a: number; ~a; }
-      { let a: number; !a; }
+      { let a: boolean; !a; }
     `
     },
     metadata: {
-      inferencePasses: 5
+      inferencePasses: 3
     }
   }
 } as TestSpec

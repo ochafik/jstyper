@@ -1,5 +1,9 @@
 import * as ts from 'typescript';
 
+export function isUnaryExpression(node: ts.Node): node is (ts.PrefixUnaryExpression | ts.PostfixUnaryExpression) {
+  return isPostfixUnaryExpression(node) || isPrefixUnaryExpression(node);
+}
+
 export function isFunctionLikeDeclaration(decl?: ts.Node):
     decl is ts.FunctionLikeDeclaration {
   if (!decl) {

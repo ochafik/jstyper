@@ -91,92 +91,13 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
               }
             }
           } else if (nodes.isBinaryExpression(node)) {
-            const [leftType, rightType] =
-                [node.left, node.right].map(e => checker.getTypeAtLocation(e));
-
-            const leftConstraints =
-                constraintsCache.getNodeConstraints(node.left);
-            const rightConstraints =
-                constraintsCache.getNodeConstraints(node.right);
-
-            const op = node.operatorToken.kind;
-
-            if (nodes.isInKeyword(node.operatorToken)) {
-              if (rightConstraints && nodes.isStringLiteral(node.left)) {
-                rightConstraints.getComputedFieldConstraints(node.left.text).isUndefined();
-              }
-            }
-            if (ops.binaryNumberOperators.has(op)) {
-              if (leftConstraints) {
-                leftConstraints.isNumber();
-              }
-              if (rightConstraints) {
-                rightConstraints.isNumber();
-              }
-            }
-            if (ops.binaryNumberOrStringOperators.has(op)) {
-              if (fl.isNumber(ctxType)) {
-                leftConstraints && leftConstraints.isNumber();
-                rightConstraints && rightConstraints.isNumber();
-              }
-            }
-            if (ops.equalityLikeOperators.has(op)) {
-              // This is a bit bold: we assume if things can be equatable, then
-              // they have the same type.
-              function handle(
-                  constraints: TypeConstraints|undefined, otherType: ts.Type) {
-                if (leftConstraints && otherType) {
-                  if (fl.isPrimitive(otherType)) {  //! isAny(otherType)) {
-                    leftConstraints.isType(otherType);
-                  } else if (fl.isNull(otherType)) {
-                    leftConstraints.isNullable();
-                  }
-                }
-              }
-              handle(leftConstraints, rightType);
-              handle(rightConstraints, leftType);
-            } 
-            if (ops.binaryBooleanOperators.has(op)) {
-              constraintsCache.nodeIsBooleanLike(node.left);
-              // In `a && b`, we know that `a` is bool-like but know absolutely
-              // nothing about `b`.
-              // But if that is embedded in `(a && b) && c`, then it's another
-              // game.
-              // TODO: propagate contextual type upwards.
-              constraintsCache.nodeIsBooleanLike(node.right);
-            }
-            if (ops.assignmentOperators.has(op)) {
-              if (leftConstraints) {
-                leftConstraints.isWritable();
-              }
-              if (op == ts.SyntaxKind.PlusEqualsToken) {
-                if (leftConstraints && fl.isNumber(leftConstraints.flags) &&
-                    rightConstraints) {
-                  rightConstraints.isNumber();
-                }
-                // handlePlusOp(leftConstraints, rightType);
-              } else if (leftConstraints && rightType && !fl.isAny(rightType)) {
-                leftConstraints.isType(rightType);
-              }
-            }
-          // } else if (nodes.isAssignment)
-          } else if (
-              nodes.isPostfixUnaryExpression(node) ||
-              nodes.isPrefixUnaryExpression(node)) {
-            const constraints =
-                constraintsCache.getNodeConstraints(node.operand);
-            //   console.log(`leftConstraints for ${node.getFullText()}:
-            //   ${leftConstraints} (op = ${node.operator},
-            //   ops.unaryNumberOperators =
-            //   ${[...ops.unaryNumberOperators.values()]})`);
-            if (constraints) {
-              const op = node.operator;
-              if (ops.unaryNumberOperators.has(op)) {
-                constraints.isNumber();
-              } else if (ops.unaryBooleanOperators.has(op)) {
-                constraints.isBooleanLike();
-              }
-            }
+            ops.inferBinaryOpConstraints(node, ctxType,
+                checker.getTypeAtLocation(node.left),
+                checker.getTypeAtLocation(node.right),
+                constraintsCache.getNodeConstraints(node.left),
+                constraintsCache.getNodeConstraints(node.right));
+          } else if (nodes.isUnaryExpression(node)) {
+            ops.inferUnaryOpConstraints(node.operator, constraintsCache.getNodeConstraints(node.operand));
           } else if (nodes.isDeleteExpression(node)) {
             const constraints = constraintsCache.getNodeConstraints(node.expression);
             if (constraints) {

@@ -67,6 +67,7 @@ function gg(x: number, y: {addValue: boolean, value: any, name: string}) {
 
 # TODO
 
+- Bundle & support DOM & ES2015+ libs
 - Support `var foo = require('./bar').foo` pattern
 - Parse and output flow comment / flow types (+ compare with Flow)
 - Lint mode
