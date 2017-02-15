@@ -30,6 +30,12 @@ export function isNumericLiteral(node?: ts.Node): node is ts.NumericLiteral {
 export function isStringLiteral(node?: ts.Node): node is ts.StringLiteral {
   return node != null && node.kind === ts.SyntaxKind.StringLiteral;
 }
+export function isTrueKeyword(node?: ts.Node): node is ts.Token<ts.SyntaxKind.TrueKeyword> {
+  return node != null && node.kind === ts.SyntaxKind.TrueKeyword;
+}
+export function isFalseKeyword(node?: ts.Node): node is ts.Token<ts.SyntaxKind.FalseKeyword> {
+  return node != null && node.kind === ts.SyntaxKind.FalseKeyword;
+}
 export function isJsxText(node?: ts.Node): node is ts.JsxText {
   return node != null && node.kind === ts.SyntaxKind.JsxText;
 }

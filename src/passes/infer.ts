@@ -9,6 +9,7 @@ import {guessName} from '../utils/name_guesser';
 import * as nodes from '../utils/nodes';
 import {isCallTarget, traverse} from '../utils/nodes';
 import * as ops from '../utils/operators';
+import * as objects from '../matchers/objects';
 import {CallConstraints, TypeConstraints} from '../utils/type_constraints';
 
 export const infer: (options: Options) => ReactorCallback = (options) => (
@@ -53,6 +54,24 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
                   node.parent != null && nodes.isExpressionStatement(node.parent),
                   node.arguments);
             }
+            const props = objects.matchProperties(node, checker);
+            if (props) {
+              const objectConstraints = constraintsCache.getNodeConstraints(props.target);
+              if (objectConstraints) {
+                for (const prop of props.properties) {
+                  const fieldConstraints = prop.isComputedName
+                      ? objectConstraints.getComputedFieldConstraints(prop.name)
+                      : objectConstraints.getFieldConstraints(prop.name);
+
+                  for (const propType of prop.valueTypes) {
+                    fieldConstraints.isType(propType);
+                  }
+                  if (prop.writable) {
+                    fieldConstraints.isWritable();
+                  }
+                }
+              }
+            } 
           } else if (nodes.isNewExpression(node)) {
             const constraints = constraintsCache.getNodeConstraints(node.expression);
             if (constraints) {

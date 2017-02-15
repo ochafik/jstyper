@@ -79,7 +79,6 @@ function gg(x: number, y: {addValue: boolean, value: any, name: string}) {
 - WebDriver test for demo
 - Support literal types
 - Use `const` when appropriate in `var` rewrite.
-- Support `Object.setProperty`
 - Proper cli args parsing + `--help`
 - Better `new F()` class creation inference
 

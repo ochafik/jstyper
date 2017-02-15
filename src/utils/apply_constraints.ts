@@ -72,7 +72,9 @@ export function applyConstraints(
             handleVarConstraints(argConstraints, param);
           }
         });
-        handleReturnType(callConstraints.returnType, funDecl);
+        if (!nodes.isArrowFunction(decl)) {
+          handleReturnType(callConstraints.returnType, funDecl);
+        }
       }
     }
 
