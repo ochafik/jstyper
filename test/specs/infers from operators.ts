@@ -7,128 +7,128 @@ import {TestSpec} from '../../src/testing/test_spec';
 export default {
   files: {
     'input.js': `
-      { let a, b; a in b; }
-      { let a; 'foo' in a; }
+      (a, b) => { a in b; };
+      (a) => { 'foo' in a; };
 
-      { let a, b; a instanceof b; }
-      { let a, b; a = b; }
-      { let a, b = 1; a = b; }
-      { let a, b; a + b; }
-      { let a, b, c = 1; c = a + b; }
-      { let a, b = 1, c = ''; c = a + b; }
+      (a, b) => { a instanceof b; };
+      (a, b) => { a = b; };
+      (a, b = 1) => { a = b; };
+      (a, b) => { a + b; };
+      (a, b, c = 1) => { c = a + b; };
+      (a, b = 1, c = '') => { c = a + b; };
       
-      { let a, b; a += b; }
-      { let a = 1, b; a += b; }
+      (a, b) => { a += b; };
+      (a = 1, b) => { a += b; };
 
-      { let a, b; a - b; }
-      { let a, b; a -= b; }
-      { let a, b; a * b; }
-      { let a, b; a *= b; }
-      { let a, b; a ** b; }
-      { let a, b; a **= b; }
-      { let a, b; a / b; }
-      { let a, b; a /= b; }
-      { let a, b; a % b; }
-      { let a, b; a %= b; }
-      { let a, b; a << b; }
-      { let a, b; a <<= b; }
-      { let a, b; a >> b; }
-      { let a, b; a >>= b; }
-      { let a, b; a >>> b; }
-      { let a, b; a >>>= b; }
-      { let a, b; a & b; }
-      { let a, b; a &= b; }
-      { let a, b; a | b; }
-      { let a, b; a |= b; }
-      { let a, b; a ^ b; }
-      { let a, b; a ^= b; }
+      (a, b) => { a - b; };
+      (a, b) => { a -= b; };
+      (a, b) => { a * b; };
+      (a, b) => { a *= b; };
+      (a, b) => { a ** b; };
+      (a, b) => { a **= b; };
+      (a, b) => { a / b; };
+      (a, b) => { a /= b; };
+      (a, b) => { a % b; };
+      (a, b) => { a %= b; };
+      (a, b) => { a << b; };
+      (a, b) => { a <<= b; };
+      (a, b) => { a >> b; };
+      (a, b) => { a >>= b; };
+      (a, b) => { a >>> b; };
+      (a, b) => { a >>>= b; };
+      (a, b) => { a & b; };
+      (a, b) => { a &= b; };
+      (a, b) => { a | b; };
+      (a, b) => { a |= b; };
+      (a, b) => { a ^ b; };
+      (a, b) => { a ^= b; };
 
-      { let a, b; a == b; }
-      { let a, b; a === b; }
-      { let a, b; a != b; }
-      { let a, b; a !== b; }
-      { let a, b; a < b; }
-      { let a, b; a <= b; }
-      { let a, b; a > b; }
-      { let a, b; a >= b; }
-      { let a, b; a || b; }
-      { let a, b; a && b; }
-      { let a, b; a ^^ b; }
+      (a, b) => { a == b; };
+      (a, b) => { a === b; };
+      (a, b) => { a != b; };
+      (a, b) => { a !== b; };
+      (a, b) => { a < b; };
+      (a, b) => { a <= b; };
+      (a, b) => { a > b; };
+      (a, b) => { a >= b; };
+      (a, b) => { a || b; };
+      (a, b) => { a && b; };
+      (a, b) => { a ^^ b; };
       
-      { let a; a++; }
-      { let a; ++a; }
-      { let a; a--; }
-      { let a; --a; }
-      { let a; -a; }
-      { let a; +a; }
-      { let a; ~a; }
-      { let a; !a; }
+      (a) => { a++; };
+      (a) => { ++a; };
+      (a) => { a--; };
+      (a) => { --a; };
+      (a) => { -a; };
+      (a) => { +a; };
+      (a) => { ~a; };
+      (a) => { !a; };
     `
   },
   options: {},
   result: {
     files: {
       'input.js': `
-      { let a: string, b; a in b; }
-      { let a: {foo?: any}; 'foo' in a; }
+      (a: string, b) => { a in b; };
+      (a: {foo?: any}) => { 'foo' in a; };
 
-      { let a, b; a instanceof b; }
-      { let a: undefined, b: undefined; a = b; }
-      { let a: number, b: number = 1; a = b; }
-      { let a, b; a + b; }
-      { let a: number, b: number, c: number = 1; c = a + b; }
-      { let a, b: number = 1, c: number | string = ''; c = a + b; }
+      (a, b) => { a instanceof b; };
+      (a, b) => { a = b; };
+      (a: number, b: number = 1) => { a = b; };
+      (a, b) => { a + b; };
+      (a: number, b: number, c: number = 1) => { c = a + b; };
+      (a, b: number = 1, c: string = '') => { c = a + b; };
       
-      { let a, b: undefined; a += b; }
-      { let a: number = 1, b: number; a += b; }
+      (a, b) => { a += b; };
+      (a: number = 1, b: number) => { a += b; };
 
-      { let a: number, b: number; a - b; }
-      { let a: number | undefined, b: number | undefined; a -= b; }
-      { let a: number, b: number; a * b; }
-      { let a: number | undefined, b: number | undefined; a *= b; }
-      { let a: number, b: number; a ** b; }
-      { let a: number | undefined, b: number | undefined; a **= b; }
-      { let a: number, b: number; a / b; }
-      { let a: number | undefined, b: number | undefined; a /= b; }
-      { let a: number, b: number; a % b; }
-      { let a: number | undefined, b: number | undefined; a %= b; }
-      { let a: number, b: number; a << b; }
-      { let a: number | undefined, b: number | undefined; a <<= b; }
-      { let a: number, b: number; a >> b; }
-      { let a: number | undefined, b: number | undefined; a >>= b; }
-      { let a: number, b: number; a >>> b; }
-      { let a: number | undefined, b: number | undefined; a >>>= b; }
-      { let a: number, b: number; a & b; }
-      { let a: number | undefined, b: number | undefined; a &= b; }
-      { let a: number, b: number; a | b; }
-      { let a: number | undefined, b: number | undefined; a |= b; }
-      { let a: number, b: number; a ^ b; }
-      { let a: number | undefined, b: number | undefined; a ^= b; }
+      (a: number, b: number) => { a - b; };
+      (a: number, b: number) => { a -= b; };
+      (a: number, b: number) => { a * b; };
+      (a: number, b: number) => { a *= b; };
+      (a: number, b: number) => { a ** b; };
+      (a: number, b: number) => { a **= b; };
+      (a: number, b: number) => { a / b; };
+      (a: number, b: number) => { a /= b; };
+      (a: number, b: number) => { a % b; };
+      (a: number, b: number) => { a %= b; };
+      (a: number, b: number) => { a << b; };
+      (a: number, b: number) => { a <<= b; };
+      (a: number, b: number) => { a >> b; };
+      (a: number, b: number) => { a >>= b; };
+      (a: number, b: number) => { a >>> b; };
+      (a: number, b: number) => { a >>>= b; };
+      (a: number, b: number) => { a & b; };
+      (a: number, b: number) => { a &= b; };
+      (a: number, b: number) => { a | b; };
+      (a: number, b: number) => { a |= b; };
+      (a: number, b: number) => { a ^ b; };
+      (a: number, b: number) => { a ^= b; };
 
-      { let a, b; a == b; }
-      { let a, b; a === b; }
-      { let a, b; a != b; }
-      { let a, b; a !== b; }
-      { let a: number, b: number; a < b; }
-      { let a: number, b: number; a <= b; }
-      { let a: number, b: number; a > b; }
-      { let a: number, b: number; a >= b; }
-      { let a: boolean, b: boolean; a || b; }
-      { let a: boolean, b: boolean; a && b; }
-      { let a: number, b: number; a ^^ b; }
+      (a, b) => { a == b; };
+      (a, b) => { a === b; };
+      (a, b) => { a != b; };
+      (a, b) => { a !== b; };
+      (a: number, b: number) => { a < b; };
+      (a: number, b: number) => { a <= b; };
+      (a: number, b: number) => { a > b; };
+      (a: number, b: number) => { a >= b; };
+      (a: boolean, b: boolean) => { a || b; };
+      (a: boolean, b: boolean) => { a && b; };
+      (a: number, b: number) => { a ^^ b; };
       
-      { let a: number; a++; }
-      { let a: number; ++a; }
-      { let a: number; a--; }
-      { let a: number; --a; }
-      { let a: number; -a; }
-      { let a: number; +a; }
-      { let a: number; ~a; }
-      { let a: boolean; !a; }
+      (a: number) => { a++; };
+      (a: number) => { ++a; };
+      (a: number) => { a--; };
+      (a: number) => { --a; };
+      (a: number) => { -a; };
+      (a: number) => { +a; };
+      (a: number) => { ~a; };
+      (a: boolean) => { !a; };
     `
     },
     metadata: {
-      inferencePasses: 3
+      inferencePasses: 2
     }
   }
 } as TestSpec
