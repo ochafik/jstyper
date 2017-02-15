@@ -23,14 +23,14 @@ export default {
   result: {
     files: {
       'input.js': `
-      function f(x: {readonly a: any, b: number, c?: () => void, d?: any}): void {
+      function f(x: {readonly a: any, b: number, readonly c?: () => void, d?: any}): void {
         x.a;
         x.b = 1;
         if (x.c) x.c();
         delete x.d;
       }
 
-      function g(x: {readonly a: any, b: number, c?: () => void, d?: any}): void {
+      function g(x: {readonly a: any, b: number, readonly c?: () => void, d?: any}): void {
         f(x);
       } 
     `

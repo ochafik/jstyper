@@ -82,7 +82,7 @@ export default {
     files: {
       'input.js': `
       (a: string, b) => { a in b; };
-      (a: {foo?: any}) => { 'foo' in a; };
+      (a: {readonly foo?: any}) => { 'foo' in a; };
 
       (a, b) => { a instanceof b; };
       (a, b) => { a = b; };

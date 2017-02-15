@@ -65,6 +65,7 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
 
                   for (const propType of prop.valueTypes) {
                     fieldConstraints.isType(propType);
+                    fieldConstraints.isUndefined();
                   }
                   if (prop.writable) {
                     fieldConstraints.isWritable();

@@ -14,6 +14,13 @@ const defaultState: State = {
 function f(x, opts) {
   return opts && opts.mult ? x * 2 : x / 2;
 }
+
+function addProp(o) {
+  Object.defineProperty(o, 'x' {
+    value: 1,
+    writable: true
+  });
+}
     `.trim(),
   maxIterations: defaultOptions.maxIterations,
   autoRun: true,

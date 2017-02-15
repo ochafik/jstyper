@@ -51,7 +51,7 @@ export default {
   result: {
     files: {
       'readonlies.js': `
-      function f(x: {readonly ['a']: number, readonly ['b']: number, readonly ['c']: {x: number}}): void {
+      function f(x: {readonly ['a']?: number, readonly ['b']?: number, readonly ['c']?: {x: number}}): void {
         Object.defineProperty(x, 'a', {
           value: 1
         });
@@ -65,7 +65,7 @@ export default {
       }
     `,
       'writables.js': `
-      function g(x: {['a']: string, ['b']: {x: number}}): void {
+      function g(x: {['a']?: string, ['b']?: {x: number}}): void {
         Object.defineProperty(x, 'a', {
           value: '',
           writable: true
@@ -77,7 +77,7 @@ export default {
       }
     `,
       'properties.js': `
-      function h(x: {readonly b: any, readonly ['a']: number}): void {
+      function h(x: {readonly b: any, readonly ['a']?: number}): void {
         Object.defineProperties(x, {
           'a': {
             value: 1

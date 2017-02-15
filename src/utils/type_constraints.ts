@@ -446,15 +446,12 @@ export class TypeConstraints {
     resolved = resolved || 'any';
 
     const key = isComputed ? `['${name}']` : name;
+    const prefix = valueType._isWritable || !isMember ? '' : 'readonly ';
     if (isUndefined) {
-      return `${key}?: ${resolved}`;
+      return `${prefix}${key}?: ${resolved}`;
     } else {
-      if (valueType._isWritable || !isMember) {
-        return `${key}: ${resolved}`;
-      } else {
-        return `readonly ${key}: ${resolved}`;
-        // return `get ${key}(): ${resolved}`;
-      }
+      return `${prefix}${key}: ${resolved}`;
+      // return `get ${key}(): ${resolved}`;
     }
   }
 

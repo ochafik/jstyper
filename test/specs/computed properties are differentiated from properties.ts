@@ -26,7 +26,7 @@ export default {
   result: {
     files: {
       'input.js': `
-      function f(x: {readonly a: number, b(): void, c: boolean, readonly ['a']: number | string, ['b'](): void, ['c']: string, ['z']?: any}, z: {readonly ['yay']: any}): void {
+      function f(x: {readonly a: number, b(): void, c: boolean, readonly ['a']: number | string, ['b'](): void, ['c']: string, readonly ['z']?: any}, z: {readonly ['yay']: any}): void {
         x.a == 1;
         x['a'] == '';
         x.b();
