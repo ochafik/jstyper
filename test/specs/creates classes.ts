@@ -29,13 +29,7 @@ export default {
 
       function Baz(x: boolean): void {}
       new Baz(true).z = 1;
-    `,
-      'node_modules/@types/foo/index.d.ts': `declare module "foo" {
-  export class Foo {
-    constructor(arg1: number);
-  }
-}
-`
+    `
     },
     metadata: {
       inferencePasses: 3

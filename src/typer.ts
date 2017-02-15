@@ -30,9 +30,9 @@ export function runTyper(
   // }
   const reactor =
       new LanguageServiceReactor(fileContents, options.currentWorkingDir, options.dependenciesFileName, {
-        // target: ts.ScriptTarget.ES2017,
-        // module: ts.ModuleKind.ES2015,
-        // moduleResolution: ts.ModuleResolutionKind.NodeJs,
+        target: ts.ScriptTarget.ES2017,
+        module: ts.ModuleKind.ES2015,
+        moduleResolution: ts.ModuleResolutionKind.NodeJs,
         //lib: ["dom", "es2017"],
         allowJs: true,
         strictNullChecks: true,

@@ -104,7 +104,22 @@ window.addEventListener('load', () => {
     };
 
     const inputFileName = 'file.js';
-    const {files, metadata} = runTyper({[inputFileName]: jsInput.value}, options)
+    const inputs = {
+      [inputFileName]: jsInput.value,
+      // 'bar.js': `
+      //   // export class Bar {}
+      //   // export function takeBar(x) {}
+      //   export default {
+      //     a: a,
+      //     b: function(x) {},
+      //     c: 1
+      //   }
+      //   function a(x: {readonly y: {z(): void}}): void {
+      //     x.y.z();
+      //   }
+      // `
+    }
+    const {files, metadata} = runTyper(inputs, options)
     let output = '';
     for (const fileName in files) {
       if (fileName != inputFileName) {

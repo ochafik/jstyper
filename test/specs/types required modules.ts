@@ -31,16 +31,10 @@ export default {
       foo.c = 10;
           
           
-    `,
-      'node_modules/@types/foo/index.d.ts': `declare module "foo" {
-  export function a(arg1: number): string;
-  export const b: number;
-  export let c: number;
-}
-`
+    `
     },
     metadata: {
-      inferencePasses: 3
+      inferencePasses: 2
     }
   }
 } as TestSpec

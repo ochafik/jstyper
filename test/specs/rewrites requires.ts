@@ -43,11 +43,7 @@ export default {
     `,
       'bar.js': `
       export default { x: 1, y: 2 };
-    `,
-      'node_modules/@types/./bar/index.d.ts': `declare module "./bar" {
-  export const x: any;
-}
-`
+    `
     },
     metadata: {
       inferencePasses: 2

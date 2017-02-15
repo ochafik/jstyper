@@ -46,7 +46,10 @@ export class ConstraintsCache {
     return sym && this.getSymbolConstraints(sym);
   }
 
-  private getSymbolConstraints(sym: ts.Symbol): TypeConstraints {
+  private getSymbolConstraints(sym?: ts.Symbol): TypeConstraints | undefined {
+    if (!sym) {
+      return undefined;
+    }
     let constraints = this.allConstraints.get(sym);
     if (!constraints) {
       // console.log(`Building constraints for
@@ -71,6 +74,17 @@ export class ConstraintsCache {
       node = node.expression;
     }
 
+    const getModuleExports = (importClause: ts.ImportClause) => {
+      if (nodes.isImportDeclaration(importClause.parent)) {
+        const importDecl = importClause.parent;
+        const modSym = this.checker.getSymbolAtLocation(importDecl.moduleSpecifier);
+        if (modSym && modSym.exports) {
+          return modSym.exports;
+        }
+      }
+      return undefined;
+    }
+
     if (nodes.isPropertyAccessExpression(node)) {
       const constraints = this.getNodeConstraints(node.expression);
       if (constraints) {
@@ -89,10 +103,8 @@ export class ConstraintsCache {
     } else if (
         nodes.isConstructor(node) || nodes.isArrowFunction(node) ||
         nodes.isFunctionExpression(node)) {
-      const sym = node['symbol'];  // this.checker.getSymbolAtLocation(node);
-      if (sym) {
-        return this.getSymbolConstraints(sym);
-      }
+      // this.checker.getSymbolAtLocation(node);
+      return this.getSymbolConstraints(node['symbol']);
     } else if (nodes.isVariableDeclaration(node)) {
       let requiredPath = nodes.getRequiredPath(node.initializer);
       if (requiredPath && !requiredPath.startsWith('.')) {
@@ -110,32 +122,43 @@ export class ConstraintsCache {
           return funConstraints.getCallConstraints().getArgType(paramIndex);
         }
       }
-    } else if (nodes.isNamespaceImport(node)) {
-      return node.parent && this.getNodeConstraints(node.parent);
+//     } else if (nodes.isNamespaceImport(node)) {
+//       return node.parent && this.getNodeConstraints(node.parent) ||
+//           this.getSymbolConstraintsAtLocation(node);
     } else if (nodes.isImportSpecifier(node)) {
-      if (node.parent) {
-        const constraints = this.getNodeConstraints(node.parent);
-        if (constraints) {
-          const name = (node.propertyName || node.name).text;
-          return constraints.getFieldConstraints(name);
+      if (nodes.isNamedImports(node.parent)) {
+        const namedImports = node.parent;
+        if (nodes.isImportClause(namedImports.parent)) {
+          const exports = getModuleExports(namedImports.parent);
+          if (exports && nodes.isIdentifier(node.name)) {
+            const sym = exports[node.name.text];
+            return this.getSymbolConstraints(sym);
+          }
         }
       }
-    } else if (nodes.isNamedImports(node)) {
-      return node.parent && this.getNodeConstraints(node.parent);
-    } else if (nodes.isImportClause(node)) {
-      if (node.parent && nodes.isImportDeclaration(node.parent)) {
-        const mod = node.parent.moduleSpecifier;
-        if (nodes.isStringLiteral(mod)) {
-          return this.getRequireConstraints(mod.text);
+    } else if (nodes.isNamespaceImport(node)) {
+        if (nodes.isImportClause(node.parent)) {
+          const exports = getModuleExports(node.parent);
+          if (exports) {
+            if ('default' in exports) {
+              return this.getSymbolConstraints(exports['default']);
+            } else {
+              return {
+                // A module alias is not a real type constraint.
+                getFieldConstraints: (name: string) => this.getSymbolConstraints(exports[name]),
+                isType: (t: ts.Type) => {},
+                cannotBeVoid: () => {}
+              } as any;
+            }
+          }
         }
-      }
     } else if (nodes.isIdentifier(node)) {
-      const sym = this.checker.getSymbolAtLocation(node);
+      const sym = this.checker.getSymbolAtLocation(node) || node['symbol'] as ts.Symbol;
       if (sym) {
         const decls = sym.getDeclarations();
         // console.log(`DECLS for idend ${node.getFullText()}: ${decls &&
         // decls.length}`);
-        if (decls && decls.length > 0) {
+        if (decls) {
           for (const decl of decls) {
             const constraints = this.getNodeConstraints(decl);
             if (constraints) {

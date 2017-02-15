@@ -41,7 +41,11 @@ export class CallConstraints {
   }
 
   hasSignature(sig: ts.Signature, markChanges = true) {
-    const params = sig.getDeclaration().parameters;
+    const decl = sig.getDeclaration();
+    if (!decl) {
+      return;
+    }
+    const params = decl.parameters;
     const paramTypes = params.map(p => this.checker.getTypeAtLocation(p));
 
     this.returnType.isType(sig.getReturnType(), markChanges);

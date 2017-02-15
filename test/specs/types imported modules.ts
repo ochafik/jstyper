@@ -27,16 +27,10 @@ export default {
       c = 2;
           
           
-    `,
-      'node_modules/@types/foo/index.d.ts': `declare module "foo" {
-  export const a: (() => boolean) | undefined;
-  export function b(arg1: number): number;
-  export let c: number;
-}
-`
+    `
     },
     metadata: {
-      inferencePasses: 2
+      inferencePasses: 1
     }
   }
 } as TestSpec
