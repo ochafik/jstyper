@@ -115,12 +115,16 @@ export function applyConstraints(
       //       return;
       //   }
       // const resolved = constraints.resolve();
-      const {isUndefined, resolved} = nodes.isParameter(varDecl)
+      let {isUndefined, resolved} = nodes.isParameter(varDecl)
           ? constraints.resolveMaybeUndefined()
           : {isUndefined: false, resolved: constraints.resolve()};
 
       if (resolved == null) {
-        return;
+        if (isUndefined) {
+          resolved = 'any';
+        } else {
+          return;
+        }
       }
       const newText = (isUndefined ? '?: ' : ': ') + resolved;
 

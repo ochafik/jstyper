@@ -2,14 +2,18 @@ import * as ts from 'typescript';
 import {TypeConstraints} from './type_constraints';
 import * as flags from './flags';
 import * as nodes from './nodes';
+import {ConstraintsCache} from './constraints_cache';
 
 export function inferBinaryOpConstraints(node: ts.BinaryExpression,
-    resultType: ts.Type, leftType: ts.Type, rightType: ts.Type,
-    leftConstraints?: TypeConstraints, rightConstraints?: TypeConstraints) {
+    resultType: ts.Type,
+    checker: ts.TypeChecker,
+    constraintsCache: ConstraintsCache) {
 
-  if (!leftConstraints && !rightConstraints) {
-    return;
-  }
+  const leftType = checker.getTypeAtLocation(node.left);
+  const rightType = checker.getTypeAtLocation(node.right);
+
+  const leftConstraints = constraintsCache.getNodeConstraints(node.left);
+  const rightConstraints = constraintsCache.getNodeConstraints(node.right);
 
   const op = node.operatorToken.kind;
 
@@ -99,6 +103,32 @@ export function inferBinaryOpConstraints(node: ts.BinaryExpression,
         }
         leftConstraints && handle(leftConstraints, rightType);
         rightConstraints && handle(rightConstraints, leftType);
+      }
+
+      if (nodes.isTypeOfExpression(node.left)) {
+        const constraints = constraintsCache.getNodeConstraints(node.left.expression);
+        if (constraints && nodes.isStringLiteral(node.right)) {
+          switch (node.right.text) {
+            case 'string':
+              constraints.isString();
+              break;
+            case 'number':
+              constraints.isNumber();
+              break;
+            case 'boolean':
+              constraints.isBoolean();
+              break;
+            case 'function':
+              constraints.getCallConstraints();
+              break;
+            case 'undefined':
+              constraints.isUndefined();
+              break;
+            case 'symbol':
+              constraints.isSymbol();
+              break;
+          }
+        }
       }
       // leftConstraints && rightType && leftConstraints.isType(rightType);
       // rightConstraints && leftType && rightConstraints.isType(leftType);

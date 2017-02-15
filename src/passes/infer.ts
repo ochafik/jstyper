@@ -92,11 +92,7 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
               }
             }
           } else if (nodes.isBinaryExpression(node)) {
-            ops.inferBinaryOpConstraints(node, ctxType,
-                checker.getTypeAtLocation(node.left),
-                checker.getTypeAtLocation(node.right),
-                constraintsCache.getNodeConstraints(node.left),
-                constraintsCache.getNodeConstraints(node.right));
+            ops.inferBinaryOpConstraints(node, ctxType, checker, constraintsCache);
           } else if (nodes.isUnaryExpression(node)) {
             ops.inferUnaryOpConstraints(node.operator, constraintsCache.getNodeConstraints(node.operand));
           } else if (nodes.isDeleteExpression(node)) {

@@ -19,6 +19,7 @@ export class TypeConstraints {
   private nameHints: Set<string>|undefined;
   private _flags: ts.TypeFlags = 0;
   private _isBooleanLike = false;
+  private _isSymbol = false;
   private _isNumberOrString = false;
   private _cannotBeVoid = false;
   private _isWritable = false;
@@ -57,6 +58,7 @@ export class TypeConstraints {
     return this._callConstraints != null &&
         //!this._callConstraints.constructible &&
         !this._isBooleanLike &&
+        !this._isSymbol &&
         !this._isNumberOrString && (this._flags === ts.TypeFlags.Object) &&
         // this.constructConstraints == null &&
         // !this._isWritable &&
@@ -251,6 +253,9 @@ export class TypeConstraints {
   isNumber(markChanges: boolean = true) {
     this.hasFlags(ts.TypeFlags.Number, markChanges);
   }
+  isBoolean(markChanges: boolean = true) {
+    this.hasFlags(ts.TypeFlags.Boolean, markChanges);
+  }
   isString(markChanges: boolean = true) {
     this.hasFlags(ts.TypeFlags.String, markChanges);
   }
@@ -281,6 +286,14 @@ export class TypeConstraints {
     if (this._cannotBeVoid || this._flags & ~ts.TypeFlags.Void) return;
 
     this._cannotBeVoid = true;
+    if (markChanges) {
+      this.markChange();
+    }
+  }
+  isSymbol(markChanges: boolean = true) {
+    if (this._isSymbol) return;
+
+    this._isSymbol = true;
     if (markChanges) {
       this.markChange();
     }
@@ -525,6 +538,9 @@ export class TypeConstraints {
       if (primitivePredicates[primitive](flags)) {
         union.push(primitive);
       }
+    }
+    if (this._isSymbol) {
+      union.push('symbol');
     }
     if (members.length > 0) {
       union.push('{' + members.join(', ') + '}');
