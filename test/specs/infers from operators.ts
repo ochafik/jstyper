@@ -47,10 +47,22 @@ export default {
       (a, b) => { a === b; };
       (a, b) => { a != b; };
       (a, b) => { a !== b; };
+
       (a, b) => { a < b; };
       (a, b) => { a <= b; };
       (a, b) => { a > b; };
       (a, b) => { a >= b; };
+
+      (a = 1, b) => { a < b; };
+      (a = 1, b) => { a <= b; };
+      (a = 1, b) => { a > b; };
+      (a = 1, b) => { a >= b; };
+
+      (a, b = '') => { a < b; };
+      (a, b = '') => { a <= b; };
+      (a, b = '') => { a > b; };
+      (a, b = '') => { a >= b; };
+      
       (a, b) => { a || b; };
       (a, b) => { a && b; };
       (a, b) => { a ^^ b; };
@@ -109,10 +121,22 @@ export default {
       (a, b) => { a === b; };
       (a, b) => { a != b; };
       (a, b) => { a !== b; };
-      (a: number, b: number) => { a < b; };
-      (a: number, b: number) => { a <= b; };
-      (a: number, b: number) => { a > b; };
-      (a: number, b: number) => { a >= b; };
+
+      (a, b) => { a < b; };
+      (a, b) => { a <= b; };
+      (a, b) => { a > b; };
+      (a, b) => { a >= b; };
+
+      (a: number = 1, b: number) => { a < b; };
+      (a: number = 1, b: number) => { a <= b; };
+      (a: number = 1, b: number) => { a > b; };
+      (a: number = 1, b: number) => { a >= b; };
+
+      (a: string, b: string = '') => { a < b; };
+      (a: string, b: string = '') => { a <= b; };
+      (a: string, b: string = '') => { a > b; };
+      (a: string, b: string = '') => { a >= b; };
+      
       (a: boolean, b: boolean) => { a || b; };
       (a: boolean, b: boolean) => { a && b; };
       (a: number, b: number) => { a ^^ b; };

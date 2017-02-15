@@ -39,10 +39,6 @@ export function inferBinaryOpConstraints(node: ts.BinaryExpression,
     case ts.SyntaxKind.SlashEqualsToken:
     case ts.SyntaxKind.PercentToken:
     case ts.SyntaxKind.PercentEqualsToken:
-    case ts.SyntaxKind.LessThanToken:
-    case ts.SyntaxKind.LessThanEqualsToken:
-    case ts.SyntaxKind.GreaterThanToken:
-    case ts.SyntaxKind.GreaterThanEqualsToken:
     case ts.SyntaxKind.LessThanLessThanToken:
     case ts.SyntaxKind.LessThanLessThanEqualsToken:
     case ts.SyntaxKind.GreaterThanGreaterThanToken:
@@ -57,6 +53,23 @@ export function inferBinaryOpConstraints(node: ts.BinaryExpression,
     case ts.SyntaxKind.CaretEqualsToken:
       leftConstraints && leftConstraints.isNumber();
       rightConstraints && rightConstraints.isNumber();
+      break;
+    // Ordering operators
+    case ts.SyntaxKind.LessThanToken:
+    case ts.SyntaxKind.LessThanEqualsToken:
+    case ts.SyntaxKind.GreaterThanToken:
+    case ts.SyntaxKind.GreaterThanEqualsToken:
+      {
+        function handle(constraints: TypeConstraints, otherType: ts.Type) {
+          if (flags.isNumber(otherType) && !flags.isString(otherType)) {
+            constraints.isNumber();
+          } else if (flags.isString(otherType) && !flags.isNumber(otherType)) {
+            constraints.isString();
+          }
+        }
+        leftConstraints && handle(leftConstraints, rightType);
+        rightConstraints && handle(rightConstraints, leftType);
+      }
       break;
     // Boolean operators
     case ts.SyntaxKind.AmpersandAmpersandToken:
