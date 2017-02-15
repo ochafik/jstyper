@@ -29,6 +29,17 @@ export default {
           
           
     `,
+    'exported default value.js': `
+      module.exports = a;
+      var a = 1;
+    `,
+    'exported default function.js': `
+      module.exports = function(x) {};
+    `,
+    'exported default aliased function.js': `
+      module.exports = f;
+      function f(x) {}
+    `,
     'exported vars in multiple declaration are too complex.js': `
       module.exports = {
         a: a
@@ -61,6 +72,17 @@ export {f as foo};
       function h(): void {}
           
           
+    `,
+      'exported default value.js': `
+      
+      export default var a: number = 1;
+    `,
+      'exported default function.js': `
+      export default function(x) {};
+    `,
+      'exported default aliased function.js': `
+      
+      export default function f(x): void {}
     `,
       'exported vars in multiple declaration are too complex.js': `
       export default {

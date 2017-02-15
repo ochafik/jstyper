@@ -74,13 +74,10 @@ export class ConstraintsCache {
       node = node.expression;
     }
 
-    const getModuleExports = (importClause: ts.ImportClause) => {
+    const getModuleSymbol = (importClause: ts.ImportClause) => {
       if (nodes.isImportDeclaration(importClause.parent)) {
         const importDecl = importClause.parent;
-        const modSym = this.checker.getSymbolAtLocation(importDecl.moduleSpecifier);
-        if (modSym && modSym.exports) {
-          return modSym.exports;
-        }
+        return this.checker.getSymbolAtLocation(importDecl.moduleSpecifier);
       }
       return undefined;
     }
@@ -129,26 +126,27 @@ export class ConstraintsCache {
       if (nodes.isNamedImports(node.parent)) {
         const namedImports = node.parent;
         if (nodes.isImportClause(namedImports.parent)) {
-          const exports = getModuleExports(namedImports.parent);
-          if (exports && nodes.isIdentifier(node.name)) {
-            const sym = exports[node.name.text];
+          const modSym = getModuleSymbol(namedImports.parent);
+          if (modSym && modSym.exports && nodes.isIdentifier(node.name)) {
+            const sym = modSym.exports[node.name.text];
             return this.getSymbolConstraints(sym);
           }
         }
       }
     } else if (nodes.isNamespaceImport(node)) {
         if (nodes.isImportClause(node.parent)) {
-          const exports = getModuleExports(node.parent);
-          if (exports) {
-            if ('default' in exports) {
-              return this.getSymbolConstraints(exports['default']);
+          const modSym = getModuleSymbol(node.parent);
+          if (modSym && modSym.exports) {
+            if ('default' in modSym.exports) {
+              return this.getSymbolConstraints(modSym.exports['default']);
             } else {
-              return {
-                // A module alias is not a real type constraint.
-                getFieldConstraints: (name: string) => this.getSymbolConstraints(exports[name]),
-                isType: (t: ts.Type) => {},
-                cannotBeVoid: () => {}
-              } as any;
+              const constraints = new TypeConstraints(`(module '${this.checker.symbolToString(modSym)}')`,
+                  this.services, this.checker, {...this.options, differentiateComputedProperties: false});
+              for (const key in modSym.exports) {
+                const exp = modSym.exports[key];
+                constraints.fields.set(key, this.getSymbolConstraints(exp));
+              }
+              return constraints;
             }
           }
         }

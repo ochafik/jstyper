@@ -13,15 +13,17 @@ export const updateExports: ReactorCallback = (fileNames, services, addChange, a
       const mutator = new Mutator(sourceFile.fileName, addChange);
 
       const exports = new Map<ts.Symbol, string>();
+      let hasDefaultExport = false;
+      let defaultExportSym: ts.Symbol | undefined;
+
       ts.forEachChild(sourceFile, visitDefaultExport);
-      if (exports.size > 0) {
+      if (exports.size > 0 || defaultExportSym) {
         ts.forEachChild(sourceFile, visitExports);
       }
 
       function visitDefaultExport(node: ts.Node) {
         if (nodes.isExpressionStatement(node) && nodes.isBinaryExpression(node.expression) && nodes.isEqualsToken(node.expression.operatorToken)) {
           const {left, right} = node.expression;
-          let should
           if (nodes.isPropertyAccessExpression(left) && nodes.isIdentifier(left.expression) &&
               left.name.text == 'exports' && left.expression.text == 'module') {
             if (nodes.isObjectLiteralExpression(right)) {
@@ -51,6 +53,17 @@ export const updateExports: ReactorCallback = (fileNames, services, addChange, a
                 mutator.remove({start: node.getStart(), end: right.getStart()}, `export default `);
                 exports.clear();
               }
+            } else {
+              hasDefaultExport = true;
+              if (nodes.isIdentifier(right)) {
+                const sym = checker.getSymbolAtLocation(right);
+                if (sym && !(sym.declarations && sym.declarations.some(isVarWithSiblings))) {
+                  mutator.removeNode(node);
+                  defaultExportSym = sym;
+                }
+              } else {
+                mutator.remove({start: node.getStart(), end: right.getStart()}, `export default `);
+              }
             }
           }
         }
@@ -71,16 +84,20 @@ export const updateExports: ReactorCallback = (fileNames, services, addChange, a
       function handleExport(sym: ts.Symbol | undefined, node: ts.Node, name: string) {
         // const sym = symbols.getSymbol(node, checker);
         if (sym) {
-          const exportedName = exports.get(sym);
-          if (exportedName) {
-            if (name == exportedName) {
-              // for (const decl of sym.getDeclarations()) {
-                mutator.insert(node.getStart(), 'export ');
-              // }
-            } else {
-              // for (const decl of sym.getDeclarations()) {
-                mutator.insert(node.getEnd(), `\nexport {${name} as ${exportedName}};\n`);
-              // }
+          if (sym === defaultExportSym) {
+            mutator.insert(node.getStart(), 'export default ');
+          } else {
+            const exportedName = exports.get(sym);
+            if (exportedName) {
+              if (name == exportedName) {
+                // for (const decl of sym.getDeclarations()) {
+                  mutator.insert(node.getStart(), 'export ');
+                // }
+              } else {
+                // for (const decl of sym.getDeclarations()) {
+                  mutator.insert(node.getEnd(), `\nexport {${name} as ${exportedName}};\n`);
+                // }
+              }
             }
           }
         }
