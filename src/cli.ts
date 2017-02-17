@@ -19,7 +19,7 @@ const fileNames = argv['_'];
 
 const inputContents: {[fileName: string]: string} = Object.create(null);
 for (const fileName of fileNames) {
-  if (!fileName.endsWith('.js')) {
+  if (!fileName.endsWith('.js') && !fileName.endsWith('.ts')) {
     console.warn(
         `ERROR: file '${fileName}' does not have a JavaScript extension.`);
     process.exit(1);

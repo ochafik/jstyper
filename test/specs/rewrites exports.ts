@@ -6,7 +6,7 @@ import {TestSpec} from '../../src/testing/test_spec';
 
 export default {
   files: {
-    'untransformable exports.js': `
+    'untransformable exports.ts': `
       module.exports = {
         f() { return 1 },
         n: 1
@@ -14,33 +14,31 @@ export default {
           
           
     `,
-    'independent exports.js': `
+    'independent exports.ts': `
       module.exports = {
-        foo: f,
-        g: g,
-        n: n,
+        id_foo: id_f,
+        id_g: id_g,
+        id_n: id_n,
       };
       
-      var n = 1;
+      var id_n = 1;
       
-      function f() {}
-      function g() {}
-      function h() {}
-          
-          
+      function id_f() {}
+      function id_g() {}
+      function id_h() {}
     `,
-    'exported default value.js': `
+    'exported default value.ts': `
       module.exports = a;
       var a = 1;
     `,
-    'exported default function.js': `
+    'exported default function.ts': `
       module.exports = function(x) {};
     `,
-    'exported default aliased function.js': `
+    'exported default aliased function.ts': `
       module.exports = f;
       function f(x) {}
     `,
-    'exported vars in multiple declaration are too complex.js': `
+    'exported vars in multiple declaration are too complex.ts': `
       module.exports = {
         a: a
       };
@@ -52,7 +50,7 @@ export default {
   options: {},
   result: {
     files: {
-      'untransformable exports.js': `
+      'untransformable exports.ts': `
       export default {
         f(): number { return 1 },
         n: 1
@@ -60,31 +58,29 @@ export default {
           
           
     `,
-      'independent exports.js': `
+      'independent exports.ts': `
       
       
-      export var n: number = 1;
+      export var id_n: number = 1;
       
-      function f(): void {}
-export {f as foo};
+      function id_f(): void {}
+export {id_f as id_foo};
 
-      export function g(): void {}
-      function h(): void {}
-          
-          
+      export function id_g(): void {}
+      function id_h(): void {}
     `,
-      'exported default value.js': `
-      
-      export default var a: number = 1;
+      'exported default value.ts': `
+      module.exports = a;
+      var a: number = 1;
     `,
-      'exported default function.js': `
+      'exported default function.ts': `
       export default function(x) {};
     `,
-      'exported default aliased function.js': `
+      'exported default aliased function.ts': `
       
       export default function f(x): void {}
     `,
-      'exported vars in multiple declaration are too complex.js': `
+      'exported vars in multiple declaration are too complex.ts': `
       export default {
         a: a
       };

@@ -6,8 +6,8 @@ import {TestSpec} from '../../src/testing/test_spec';
 
 export default {
   files: {
-    'foo.js': `
-      import {Bar, bar} from './bar';
+    'foo.ts': `
+      import {Bar, takeBar} from './bar';
       import * as bar from './bar';
       import * as baz from './baz';
       function foo(x) {
@@ -27,11 +27,11 @@ export default {
         baz.c = '';
       }
     `,
-    'bar.js': `
+    'bar.ts': `
       export class Bar {}
       export function takeBar(x) {}
     `,
-    'baz.js': `
+    'baz.ts': `
       export default {
         a: a,
         b: function(x) {},
@@ -45,11 +45,11 @@ export default {
   options: {},
   result: {
     files: {
-      'foo.js': `
-      import {Bar, bar} from './bar';
+      'foo.ts': `
+      import {Bar, takeBar} from './bar';
       import * as bar from './bar';
       import * as baz from './baz';
-      function foo(x: Bar): void {
+      function foo(x?: Bar): void {
         takeBar(x);
         takeBar();
 
@@ -66,11 +66,11 @@ export default {
         baz.c = '';
       }
     `,
-      'bar.js': `
+      'bar.ts': `
       export class Bar {}
-      export function takeBar(x): void {}
+      export function takeBar(x?: Bar | number): void {}
     `,
-      'baz.js': `
+      'baz.ts': `
       export default {
         a: a,
         b: function(x): void {},
@@ -82,7 +82,7 @@ export default {
     `
     },
     metadata: {
-      inferencePasses: 2
+      inferencePasses: 4
     }
   }
 } as TestSpec

@@ -86,6 +86,7 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
         // if (this.fileNames.indexOf(fileName) < 0) {
         //   this.fileNames.push(fileName);
         // }
+        console.warn(`WARNING: Creating file ${fileName} (existing files: ${this.fileNames})`);
         file = new VersionedFile('');
         this.files.set(fileName, file);
       }

@@ -18,7 +18,7 @@ export function getFile(
   let outputFile = fileName;
   if (outputDir) {
     outputFile =
-        path.join(outputDir, path.relative(currentWorkingDir || '.', fileName));
+        path.join(outputDir, path.relative(currentWorkingDir == null ? '.' : currentWorkingDir, fileName));
   }
   mkdirsSync(path.dirname(outputFile));
   return outputFile;

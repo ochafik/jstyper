@@ -6,7 +6,7 @@ import {TestSpec} from '../../src/testing/test_spec';
 
 export default {
   files: {
-    'input.js': `
+    'input.ts': `
       import {a, b, c} from 'foo';
       
       a && a();
@@ -19,7 +19,7 @@ export default {
   options: {},
   result: {
     files: {
-      'input.js': `
+      'input.ts': `
       import {a, b, c} from 'foo';
       
       a && a();

@@ -20,14 +20,17 @@ export function runTyper(
     fileContents: {[fileName: string]: string},
     options = defaultOptions): TyperExecutionResult {
 
-  // fileContents = {
-  //   ...fileContents,
-  //   // 'node_modules/typescript/lib/lib.dom.d.ts': `
-  //   //   declare var document: {
-  //   //     getElementById(id: string): number;
-  //   //   };
-  //   // `
-  // }
+    // fileContents = {
+    //   ...fileContents,
+    //   'foo.ts': `
+    //     export function fooFoo(x) {}
+    //   `
+    //   // 'node_modules/typescript/lib/lib.dom.d.ts': `
+    //   //   declare var document: {
+    //   //     getElementById(id: string): number;
+    //   //   };
+    //   // `
+    // }
   const reactor =
       new LanguageServiceReactor(fileContents, options.currentWorkingDir, options.dependenciesFileName, {
         target: ts.ScriptTarget.ES2017,
