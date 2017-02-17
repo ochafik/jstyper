@@ -66,6 +66,7 @@ export function applyConstraints(
       if (constraints.hasCallConstraints) {
         const callConstraints = constraints.getCallConstraints();
         // TODO: if (callConstraints.constructible)
+
         callConstraints.argTypes.forEach((argConstraints, i) => {
           const param = funDecl.parameters[i];
           if (param) {
@@ -126,12 +127,29 @@ export function applyConstraints(
           return;
         }
       }
-      const newText = (isUndefined ? '?: ' : ': ') + resolved;
+      const sourceFile = decl.getSourceFile();
 
+      const newText = (isUndefined ? '?: ' : ': ') + resolved;
+      if (nodes.isArrowFunction(varDecl.parent) &&
+          varDecl.parent.parameters.length == 1) {
+        const arrowStart = varDecl.parent.equalsGreaterThanToken.getStart();
+        const space = sourceFile.getFullText().substring(varDecl.getEnd(), arrowStart).trim();
+        if (space == '') {
+          const start = varDecl.getStart();
+          const parenthesizedArg = `(${varDecl.getFullText().trim()}${newText}) `;
+          addChange(
+              sourceFile,
+              {span: {start, length: arrowStart - start}, newText: parenthesizedArg});
+          return;
+        } else if (space != ')') {
+          return;
+        }
+      }
+      
       const start = varDecl.name.getEnd();
       const length = varDecl.type ?  varDecl.type.getEnd() - start : 0;
       addChange(
-          decl.getSourceFile(),
+          sourceFile,
           {span: {start: start, length: length}, newText});
     }
   }
