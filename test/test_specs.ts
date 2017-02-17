@@ -4,6 +4,6 @@ import {typerTest} from '../src/testing/support';
 describe('Typer', () => {
   const specsDir = 'test/specs';
   for (const file of fs.readdirSync(specsDir).filter(n => n.endsWith('.ts'))) {
-    it(`converts ${file}`, typerTest(`${specsDir}/${file}`));
+    it(file, typerTest(`${specsDir}/${file}`));
   }
 });
