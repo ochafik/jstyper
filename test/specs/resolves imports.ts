@@ -49,7 +49,7 @@ export default {
       import {Bar, takeBar} from './bar';
       import * as bar from './bar';
       import * as baz from './baz';
-      function foo(x?: Bar): void {
+      function foo(x: Bar | number): void {
         takeBar(x);
         takeBar();
 
@@ -82,7 +82,7 @@ export default {
     `
     },
     metadata: {
-      inferencePasses: 4
+      inferencePasses: 3
     }
   }
 } as TestSpec

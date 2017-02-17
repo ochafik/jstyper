@@ -98,7 +98,7 @@ export class TypeConstraints {
     return constraints;
   }
 
-  isType(type: ts.Type, markChanges: boolean = true) {
+  isType(type: ts.Type, markChanges: boolean = true, andNotFlags?: ts.TypeFlags) {
     // {
     //   let tpe = type && this.checker.typeToString(type);
     //   console.log(`Constraints(${this.description}).isType(${tpe})`);
@@ -112,7 +112,9 @@ export class TypeConstraints {
       return;
     }
 
-    if (type.flags & ts.TypeFlags.Object && type.symbol &&
+    const flags = typeof andNotFlags === 'undefined' ? type.flags : type.flags & ~andNotFlags;
+
+    if (flags & ts.TypeFlags.Object && type.symbol &&
         type.symbol.flags &
             (ts.SymbolFlags.Class | ts.SymbolFlags.Enum |
              ts.SymbolFlags.ConstEnum | ts.SymbolFlags.Interface |
@@ -133,9 +135,9 @@ export class TypeConstraints {
 
     if (fl.isUnion(type)) {
       for (const member of (<ts.UnionType>type).types) {
-        this.isType(member, markChanges);
+        this.isType(member, markChanges, andNotFlags);
       }
-      if (type.flags === ts.TypeFlags.Union) {
+      if (flags === ts.TypeFlags.Union) {
         // Nothing else in this union type.
         return;
       }
@@ -199,7 +201,7 @@ export class TypeConstraints {
       }
     }
 
-    this.hasFlags(type.flags, markChanges);
+    this.hasFlags(flags, markChanges);
 
     if (!markChanges) {
       this._hasChanges = originalHasChanges;

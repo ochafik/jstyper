@@ -37,7 +37,7 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
               // console.log(`CTX(${nodeConstraints.description} =
               // ${node.getFullText().trim()}) = ${ctxType &&
               // checker.typeToString(ctxType)}`);
-              nodeConstraints.isType(ctxType);
+              nodeConstraints.isType(ctxType, true, ts.TypeFlags.Undefined | ts.TypeFlags.Null);
 
               if (!nodes.isExpressionStatement(node.parent)) {
                 nodeConstraints.cannotBeVoid();
