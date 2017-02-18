@@ -94,7 +94,7 @@ export class CallConstraints {
       return;
     }
     this.argTypes.forEach((t, i) => {
-      if (i >= this.minArity) {
+      if (typeof this.minArity == 'number' && i >= this.minArity) {
         t.isUndefined(markChanges);
       }
     });

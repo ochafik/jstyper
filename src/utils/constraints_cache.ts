@@ -142,7 +142,10 @@ export class ConstraintsCache {
                   this.services, this.checker, {...this.options, differentiateComputedProperties: false});
               for (const key in modSym.exports) {
                 const exp = modSym.exports[key];
-                constraints.fields.set(key, this.getSymbolConstraints(exp));
+                const symConstraints = this.getSymbolConstraints(exp);
+                if (symConstraints) {
+                  constraints.fields.set(key, symConstraints);
+                }
               }
               return constraints;
             }
