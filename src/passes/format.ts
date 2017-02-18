@@ -20,7 +20,7 @@ const formattingOptions: ts.FormatCodeOptions = {
   InsertSpaceBeforeAndAfterBinaryOperators: true,
   InsertSpaceAfterConstructor: false,
   InsertSpaceAfterKeywordsInControlFlowStatements: true,
-  InsertSpaceAfterFunctionKeywordForAnonymousFunctions: true,
+  InsertSpaceAfterFunctionKeywordForAnonymousFunctions: false,
   InsertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis: false,
   InsertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets: false,
   InsertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: false,
