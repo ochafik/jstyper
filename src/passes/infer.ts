@@ -6,7 +6,7 @@ import {ConstraintsCache} from '../utils/constraints_cache';
 import {TypeConstraints} from '../utils/type_constraints';
 import {ReactorCallback} from '../utils/language_service_reactor';
 import {guessName} from '../utils/name_guesser';
-import * as flags from '../utils/flags';
+// import * as flags from '../utils/flags';
 import * as nodes from '../utils/nodes';
 import * as ops from '../utils/operators';
 import * as objects from '../matchers/objects';
@@ -36,7 +36,10 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
               // console.log(`CTX(${nodeConstraints.description} =
               // ${node.getFullText().trim()}) = ${ctxType &&
               // checker.typeToString(ctxType)}`);
-              nodeConstraints.isType(ctxType, true, false, ts.TypeFlags.Undefined | ts.TypeFlags.Null);
+              nodeConstraints.isType(ctxType, {
+                // isReadonly: false,
+                andNotFlags: ts.TypeFlags.Undefined | ts.TypeFlags.Null
+              });
 
               if (!nodes.isExpressionStatement(node.parent)) {
                 nodeConstraints.cannotBeVoid();
@@ -217,7 +220,7 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
           argConstraints.addNameHint(guessName(arg));
         }
         // console.log(`  ARG(${i}): ${checker.typeToString(t)}`);
-        argConstraints.isType(t, true, true);
+        argConstraints.isType(t, {isReadonly: true});
       });
 
       return callConstraints;

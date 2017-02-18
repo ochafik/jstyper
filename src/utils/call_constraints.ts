@@ -1,7 +1,7 @@
 import * as ts from 'typescript';
 import * as fl from './flags';
 import {guessName} from './name_guesser';
-import {TypeConstraints} from './type_constraints';
+import {TypeConstraints, TypeOpts, getTypeOptions} from './type_constraints';
 
 export type Signature = {
   returnType?: ts.Type,
@@ -29,15 +29,18 @@ export class CallConstraints {
     return this._constructible;
   }
 
-  isConstructible(markChanges = false) {
+  isConstructible(opts?: TypeOpts) {
+    // markChanges = false
+    const typeOptions = getTypeOptions(opts);
+
     if (this._constructible) return;
     this._constructible = true;
-    if (markChanges) {
+    if (typeOptions.markChanges) {
       this._hasChanges = true;
     }
   }
 
-  hasSignature(sig: ts.Signature, markChanges = true) {
+  hasSignature(sig: ts.Signature, opts?: TypeOpts) {
     const decl = sig.getDeclaration();
     if (!decl) {
       return;
@@ -45,7 +48,7 @@ export class CallConstraints {
     const params = decl.parameters;
     const paramTypes = params.map(p => this.checker.getTypeAtLocation(p));
 
-    this.returnType.isType(sig.getReturnType(), markChanges);
+    this.returnType.isType(sig.getReturnType(), opts);
 
     let minArity = 0;
     for (let paramType of paramTypes) {
@@ -54,17 +57,17 @@ export class CallConstraints {
       }
       minArity++;
     }
-    this.hasArity(minArity, markChanges);
+    this.hasArity(minArity, opts);
 
     paramTypes.forEach((paramType, i) => {
       const param = params[i];
-      const paramConstraints = this.getArgType(i, markChanges);
-      paramConstraints.isType(paramType, markChanges);
+      const paramConstraints = this.getArgType(i, opts);
+      paramConstraints.isType(paramType, opts);
       paramConstraints.addName(guessName(param.name));
     });
   }
   
-  private ensureArity(arity: number, markChanges: boolean = true) {
+  private ensureArity(arity: number, opts?: TypeOpts) {
     let updated = false;
     for (let i = 0; i < arity; i++) {
       if (this.argTypes.length <= i) {
@@ -75,27 +78,27 @@ export class CallConstraints {
     }
 
     if (updated) {
-      this.updateOptionalArgs(markChanges);
+      this.updateOptionalArgs(opts);
     }
   }
-  hasArity(arity: number, markChanges: boolean = true) {
+  hasArity(arity: number, opts?: TypeOpts) {
     // this.arities.push(arity);
     if (typeof this.minArity === 'undefined' || arity < this.minArity) {
       this.minArity = arity;
-      this.updateOptionalArgs(markChanges);
+      this.updateOptionalArgs(opts);
     }
   }
-  getArgType(index: number, markChanges: boolean = true) {
-    this.ensureArity(index + 1, markChanges);
+  getArgType(index: number, opts?: TypeOpts) {
+    this.ensureArity(index + 1, opts);
     return this.argTypes[index];
   }
-  private updateOptionalArgs(markChanges: boolean = true) {
+  private updateOptionalArgs(opts?: TypeOpts) {
     if (typeof this.minArity === 'undefined') {
       return;
     }
     this.argTypes.forEach((t, i) => {
       if (typeof this.minArity == 'number' && i >= this.minArity) {
-        t.isUndefined(markChanges);
+        t.isUndefined(opts);
       }
     });
   }

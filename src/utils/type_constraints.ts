@@ -7,6 +7,24 @@ import * as fl from './flags';
 import {CallConstraints} from './call_constraints';
 export {CallConstraints};
 
+export type TypeOptions = {
+  markChanges: boolean,
+  isReadonly: boolean,
+  andNotFlags: ts.TypeFlags
+};
+
+export type TypeOpts = Partial<Readonly<TypeOptions>>;
+
+export const defaultTypeOptions: Readonly<TypeOptions> = {
+  markChanges: true,
+  isReadonly: false,
+  andNotFlags: 0
+};
+
+export function getTypeOptions(opts?: TypeOpts, defaults = defaultTypeOptions): Readonly<TypeOptions> {
+  return opts ? {...defaults, ...opts} : defaultTypeOptions; 
+}
+
 export class TypeConstraints {
   fields = new Map<string, TypeConstraints>();
   computedFields = new Map<string, TypeConstraints>();
@@ -65,54 +83,45 @@ export class TypeConstraints {
         this.computedFields.size == 0;
   }
 
-  getFieldConstraints(name: string, markChanges: boolean = true):
+  getFieldConstraints(name: string, opts?: TypeOpts):
       TypeConstraints {
-    this.isObject(markChanges);
+    this.isObject(opts);
     let constraints = this.fields.get(name);
     if (!constraints) {
       constraints = this.createConstraints(`${this.description}.${name}`);
-      if (markChanges) {
-        constraints.markChange();
-      }
+      constraints.markChange(opts);
       this.fields.set(name, constraints);
     }
     return constraints;
   }
 
-  getComputedFieldConstraints(name: string, markChanges: boolean = true):
-      TypeConstraints {
+  getComputedFieldConstraints(name: string, opts?: TypeOpts): TypeConstraints {
     if (!this.options.differentiateComputedProperties) {
-      return this.getFieldConstraints(name, markChanges);
+      return this.getFieldConstraints(name, opts);
     }
 
-    this.isObject(markChanges);
+    this.isObject(opts);
     let constraints = this.computedFields.get(name);
     if (!constraints) {
       constraints = this.createConstraints(`${this.description}['${name}']`);
-      if (markChanges) {
-        constraints.markChange();
-      }
+      constraints.markChange(opts);
       this.computedFields.set(name, constraints);
     }
     return constraints;
   }
 
-  isType(type: ts.Type, markChanges: boolean = true, isReadonly = false, andNotFlags?: ts.TypeFlags) {
-    // {
-    //   let tpe = type && this.checker.typeToString(type);
-    //   console.log(`Constraints(${this.description}).isType(${tpe})`);
-    // }
-
-    // const name = this.checker.typeToString(type);
+  isType(type: ts.Type, opts?: TypeOpts) {
+    let typeOptions = getTypeOptions(opts);
+    
     if (!type || fl.isAny(type)) {
-      if (markChanges && !this._flags && this.symbols.length == 0) {
+      if (typeOptions.markChanges && !this._flags && this.symbols.length == 0) {
         this.markChange();
       }
       return;
     }
 
-    const flags = typeof andNotFlags === 'undefined' ? type.flags : type.flags & ~andNotFlags;
-
+    const flags = type.flags & ~typeOptions.andNotFlags;
+    
     if (flags & ts.TypeFlags.Object && type.symbol &&
         type.symbol.flags &
             (ts.SymbolFlags.Class | ts.SymbolFlags.Enum |
@@ -124,17 +133,17 @@ export class TypeConstraints {
         return;
       }
       this.symbols.push(type.symbol);
-      if (markChanges) {
+      if (typeOptions.markChanges) {
         this.markChange();
       }
-      markChanges = false;
+      typeOptions = {...typeOptions, markChanges: false};
     }
 
-    const originalHasChanges = this._hasChanges;
+    // const originalHasChanges = this._hasChanges;
 
     if (fl.isUnion(type)) {
       for (const member of (<ts.UnionType>type).types) {
-        this.isType(member, markChanges, isReadonly, andNotFlags);
+        this.isType(member, typeOptions);
       }
       if (flags === ts.TypeFlags.Union) {
         // Nothing else in this union type.
@@ -143,14 +152,14 @@ export class TypeConstraints {
     }
 
     for (const sig of type.getCallSignatures()) {
-      const cc = this.getCallConstraints(markChanges);
-      cc.hasSignature(sig, markChanges);
+      const cc = this.getCallConstraints(typeOptions);
+      cc.hasSignature(sig, typeOptions);
     }
 
     for (const sig of type.getConstructSignatures()) {
-      const cc = this.getCallConstraints(markChanges);
-      cc.hasSignature(sig, markChanges);
-      cc.isConstructible(markChanges);
+      const cc = this.getCallConstraints(typeOptions);
+      cc.hasSignature(sig, typeOptions);
+      cc.isConstructible(typeOptions);
     }
 
     for (const prop of type.getProperties()) {
@@ -178,48 +187,46 @@ export class TypeConstraints {
         if (nodes.isComputedPropertyName(decl.name)) {
           if (nodes.isStringLiteral(decl.name.expression)) {
             name = decl.name.expression.text;
-            fieldConstraints = this.getComputedFieldConstraints(name, markChanges);
+            fieldConstraints = this.getComputedFieldConstraints(name, typeOptions);
           }
         } else {
           name = this.checker.symbolToString(prop);
-          fieldConstraints = this.getFieldConstraints(name, markChanges);
+          fieldConstraints = this.getFieldConstraints(name, typeOptions);
         }
         if (!name || !fieldConstraints) {
           continue;
         }
       
         const type = this.checker.getTypeOfSymbolAtLocation(prop, decl);
-        if (!isReadonly &&//(prop.flags & ts.SymbolFlags.SetAccessor) ||
+        if (!typeOptions.isReadonly &&//(prop.flags & ts.SymbolFlags.SetAccessor) ||
             !nodes.isReadonly(decl)) {
-          fieldConstraints.isWritable(markChanges);
+          fieldConstraints.isWritable(typeOptions);
         }
         if (nodes.isPropertySignature(decl) && decl.questionToken) {
-          fieldConstraints.isUndefined(markChanges);
+          fieldConstraints.isUndefined(typeOptions);
         }
-        fieldConstraints.isType(type, markChanges);
+        fieldConstraints.isType(type, typeOptions);
       }
     }
 
-    this.hasFlags(flags, markChanges);
+    this.hasFlags(flags, typeOptions);
 
-    if (!markChanges) {
-      this._hasChanges = originalHasChanges;
-    }
+    // if (!markChanges) {
+    //   this._hasChanges = originalHasChanges;
+    // }
     // const after = this.resolve();
     // console.log(`isType(${this.checker.typeToString(type)}): "${before}" ->
     // "${after}`);
   }
 
-  private hasFlags(flags: ts.TypeFlags, markChanges: boolean = true) {
+  private hasFlags(flags: ts.TypeFlags, opts?: TypeOpts) {
     flags = fl.normalize(flags);
 
     const oldFlags = this._flags;
     const newFlags = oldFlags | flags;
     if (newFlags != this._flags) {
       this._flags = newFlags;
-      if (markChanges) {
-        this.markChange();
-      }
+      this.markChange(opts);
     }
   }
 
@@ -231,8 +238,8 @@ export class TypeConstraints {
   //   return !!this.constructConstraints;
   // }
 
-  getCallConstraints(markChanges: boolean = true): CallConstraints {
-    this.isObject(markChanges);
+  getCallConstraints(opts?: TypeOpts): CallConstraints {
+    this.isObject(opts);
     if (!this._callConstraints) {
       this._callConstraints = new CallConstraints(
           this.checker, this.description,
@@ -251,77 +258,70 @@ export class TypeConstraints {
   //   return this.constructConstraints;
   // }
 
-  isNumber(markChanges: boolean = true) {
-    this.hasFlags(ts.TypeFlags.Number, markChanges);
+  isNumber(opts?: TypeOpts) {
+    this.hasFlags(ts.TypeFlags.Number, opts);
   }
-  isBoolean(markChanges: boolean = true) {
-    this.hasFlags(ts.TypeFlags.Boolean, markChanges);
+  isBoolean(opts?: TypeOpts) {
+    this.hasFlags(ts.TypeFlags.Boolean, opts);
   }
-  isString(markChanges: boolean = true) {
-    this.hasFlags(ts.TypeFlags.String, markChanges);
+  isString(opts?: TypeOpts) {
+    this.hasFlags(ts.TypeFlags.String, opts);
   }
-  isUndefined(markChanges: boolean = true) {
-    this.hasFlags(ts.TypeFlags.Undefined, markChanges);
+  isUndefined(opts?: TypeOpts) {
+    this.hasFlags(ts.TypeFlags.Undefined, opts);
   }
-  isObject(markChanges: boolean = true) {
-    this.hasFlags(ts.TypeFlags.Object, markChanges);
+  isObject(opts?: TypeOpts) {
+    this.hasFlags(ts.TypeFlags.Object, opts);
   }
-  isNullable(markChanges: boolean = true) {
-    this.hasFlags(ts.TypeFlags.Null, markChanges);
+  isNullable(opts?: TypeOpts) {
+    this.hasFlags(ts.TypeFlags.Null, opts);
   }
-  isVoid(markChanges: boolean = true) {
-    this.hasFlags(ts.TypeFlags.Void, markChanges);
+  isVoid(opts?: TypeOpts) {
+    this.hasFlags(ts.TypeFlags.Void, opts);
   }
   
   get writable(): boolean {
     return this._isWritable;
   }
-  isWritable(markChanges: boolean = true) {
+  isWritable(opts?: TypeOpts) {
     if (this._isWritable) return;
     this._isWritable = true;
-    if (markChanges) {
-      this.markChange();
-    }
+    this.markChange(opts);
   }
-  cannotBeVoid(markChanges: boolean = true) {
+  cannotBeVoid(opts?: TypeOpts) {
     if (this._cannotBeVoid || this._flags & ~ts.TypeFlags.Void) return;
 
     this._cannotBeVoid = true;
-    if (markChanges) {
-      this.markChange();
-    }
+    this.markChange(opts);
   }
-  isSymbol(markChanges: boolean = true) {
+  isSymbol(opts?: TypeOpts) {
     if (this._isSymbol) return;
 
     this._isSymbol = true;
-    if (markChanges) {
-      this.markChange();
-    }
+    this.markChange(opts);
   }
-  isBooleanLike(markChanges: boolean = true) {
+  isBooleanLike(opts?: TypeOpts) {
     if (this._isBooleanLike || fl.isBoolean(this._flags) ||
         fl.isBooleanLike(this._flags) || fl.isNullOrUndefined(this._flags) ||
         fl.isNumberOrString(this._flags)) {
       return;
     }
     this._isBooleanLike = true;
-    if (markChanges) {
-      this.markChange();
-    }
+    this.markChange(opts);
   }
-  isNumberOrString(markChanges: boolean = true) {
+  isNumberOrString(opts?: TypeOpts) {
     if (this._isNumberOrString || fl.isNumberOrString(this._flags)) {
       return;
     }
     this._isNumberOrString = true;
-    if (markChanges) {
-      this.markChange();
-    }
+    this.markChange(opts);
     // this.hasFlags(ts.TypeFlags.StringOrNumberLiteral);
   }
 
-  private markChange() {
+  private markChange(opts?: TypeOpts) {
+    const options = getTypeOptions(opts);
+    if (!options.markChanges) return;
+    
     if (this._hasChanges) return;
 
     // const typeNames = this.types.map(t =>
