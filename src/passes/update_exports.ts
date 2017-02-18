@@ -4,7 +4,7 @@ import * as nodes from '../utils/nodes';
 import * as symbols from '../utils/symbols';
 import {Mutator} from '../utils/mutator';
 
-export const updateExports: ReactorCallback = (fileNames, services, addChange, addRequirement) => {
+export const updateExports: ReactorCallback = (fileNames, services, addChange, _) => {
   const program = services.getProgram();
   const checker = program.getTypeChecker();
 

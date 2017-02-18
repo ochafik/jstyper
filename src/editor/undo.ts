@@ -2,7 +2,7 @@ export function addUndoSupport(
     textArea: HTMLTextAreaElement,
     contentChanged: (content: string) => void): UndoManager {
   const manager = new UndoManager(textArea.value);
-  textArea.addEventListener('input', (e) => {
+  textArea.addEventListener('input', () => {
     manager.content = textArea.value;
   });
   textArea.addEventListener('keydown', (e) => {

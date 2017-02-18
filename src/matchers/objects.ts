@@ -96,12 +96,6 @@ function isSimpleStaticCall(node: ts.Node, className: string, methodName: string
 function matchPropertyDescriptor(desc: ts.ObjectLiteralExpression, checker: ts.TypeChecker): MatchedPropertyDescriptor {
   let writable = false;
   const valueTypes: ts.Type[] = [];
-  
-  const getBool = (node?: ts.Node) => {
-    if (nodes.isTrueKeyword(node)) return true;
-    if (nodes.isFalseKeyword(node)) return false;
-    return undefined;
-  };
 
   for (const prop of desc.properties) {
     const kv = getKeyValue(prop);

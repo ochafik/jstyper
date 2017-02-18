@@ -3,9 +3,8 @@ import {ReactorCallback} from '../utils/language_service_reactor';
 import * as nodes from '../utils/nodes';
 import {Mutator} from '../utils/mutator';
 
-export const updateImports: ReactorCallback = (fileNames, services, addChange, addRequirement) => {
+export const updateImports: ReactorCallback = (fileNames, services, addChange, _) => {
   const program = services.getProgram();
-  const checker = program.getTypeChecker();
 
   for (const sourceFile of program.getSourceFiles()) {
     if (fileNames.indexOf(sourceFile.fileName) >= 0) {

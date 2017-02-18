@@ -1,6 +1,4 @@
 import * as ts from 'typescript';
-
-import * as nodes from './nodes';
 import * as fl from './flags';
 import {guessName} from './name_guesser';
 import {TypeConstraints} from './type_constraints';

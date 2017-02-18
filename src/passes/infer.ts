@@ -3,22 +3,19 @@ import * as ts from 'typescript';
 import {Options} from '../options';
 import {applyConstraints} from '../utils/apply_constraints';
 import {ConstraintsCache} from '../utils/constraints_cache';
-import * as fl from '../utils/flags';
-import {AddChangeCallback, ReactorCallback} from '../utils/language_service_reactor';
+import {ReactorCallback} from '../utils/language_service_reactor';
 import {guessName} from '../utils/name_guesser';
 import * as nodes from '../utils/nodes';
-import {isCallTarget, traverse} from '../utils/nodes';
 import * as ops from '../utils/operators';
 import * as objects from '../matchers/objects';
-import {CallConstraints, TypeConstraints} from '../utils/type_constraints';
+import {CallConstraints} from '../utils/type_constraints';
 
 export const infer: (options: Options) => ReactorCallback = (options) => (
     fileNames, services, addChange, addRequirement) => {
 
   const program = services.getProgram();
   const checker = program.getTypeChecker();
-  const constraintsCache =
-      new ConstraintsCache(services, options, program, checker);
+  const constraintsCache = new ConstraintsCache(services, options, checker);
 
   function inferOnce() {
     for (const sourceFile of program.getSourceFiles()) {
@@ -26,7 +23,7 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
         console.warn(`SKIPPING ${sourceFile.fileName}`);
       }
       if (fileNames.indexOf(sourceFile.fileName) >= 0) {
-        traverse(sourceFile, (node: ts.Node) => {
+        nodes.traverse(sourceFile, (node: ts.Node) => {
           const nodeConstraints = constraintsCache.getNodeConstraints(node);
           const ctxType = checker.getContextualType(
               <ts.Expression>node);  // TODO: isExpression
@@ -148,5 +145,5 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
   //     }
   //   }
 
-  applyConstraints(constraintsCache.allConstraints, constraintsCache.requireConstraints, checker, addChange, addRequirement);
+  applyConstraints(constraintsCache.allConstraints, constraintsCache.requireConstraints, addChange, addRequirement);
 }

@@ -1,13 +1,13 @@
 import * as ts from 'typescript';
 
-import {defaultOptions, Options} from './options';
+import {defaultOptions} from './options';
 import {turnToDeclarations} from './passes/declarations';
 import {format} from './passes/format';
 import {infer} from './passes/infer';
 import {updateExports} from './passes/update_exports';
 import {updateImports} from './passes/update_imports';
 import {updateVars} from './passes/update_vars';
-import {AddChangeCallback, LanguageServiceReactor} from './utils/language_service_reactor';
+import {LanguageServiceReactor} from './utils/language_service_reactor';
 import {mapKeys} from './utils/maps';
 
 export interface TyperExecutionMetadata { inferencePasses: number, }
@@ -32,7 +32,7 @@ export function runTyper(
     //   // `
     // }
   const reactor =
-      new LanguageServiceReactor(fileContents, options.currentWorkingDir, options.dependenciesFileName, {
+      new LanguageServiceReactor(fileContents, options.currentWorkingDir, {
         target: ts.ScriptTarget.ES2017,
         module: ts.ModuleKind.ES2015,
         moduleResolution: ts.ModuleResolutionKind.NodeJs,
@@ -77,7 +77,7 @@ export function runTyper(
     reactor.react(turnToDeclarations);
 
     return {
-      files: mapKeys(reactor.fileContents, k => k.replace(/.[tj]s/, '.d.ts')),
+      files: mapKeys<string>(reactor.fileContents, k => k.replace(/.[tj]s/, '.d.ts')),
       metadata
     };
   }

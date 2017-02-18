@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import {defaultOptions, Options} from './options';
-import {TestSpec, writeSpec} from './testing/test_spec';
+import {writeSpec} from './testing/test_spec';
 import {runTyper} from './typer';
 import {getFile, mkdirsSync} from './utils/files';
 import {pseudoJson} from './utils/pseudo_json';

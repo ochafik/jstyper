@@ -1,10 +1,8 @@
 import * as fs from 'fs';
 
-import {Options, defaultOptions} from '../options';
-import {TyperExecutionResult, TyperExecutionMetadata} from '../typer';
-import {mapValues} from '../utils/maps';
+import {Options} from '../options';
+import {TyperExecutionResult} from '../typer';
 import {pseudoJson} from '../utils/pseudo_json';
-import {deindent} from '../utils/strings';
 
 export declare interface TestSpec {
   files: {[fileName: string]: string},

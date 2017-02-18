@@ -4,7 +4,6 @@ import {Options} from '../options';
 import * as nodes from './nodes';
 
 import * as fl from './flags';
-import {guessName} from './name_guesser';
 import {CallConstraints} from './call_constraints';
 export {CallConstraints};
 
@@ -344,10 +343,6 @@ export class TypeConstraints {
     }
     return false;
   }
-  
-  private typeToString(t: ts.Type|null): string|null {
-    return t == null ? null : this.checker.typeToString(t);
-  }
 
   resolveMaybeUndefined(): {resolved: string | null, isUndefined: boolean} {
     this.normalize();
@@ -385,7 +380,7 @@ export class TypeConstraints {
       const camelSplit =
           hints.map(n => n.replace(/([a-z](?=[A-Z]))/g, '$1 ').toLowerCase());
       // TODO: tokenize camel-case instead of this crude test.
-      return hints.find((h, i) => {
+      return hints.find((_, i) => {
         const cs = camelSplit[i];
         return camelSplit.every((cs2, ii) => i == ii || cs2.endsWith(cs));
       });

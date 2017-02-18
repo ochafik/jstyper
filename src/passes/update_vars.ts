@@ -2,9 +2,8 @@ import * as ts from 'typescript';
 import {ReactorCallback} from '../utils/language_service_reactor';
 import * as nodes from '../utils/nodes';
 
-export const updateVars: ReactorCallback = (fileNames, services, addChange, addRequirement) => {
+export const updateVars: ReactorCallback = (fileNames, services, addChange, _) => {
   const program = services.getProgram();
-  const checker = program.getTypeChecker();
 
   for (const sourceFile of program.getSourceFiles()) {
     if (fileNames.indexOf(sourceFile.fileName) >= 0) {

@@ -1,5 +1,3 @@
-import {UndoManager} from './undo';
-
 export function addTabIndentSupport(
     textArea: HTMLTextAreaElement, contentChanged: (content: string) => void) {
   const tab = '  ';
@@ -26,7 +24,6 @@ export function addTabIndentSupport(
         let pre: string;
         if (e.shiftKey) {
           newSelection = selection.replace(new RegExp('\n' + tab, 'g'), '\n');
-          const i = text.indexOf(tab, preTabIndex);
           if (text.indexOf(tab, preTabIndex) == preTabIndex) {
             skippedPreTabIndex = preTabIndex + tab.length;
           }

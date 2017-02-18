@@ -1,7 +1,7 @@
 import * as ts from 'typescript';
 import {ReactorCallback} from '../utils/language_service_reactor';
 
-export const format: ReactorCallback = (fileNames, services, addChange, addRequirement) => {
+export const format: ReactorCallback = (fileNames, services, addChange, _) => {
   for (const fileName of fileNames) {
     services.getFormattingEditsForDocument(fileName, formattingOptions)
         .forEach(c => addChange(fileName, c));

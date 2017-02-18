@@ -1,4 +1,3 @@
-import * as assert from 'assert';
 import {expect} from 'chai';
 import * as mocha from 'mocha';
 

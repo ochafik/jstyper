@@ -18,7 +18,7 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
   constructor(
       fileContents: {[fileName: string]: string},
       private currentWorkingDir = '.',
-      private dependenciesFileName: string,
+      // private dependenciesFileName: string,
       private options: ts.CompilerOptions) {
     const fileNames: string[] = [];
     for (const fileName in fileContents) {
@@ -50,7 +50,7 @@ export class LanguageServiceReactor implements ts.LanguageServiceHost {
   }
   getDefaultLibFileName(options) {
     try {
-      const result = ts.getDefaultLibFilePath(this.options);
+      const result = ts.getDefaultLibFilePath(options);
       return result;
     } catch (e) {
       return 'index.ts';

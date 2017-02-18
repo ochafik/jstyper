@@ -1,18 +1,14 @@
 import * as ts from 'typescript';
 
-import {Options} from '../options';
-import * as fl from '../utils/flags';
-import {AddChangeCallback, AddRequirementCallback, ReactorCallback} from '../utils/language_service_reactor';
+import {AddChangeCallback, AddRequirementCallback} from '../utils/language_service_reactor';
 import * as nodes from '../utils/nodes';
-import * as ops from '../utils/operators';
-import {CallConstraints, TypeConstraints} from '../utils/type_constraints';
+import {TypeConstraints} from '../utils/type_constraints';
 
 // TODO: check if a constraint has seen any new info, then as long as some do,
 // do our own loop to avoid writing files.
 export function applyConstraints(
     allConstraints: Map<ts.Symbol, TypeConstraints>,
     requireConstraints: Map<string, TypeConstraints>,
-    checker: ts.TypeChecker,
     _addChange: AddChangeCallback,
     addRequirement: AddRequirementCallback) {
   function addChange(sourceFile: ts.SourceFile, change: ts.TextChange) {

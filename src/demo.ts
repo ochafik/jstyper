@@ -52,7 +52,7 @@ window.addEventListener('load', () => {
   const initialState = readStateFromFragment();
 
   jsInput.value = 'content' in initialState ? initialState.content! : '';
-  jsInput.addEventListener('input', (e) => {
+  jsInput.addEventListener('input', () => {
     saveState();
     autoRun();
   });

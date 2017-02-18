@@ -3,9 +3,7 @@ import * as ts from 'typescript';
 import {Options} from '../options';
 import * as fl from '../utils/flags';
 import * as nodes from '../utils/nodes';
-import {CallConstraints, TypeConstraints} from '../utils/type_constraints';
-
-import {applyConstraints} from './apply_constraints';
+import {TypeConstraints} from '../utils/type_constraints';
 
 export class ConstraintsCache {
   allConstraints = new Map<ts.Symbol, TypeConstraints>();
@@ -13,7 +11,7 @@ export class ConstraintsCache {
 
   constructor(
       private services: ts.LanguageService, private options: Options,
-      private program: ts.Program, private checker: ts.TypeChecker) {}
+      private checker: ts.TypeChecker) {}
 
   get hasChanges() {
     for (const c of this.allConstraints.values()) {
