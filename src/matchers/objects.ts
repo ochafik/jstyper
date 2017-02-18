@@ -1,7 +1,7 @@
 import * as ts from 'typescript';
 import * as nodes from '../utils/nodes';
 
-type MatchedPropertyDescriptor = {
+export type MatchedPropertyDescriptor = {
   writable: boolean,
   valueTypes: ts.Type[]
 };
@@ -13,9 +13,27 @@ type MatchedObjectLiteralElement = {
 }
 
 type MatchedPropertyDescriptors = {
-  target: ts.Node,
   properties: (MatchedPropertyDescriptor & {name: string, isComputedName: boolean})[]
 };
+
+export type MatchedDeclarationName = {name: string, isComputedName: boolean};
+export function matchDeclarationName(node: ts.DeclarationName): MatchedDeclarationName | undefined {
+  let name: string;
+  let isComputedName: boolean;
+  if (nodes.isIdentifier(node)) {
+    name = node.text;
+    isComputedName = false;
+  } else if (nodes.isStringLiteral(node)) {
+    name = node.text;
+    isComputedName = true;
+  } else if (nodes.isComputedPropertyName(node) && nodes.isStringLiteral(node.expression)) {
+    name = node.expression.text;
+    isComputedName = true;
+  } else {
+    return undefined;
+  }
+  return {name, isComputedName};
+}
 
 export function getKeyValue(node: ts.ObjectLiteralElement): MatchedObjectLiteralElement | undefined {
   let value: ts.Node;
@@ -27,73 +45,48 @@ export function getKeyValue(node: ts.ObjectLiteralElement): MatchedObjectLiteral
     return undefined;
   }
 
-  let name: string;
-  let isComputedName: boolean;
-  if (nodes.isIdentifier(node.name)) {
-    name = node.name.text;
-    isComputedName = false;
-  } else if (nodes.isStringLiteral(node.name)) {
-    name = node.name.text;
-    isComputedName = true;
-  } else if (nodes.isComputedPropertyName(node.name) && nodes.isStringLiteral(node.name.expression)) {
-    name = node.name.expression.text;
-    isComputedName = true;
-  } else {
-    return undefined;
-  }
-  return { name, isComputedName, value };
+  const matchedName = matchDeclarationName(node.name);
+  return matchedName && { ...matchedName, value };
 }
 
-export function matchProperties(node: ts.Node, checker: ts.TypeChecker): MatchedPropertyDescriptors | undefined {
-  if (isSimpleStaticCall(node, 'Object', 'defineProperty', 3)) {
-    const [target, name, desc] = node.arguments;
-    if (nodes.isStringLiteral(name) && nodes.isObjectLiteralExpression(desc)) {
-      return {
-        target,
-        properties: [{
-          name: name.text,
-          isComputedName: true,
+export function matchPropertyDescriptors(descs: ts.ObjectLiteralExpression, checker: ts.TypeChecker): MatchedPropertyDescriptors | undefined {
+  if (nodes.isObjectLiteralExpression(descs)) {
+    const ret: MatchedPropertyDescriptors = {
+      properties: []
+    };
+    for (const prop of descs.properties) {
+      const kv = getKeyValue(prop);
+      if (!kv) continue;
 
-          ...matchPropertyDescriptor(desc, checker)
-        }]
-      };
-    }
-  } else if (isSimpleStaticCall(node, 'Object', 'defineProperties', 2)) {
-    const [target, descs] = node.arguments;
-    if (nodes.isObjectLiteralExpression(descs)) {
-      const ret: MatchedPropertyDescriptors = {
-        target,
-        properties: []
-      };
-      for (const prop of descs.properties) {
-        const kv = getKeyValue(prop);
-        if (!kv) continue;
-
-        const {name, isComputedName, value} = kv;
-        if (nodes.isObjectLiteralExpression(value)) {
-          ret.properties.push({
-            name,
-            isComputedName,
-            ...matchPropertyDescriptor(value, checker)
-          });
-        }
+      const {name, isComputedName, value} = kv;
+      if (nodes.isObjectLiteralExpression(value)) {
+        ret.properties.push({
+          name,
+          isComputedName,
+          ...matchPropertyDescriptor(value, checker)
+        });
       }
-      return ret;
     }
+    return ret;
   }
   return undefined;
 }
 
-function isSimpleStaticCall(node: ts.Node, className: string, methodName: string, arity: number): node is ts.CallExpression {
-  return nodes.isCallExpression(node) &&
-      nodes.isPropertyAccessExpression(node.expression) &&
-      nodes.isIdentifier(node.expression.expression) &&
-      node.expression.expression.text == className &&
-      node.expression.name.text == methodName &&
-      (arity === void 0 || node.arguments.length == arity);
+type MatchedSimpleSelect = {
+  targetName: string,
+  selectedName: string
+};
+
+export function matchSimpleSelect(node: ts.Node): MatchedSimpleSelect | undefined {
+  if (nodes.isPropertyAccessExpression(node) && nodes.isIdentifier(node.expression)) {
+    const targetName = node.expression.text;
+    const selectedName = node.name.text;
+    return {targetName, selectedName};
+  }
+  return undefined;
 }
 
-function matchPropertyDescriptor(desc: ts.ObjectLiteralExpression, checker: ts.TypeChecker): MatchedPropertyDescriptor {
+export function matchPropertyDescriptor(desc: ts.ObjectLiteralExpression, checker: ts.TypeChecker): MatchedPropertyDescriptor {
   let writable = false;
   const valueTypes: ts.Type[] = [];
 

@@ -97,7 +97,7 @@ export class TypeConstraints {
     return constraints;
   }
 
-  isType(type: ts.Type, markChanges: boolean = true, andNotFlags?: ts.TypeFlags) {
+  isType(type: ts.Type, markChanges: boolean = true, isReadonly = false, andNotFlags?: ts.TypeFlags) {
     // {
     //   let tpe = type && this.checker.typeToString(type);
     //   console.log(`Constraints(${this.description}).isType(${tpe})`);
@@ -134,7 +134,7 @@ export class TypeConstraints {
 
     if (fl.isUnion(type)) {
       for (const member of (<ts.UnionType>type).types) {
-        this.isType(member, markChanges, andNotFlags);
+        this.isType(member, markChanges, isReadonly, andNotFlags);
       }
       if (flags === ts.TypeFlags.Union) {
         // Nothing else in this union type.
@@ -189,7 +189,7 @@ export class TypeConstraints {
         }
       
         const type = this.checker.getTypeOfSymbolAtLocation(prop, decl);
-        if (//(prop.flags & ts.SymbolFlags.SetAccessor) ||
+        if (!isReadonly &&//(prop.flags & ts.SymbolFlags.SetAccessor) ||
             !nodes.isReadonly(decl)) {
           fieldConstraints.isWritable(markChanges);
         }

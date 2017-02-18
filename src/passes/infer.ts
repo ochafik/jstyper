@@ -3,8 +3,10 @@ import * as ts from 'typescript';
 import {Options} from '../options';
 import {applyConstraints} from '../utils/apply_constraints';
 import {ConstraintsCache} from '../utils/constraints_cache';
+import {TypeConstraints} from '../utils/type_constraints';
 import {ReactorCallback} from '../utils/language_service_reactor';
 import {guessName} from '../utils/name_guesser';
+import * as flags from '../utils/flags';
 import * as nodes from '../utils/nodes';
 import * as ops from '../utils/operators';
 import * as objects from '../matchers/objects';
@@ -34,7 +36,7 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
               // console.log(`CTX(${nodeConstraints.description} =
               // ${node.getFullText().trim()}) = ${ctxType &&
               // checker.typeToString(ctxType)}`);
-              nodeConstraints.isType(ctxType, true, ts.TypeFlags.Undefined | ts.TypeFlags.Null);
+              nodeConstraints.isType(ctxType, true, false, ts.TypeFlags.Undefined | ts.TypeFlags.Null);
 
               if (!nodes.isExpressionStatement(node.parent)) {
                 nodeConstraints.cannotBeVoid();
@@ -42,6 +44,22 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
             }
           }
 
+          function defineProperty(objectConstraints: TypeConstraints, name: string, isComputedName: boolean, desc?: objects.MatchedPropertyDescriptor) {
+            if (!desc) return;
+
+            const fieldConstraints = isComputedName
+                ? objectConstraints.getComputedFieldConstraints(name)
+                : objectConstraints.getFieldConstraints(name);
+
+            for (const propType of desc.valueTypes) {
+              fieldConstraints.isType(propType);
+              fieldConstraints.isUndefined();
+            }
+            if (desc.writable) {
+              fieldConstraints.isWritable();
+            }
+          }
+          
           if (nodes.isCallExpression(node)) {
             const constraints = constraintsCache.getNodeConstraints(node.expression);
             if (constraints) {
@@ -51,25 +69,95 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
                   node.parent != null && nodes.isExpressionStatement(node.parent),
                   node.arguments);
             }
-            const props = objects.matchProperties(node, checker);
-            if (props) {
-              const objectConstraints = constraintsCache.getNodeConstraints(props.target);
-              if (objectConstraints) {
-                for (const prop of props.properties) {
-                  const fieldConstraints = prop.isComputedName
-                      ? objectConstraints.getComputedFieldConstraints(prop.name)
-                      : objectConstraints.getFieldConstraints(prop.name);
+            const simpleSelect = objects.matchSimpleSelect(node.expression);
+            if (simpleSelect && simpleSelect.targetName == 'Object') {
+              switch (simpleSelect.selectedName) {
+                case 'defineProperty':
+                  if (node.arguments.length == 3) {
+                    const [target, name, desc] = node.arguments;
+                    const objectConstraints = constraintsCache.getNodeConstraints(target);
+                    if (!objectConstraints) break;
 
-                  for (const propType of prop.valueTypes) {
-                    fieldConstraints.isType(propType);
-                    fieldConstraints.isUndefined();
+                    if (nodes.isStringLiteral(name) && nodes.isObjectLiteralExpression(desc)) {
+                      defineProperty(objectConstraints, name.text, true, objects.matchPropertyDescriptor(desc, checker));
+                    }
                   }
-                  if (prop.writable) {
-                    fieldConstraints.isWritable();
+                  break;
+                case 'defineProperties':
+                  if (node.arguments.length == 2) {
+                    const [target, descs] = node.arguments;
+                    const objectConstraints = constraintsCache.getNodeConstraints(target);
+                    if (!objectConstraints) break;
+
+                    if (nodes.isObjectLiteralExpression(descs)) {
+                      const props = objects.matchPropertyDescriptors(descs, checker);
+                      if (props) {
+                        for (const prop of props.properties) {
+                          defineProperty(objectConstraints, prop.name, prop.isComputedName, prop);
+                        }
+                      }
+                    }
                   }
-                }
+                  break;
+                case 'assign':
+                  if (node.arguments.length >= 2) {
+                    const [destination, ...sources]  = node.arguments;
+                    const destinationType = checker.getTypeAtLocation(destination);
+                    const destinationTypeProps = destinationType.getProperties();
+
+                    function hasExistingProp(matchedName: objects.MatchedDeclarationName) {
+                      if (!destinationTypeProps) return false;
+                      for (const prop of destinationTypeProps) {
+                        const decls = prop.declarations;
+                        if (decls) {
+                          for (const decl of decls) {
+                            if (decl.name) {
+                              const name = objects.matchDeclarationName(decl.name);
+                              if (name && name.name == matchedName.name &&
+                                  (!options.differentiateComputedProperties || name.isComputedName == matchedName.isComputedName)) {
+                                return true;
+                              }
+                            }
+                          }
+                        }
+                      }
+                      return false;
+                    }
+                      
+                    const destinationConstraints = constraintsCache.getNodeConstraints(destination);
+                    if (destinationConstraints) {
+                      for (const source of sources) {
+                        const sourceType = checker.getTypeAtLocation(source);
+                        destinationConstraints.isType(sourceType);
+                        for (const prop of sourceType.getProperties()) {
+                          if (prop.declarations) {
+                            for (const decl of prop.declarations) {
+                              if (decl.name) {
+                                const matchedName = objects.matchDeclarationName(decl.name);
+                                if (matchedName) {
+                                  const {name, isComputedName} = matchedName;
+                                  const fieldConstraints = isComputedName
+                                      ? destinationConstraints.getComputedFieldConstraints(name)
+                                      : destinationConstraints.getFieldConstraints(name);
+                                  if (//!flags.isAny(destinationType) &&
+                                      //!flags.isAny(destinationConstraints.flags) &&
+                                      !hasExistingProp(matchedName)) {
+                                    fieldConstraints.isUndefined();
+                                  }
+                                  fieldConstraints.isWritable();
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                  break;
+                // case 'create':
+                //   break;
               }
-            } 
+            }
           } else if (nodes.isNewExpression(node)) {
             const constraints = constraintsCache.getNodeConstraints(node.expression);
             if (constraints) {
@@ -129,7 +217,7 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
           argConstraints.addNameHint(guessName(arg));
         }
         // console.log(`  ARG(${i}): ${checker.typeToString(t)}`);
-        argConstraints.isType(t);
+        argConstraints.isType(t, true, true);
       });
 
       return callConstraints;

@@ -48,7 +48,7 @@ export default {
         return foo ? foo.x : null;
       }
       
-      function g7(foo?: Foo | ({x: number})): number | null {
+      function g7(foo?: Foo | ({readonly x: number})): number | null {
         return foo ? foo.x : null;
       }
       
