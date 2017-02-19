@@ -69,6 +69,7 @@ function gg(x: number, y: {addValue: boolean, value: any, name: string}) {
 
 - Bundle & support DOM & ES2015+ libs
 - Support `var foo = require('./bar').foo` pattern
+- Support `var Foo = function() {}; Foo.prototype.bar = ...` (create companion `interface Foo { bar... }`)
 - Parse and output flow comment / flow types (+ compare with Flow)
 - Lint mode
 - Split large tests into smaller specs
