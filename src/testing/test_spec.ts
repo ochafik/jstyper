@@ -24,7 +24,7 @@ export declare interface TestSpec {
 // }
 
 function isTestSpec(obj: any): obj is TestSpec {
-  return 'files' in obj && 'options' in obj && 'result' in obj && 'files' in obj.result && 'metadata' in obj.result;
+  return obj && 'files' in obj && 'options' in obj && 'result' in obj && 'files' in obj.result && 'metadata' in obj.result;
 }
 // function isOldTestSpec(obj: any): obj is OldTestSpec {
 //   return 'inputs' in obj && 'outputs' in obj && 'metadata' in obj;

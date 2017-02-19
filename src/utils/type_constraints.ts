@@ -2,7 +2,7 @@ import * as ts from 'typescript';
 
 import {Options} from '../options';
 import * as nodes from './nodes';
-
+import * as objects from '../matchers/objects';
 import * as fl from './flags';
 import {CallConstraints} from './call_constraints';
 export {CallConstraints};
@@ -83,29 +83,18 @@ export class TypeConstraints {
         this.computedFields.size == 0;
   }
 
-  getFieldConstraints(name: string, opts?: TypeOpts):
+  getFieldConstraints({name, isNameComputed}: {name: string, isNameComputed: boolean}, opts?: TypeOpts):
       TypeConstraints {
-    this.isObject(opts);
-    let constraints = this.fields.get(name);
-    if (!constraints) {
-      constraints = this.createConstraints(`${this.description}.${name}`);
-      constraints.markChange(opts);
-      this.fields.set(name, constraints);
-    }
-    return constraints;
-  }
 
-  getComputedFieldConstraints(name: string, opts?: TypeOpts): TypeConstraints {
-    if (!this.options.differentiateComputedProperties) {
-      return this.getFieldConstraints(name, opts);
-    }
+    const computed = isNameComputed && this.options.differentiateComputedProperties;
+    const map = computed ? this.computedFields : this.fields;
 
     this.isObject(opts);
-    let constraints = this.computedFields.get(name);
+    let constraints = map.get(name);
     if (!constraints) {
-      constraints = this.createConstraints(`${this.description}['${name}']`);
+      constraints = this.createConstraints(`${this.description}${computed ? `['${name}']` : `.${name}`}`);
       constraints.markChange(opts);
-      this.computedFields.set(name, constraints);
+      map.set(name, constraints);
     }
     return constraints;
   }
@@ -174,28 +163,12 @@ export class TypeConstraints {
       // const fieldConstraints = this.getFieldConstraints(this.checker.symbolToString(prop), markChanges);
       
       for (const decl of decls) {
-//         if (!nodes.isPropertySignature(decl) &&
-//             !nodes.isPropertyDeclaration(decl) &&
-//             !nodes.isGetAccessor(decl) &&
-//             !nodes.isSetAccessor(decl) &&
-//             !nodes.isMethodDeclaration(decl)) {
-//           continue;
-//         }
-        //const name = this.checker.symbolToString(prop);
-        let name: string | undefined;
-        let fieldConstraints: TypeConstraints | undefined;
-        if (nodes.isComputedPropertyName(decl.name)) {
-          if (nodes.isStringLiteral(decl.name.expression)) {
-            name = decl.name.expression.text;
-            fieldConstraints = this.getComputedFieldConstraints(name, typeOptions);
-          }
-        } else {
-          name = this.checker.symbolToString(prop);
-          fieldConstraints = this.getFieldConstraints(name, typeOptions);
-        }
-        if (!name || !fieldConstraints) {
+        let matchedName = decl.name && objects.matchDeclarationName(decl.name);
+        if (!matchedName) {
           continue;
         }
+
+        let fieldConstraints = this.getFieldConstraints(matchedName, typeOptions);
       
         const type = this.checker.getTypeOfSymbolAtLocation(prop, decl);
         if (!typeOptions.isReadonly &&//(prop.flags & ts.SymbolFlags.SetAccessor) ||
@@ -234,29 +207,15 @@ export class TypeConstraints {
     return !!this._callConstraints;
   }
 
-  // get hasConstructConstraints(): boolean {
-  //   return !!this.constructConstraints;
-  // }
-
   getCallConstraints(opts?: TypeOpts): CallConstraints {
     this.isObject(opts);
     if (!this._callConstraints) {
       this._callConstraints = new CallConstraints(
-          this.checker, this.description,
-          (d) => this.createConstraints(`${this.description}.call.${d}`));
+          this.checker, `${this.description}.call`,
+          (d) => this.createConstraints(d));//`${this.description}.call.${d}`));
     }
     return this._callConstraints;
   }
-
-  // getConstructConstraints(markChanges: boolean = true): CallConstraints {
-  //   this.isObject(markChanges);
-  //   if (!this.constructConstraints) {
-  //     this.constructConstraints = new CallConstraints(
-  //         this.checker, this.description,
-  //         (d) => this.createConstraints(`${this.description}.new.${d}`));
-  //   }
-  //   return this.constructConstraints;
-  // }
 
   isNumber(opts?: TypeOpts) {
     this.hasFlags(ts.TypeFlags.Number, opts);

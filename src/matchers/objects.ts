@@ -8,31 +8,33 @@ export type MatchedPropertyDescriptor = {
 
 type MatchedObjectLiteralElement = {
   name: string,
-  isComputedName: boolean,
+  isNameComputed: boolean,
   value: ts.Node
 }
 
 type MatchedPropertyDescriptors = {
-  properties: (MatchedPropertyDescriptor & {name: string, isComputedName: boolean})[]
+  properties: (MatchedPropertyDescriptor & {name: string, isNameComputed: boolean})[]
 };
 
-export type MatchedDeclarationName = {name: string, isComputedName: boolean};
-export function matchDeclarationName(node: ts.DeclarationName): MatchedDeclarationName | undefined {
+export type MatchedDeclarationName = {name: string, isNameComputed: boolean};
+export function matchDeclarationName(node?: ts.DeclarationName): MatchedDeclarationName | undefined {
+  if (!node) return undefined;
+  
   let name: string;
-  let isComputedName: boolean;
+  let isNameComputed: boolean;
   if (nodes.isIdentifier(node)) {
     name = node.text;
-    isComputedName = false;
+    isNameComputed = false;
   } else if (nodes.isStringLiteral(node)) {
     name = node.text;
-    isComputedName = true;
+    isNameComputed = true;
   } else if (nodes.isComputedPropertyName(node) && nodes.isStringLiteral(node.expression)) {
     name = node.expression.text;
-    isComputedName = true;
+    isNameComputed = true;
   } else {
     return undefined;
   }
-  return {name, isComputedName};
+  return {name, isNameComputed};
 }
 
 export function getKeyValue(node: ts.ObjectLiteralElement): MatchedObjectLiteralElement | undefined {
@@ -58,11 +60,11 @@ export function matchPropertyDescriptors(descs: ts.ObjectLiteralExpression, chec
       const kv = getKeyValue(prop);
       if (!kv) continue;
 
-      const {name, isComputedName, value} = kv;
+      const {name, isNameComputed, value} = kv;
       if (nodes.isObjectLiteralExpression(value)) {
         ret.properties.push({
           name,
-          isComputedName,
+          isNameComputed,
           ...matchPropertyDescriptor(value, checker)
         });
       }

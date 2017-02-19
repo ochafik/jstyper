@@ -44,12 +44,11 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
             }
           }
 
-          function defineProperty(objectConstraints: TypeConstraints | undefined, name: string, isComputedName: boolean, desc?: objects.MatchedPropertyDescriptor) {
+          function defineProperty(objectConstraints: TypeConstraints | undefined, name: string, isNameComputed: boolean, desc?: objects.MatchedPropertyDescriptor) {
             if (!desc || !objectConstraints) return;
 
-            const fieldConstraints = isComputedName
-                ? objectConstraints.getComputedFieldConstraints(name)
-                : objectConstraints.getFieldConstraints(name);
+            const fieldConstraints = 
+                objectConstraints.getFieldConstraints({name, isNameComputed});
 
             for (const propType of desc.valueTypes) {
               fieldConstraints.isType(propType);
@@ -95,8 +94,8 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
                       const props = objects.matchPropertyDescriptors(descs, checker);
                       if (props) {
                         for (const prop of props.properties) {
-                          defineProperty(objectConstraints, prop.name, prop.isComputedName, prop);
-                          defineProperty(nodeConstraints, prop.name, prop.isComputedName, prop);
+                          defineProperty(objectConstraints, prop.name, prop.isNameComputed, prop);
+                          defineProperty(nodeConstraints, prop.name, prop.isNameComputed, prop);
                         }
                       }
                     }
@@ -117,7 +116,7 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
                             if (decl.name) {
                               const name = objects.matchDeclarationName(decl.name);
                               if (name && name.name == matchedName.name &&
-                                  (!options.differentiateComputedProperties || name.isComputedName == matchedName.isComputedName)) {
+                                  (!options.differentiateComputedProperties || name.isNameComputed == matchedName.isNameComputed)) {
                                 return true;
                               }
                             }
@@ -139,10 +138,7 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
                               if (decl.name) {
                                 const matchedName = objects.matchDeclarationName(decl.name);
                                 if (matchedName) {
-                                  const {name, isComputedName} = matchedName;
-                                  const fieldConstraints = isComputedName
-                                      ? constraints.getComputedFieldConstraints(name)
-                                      : constraints.getFieldConstraints(name);
+                                  const fieldConstraints =  constraints.getFieldConstraints(matchedName);
                                   if (//!flags.isAny(destinationType) &&
                                       //!flags.isAny(destinationConstraints.flags) &&
                                       !hasExistingProp(matchedName)) {

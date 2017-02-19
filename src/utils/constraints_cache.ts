@@ -83,12 +83,12 @@ export class ConstraintsCache {
     if (nodes.isPropertyAccessExpression(node)) {
       const constraints = this.getNodeConstraints(node.expression);
       if (constraints) {
-        return constraints.getFieldConstraints(node.name.text);
+        return constraints.getFieldConstraints({name: node.name.text, isNameComputed: false});
       }
     } else if (nodes.isElementAccessExpression(node) && nodes.isStringLiteral(node.argumentExpression)) {
       const constraints = this.getNodeConstraints(node.expression);
       if (constraints) {
-        return constraints.getComputedFieldConstraints(node.argumentExpression.text);
+        return constraints.getFieldConstraints({name: node.argumentExpression.text, isNameComputed: true});
       }
     } else if (nodes.isCallExpression(node)) {
       let constraints = this.getNodeConstraints(node.expression);

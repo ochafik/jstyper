@@ -37,7 +37,7 @@ export default {
       import * as bar2 from './bar';
       var bar2x = bar2.x;
 
-      var bar3: {default: {x: number, y: number}, readonly x: any, readonly y: any} = require('./bar'),
+      var bar3: {readonly x: any, readonly y: any} = require('./bar'),
           bar3x = bar3.x,
           bar3y = bar3.y;
     `,

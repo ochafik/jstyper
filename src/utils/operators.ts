@@ -21,7 +21,7 @@ export function inferBinaryOpConstraints(node: ts.BinaryExpression,
     case ts.SyntaxKind.InKeyword:
       leftConstraints && leftConstraints.isString();
       if (nodes.isStringLiteral(node.left)) {
-        rightConstraints && rightConstraints.getComputedFieldConstraints(node.left.text).isUndefined();
+        rightConstraints && rightConstraints.getFieldConstraints({name: node.left.text, isNameComputed: true}).isUndefined();
       }
       break;
     // Plus operators
