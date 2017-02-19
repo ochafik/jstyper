@@ -6,6 +6,12 @@ import {TestSpec} from '../../src/testing/test_spec';
 
 export default {
   files: {
+    'returned or assigned.js': `
+      function f_ret() {
+        return Object.defineProperty({}, 'a', { value: 1 });
+      }
+      let x_assigned = Object.defineProperty({}, 'a', { value: 1 });
+    `,
     'readonlies.js': `
       function f(x) {
         Object.defineProperty(x, 'a', {
@@ -50,6 +56,12 @@ export default {
   },
   result: {
     files: {
+      'returned or assigned.js': `
+      function f_ret(): {readonly ['a']?: number} {
+        return Object.defineProperty({}, 'a', { value: 1 });
+      }
+      let x_assigned: {readonly ['a']?: number} = Object.defineProperty({}, 'a', { value: 1 });
+    `,
       'readonlies.js': `
       function f(x: {readonly ['a']?: number, readonly ['b']?: number, readonly ['c']?: {x: number}}): void {
         Object.defineProperty(x, 'a', {

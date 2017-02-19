@@ -12,6 +12,11 @@ export default {
         Object.assign(x, y, {a: '', b: 1, ['c']: true});
       }
       f({z: 1, a: ''}, {k: 1});
+
+      function f_ret() {
+        return Object.assign({}, {a: 1});
+      }
+      let x_assigned = Object.assign({}, {a: 1});
     `
   },
   options: {
@@ -25,6 +30,11 @@ export default {
         Object.assign(x, y, {a: '', b: 1, ['c']: true});
       }
       f({z: 1, a: ''}, {k: 1});
+
+      function f_ret(): {a?: number} {
+        return Object.assign({}, {a: 1});
+      }
+      let x_assigned: {a?: number} = Object.assign({}, {a: 1});
     `
     },
     metadata: {

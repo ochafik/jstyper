@@ -33,9 +33,6 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
             // Don't propagate contextual type up of `test ? x : null`, as x
             // will be inferred to be nullable.
             if (node.parent && !nodes.isConditionalExpression(node.parent)) {
-              // console.log(`CTX(${nodeConstraints.description} =
-              // ${node.getFullText().trim()}) = ${ctxType &&
-              // checker.typeToString(ctxType)}`);
               nodeConstraints.isType(ctxType, {
                 // isReadonly: false,
                 andNotFlags: ts.TypeFlags.Undefined | ts.TypeFlags.Null
@@ -47,8 +44,8 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
             }
           }
 
-          function defineProperty(objectConstraints: TypeConstraints, name: string, isComputedName: boolean, desc?: objects.MatchedPropertyDescriptor) {
-            if (!desc) return;
+          function defineProperty(objectConstraints: TypeConstraints | undefined, name: string, isComputedName: boolean, desc?: objects.MatchedPropertyDescriptor) {
+            if (!desc || !objectConstraints) return;
 
             const fieldConstraints = isComputedName
                 ? objectConstraints.getComputedFieldConstraints(name)
@@ -79,10 +76,12 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
                   if (node.arguments.length == 3) {
                     const [target, name, desc] = node.arguments;
                     const objectConstraints = constraintsCache.getNodeConstraints(target);
-                    if (!objectConstraints) break;
+                    if (!objectConstraints && !nodeConstraints) break;
 
                     if (nodes.isStringLiteral(name) && nodes.isObjectLiteralExpression(desc)) {
-                      defineProperty(objectConstraints, name.text, true, objects.matchPropertyDescriptor(desc, checker));
+                      const matchedDec = objects.matchPropertyDescriptor(desc, checker);
+                      defineProperty(objectConstraints, name.text, true, matchedDec);
+                      defineProperty(nodeConstraints, name.text, true, matchedDec);
                     }
                   }
                   break;
@@ -90,13 +89,14 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
                   if (node.arguments.length == 2) {
                     const [target, descs] = node.arguments;
                     const objectConstraints = constraintsCache.getNodeConstraints(target);
-                    if (!objectConstraints) break;
+                    if (!objectConstraints && !nodeConstraints) break;
 
                     if (nodes.isObjectLiteralExpression(descs)) {
                       const props = objects.matchPropertyDescriptors(descs, checker);
                       if (props) {
                         for (const prop of props.properties) {
                           defineProperty(objectConstraints, prop.name, prop.isComputedName, prop);
+                          defineProperty(nodeConstraints, prop.name, prop.isComputedName, prop);
                         }
                       }
                     }
@@ -126,12 +126,13 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
                       }
                       return false;
                     }
-                      
-                    const destinationConstraints = constraintsCache.getNodeConstraints(destination);
-                    if (destinationConstraints) {
+
+                    function updateAssignedConstraints(constraints?: TypeConstraints) {
+                      if (!constraints) return;
+
                       for (const source of sources) {
                         const sourceType = checker.getTypeAtLocation(source);
-                        destinationConstraints.isType(sourceType);
+                        constraints.isType(sourceType);
                         for (const prop of sourceType.getProperties()) {
                           if (prop.declarations) {
                             for (const decl of prop.declarations) {
@@ -140,8 +141,8 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
                                 if (matchedName) {
                                   const {name, isComputedName} = matchedName;
                                   const fieldConstraints = isComputedName
-                                      ? destinationConstraints.getComputedFieldConstraints(name)
-                                      : destinationConstraints.getFieldConstraints(name);
+                                      ? constraints.getComputedFieldConstraints(name)
+                                      : constraints.getFieldConstraints(name);
                                   if (//!flags.isAny(destinationType) &&
                                       //!flags.isAny(destinationConstraints.flags) &&
                                       !hasExistingProp(matchedName)) {
@@ -155,6 +156,9 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
                         }
                       }
                     }
+                      
+                    updateAssignedConstraints(constraintsCache.getNodeConstraints(destination));
+                    updateAssignedConstraints(nodeConstraints);
                   }
                   break;
                 // case 'create':
@@ -169,15 +173,6 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
                   ctxType,
                   node.parent != null && nodes.isExpressionStatement(node.parent),
                   node.arguments).isConstructible();
-            }
-          } else if (nodes.isReturnStatement(node)) {
-            if (node.expression) {
-              const exe = <ts.FunctionLikeDeclaration>nodes.findParent(
-                  node, nodes.isFunctionLikeDeclaration);
-              const constraints = constraintsCache.getNodeConstraints(exe);
-              if (constraints) {
-                constraints.getCallConstraints().returnType.cannotBeVoid();
-              }
             }
           } else if (nodes.isBinaryExpression(node)) {
             ops.inferBinaryOpConstraints(node, ctxType, checker, constraintsCache);

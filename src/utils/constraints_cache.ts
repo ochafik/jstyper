@@ -167,6 +167,28 @@ export class ConstraintsCache {
         }
       }
     }
+
+    return this.getContextualNodeConstraints(node);
+  }
+  
+  getContextualNodeConstraints(node: ts.Node) {
+    if (node.parent) {
+      if (nodes.isReturnStatement(node.parent)) {
+        if (node === node.parent.expression) {
+          const enclosingCallable = nodes.findParent(node.parent, nodes.isFunctionLikeDeclaration);
+          if (enclosingCallable) {
+            const constraints = this.getNodeConstraints(enclosingCallable);
+            if (constraints) {
+              return constraints.getCallConstraints().returnType;
+            }
+          }
+        }
+      } else if (nodes.isVariableDeclaration(node.parent) || nodes.isPropertyAssignment(node.parent)) {
+        if (node === node.parent.initializer) {
+          return this.getNodeConstraints(node.parent);
+        }
+      }
+    }
     return undefined;
   }
 }
