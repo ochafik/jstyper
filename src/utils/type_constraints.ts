@@ -103,8 +103,8 @@ export class TypeConstraints {
     let typeOptions = getTypeOptions(opts);
     
     if (!type || fl.isAny(type)) {
-      if (typeOptions.markChanges && !this._flags && this.symbols.length == 0) {
-        this.markChange();
+      if (!this._flags && this.symbols.length == 0) {
+        this.markChange(typeOptions);
       }
       return;
     }
@@ -122,9 +122,7 @@ export class TypeConstraints {
         return;
       }
       this.symbols.push(type.symbol);
-      if (typeOptions.markChanges) {
-        this.markChange();
-      }
+      this.markChange(typeOptions);
       typeOptions = {...typeOptions, markChanges: false};
     }
 
