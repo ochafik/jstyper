@@ -101,6 +101,17 @@ export const infer: (options: Options) => ReactorCallback = (options) => (
                     }
                   }
                   break;
+                case 'create':
+                  if (node.arguments.length == 1 ||
+                      node.arguments.length == 2) {
+                    const [protoType, sourceType] = node.arguments.map(n => checker.getTypeAtLocation(n));
+                    if (nodeConstraints) {
+                      nodeConstraints.isType(protoType);
+                      if (sourceType) nodeConstraints.isType(sourceType);
+                    }
+                    break;
+                  }
+                  break;
                 case 'assign':
                   if (node.arguments.length >= 2) {
                     const [destination, ...sources]  = node.arguments;
