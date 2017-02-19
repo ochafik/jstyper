@@ -7,6 +7,8 @@ import {runTyper} from './typer';
 import {getFile, mkdirsSync} from './utils/files';
 import {pseudoJson} from './utils/pseudo_json';
 
+require('source-map-support').install();
+
 var argv = require('minimist')(process.argv.slice(2));
 // console.dir(argv);
 
