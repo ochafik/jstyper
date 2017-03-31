@@ -1,5 +1,6 @@
 import * as ts from 'typescript';
 import * as fl from './flags';
+import * as nodes from './nodes';
 import {guessName} from './name_guesser';
 import {TypeConstraints, TypeOpts, getTypeOptions} from './type_constraints';
 
@@ -12,6 +13,7 @@ export class CallConstraints {
   private minArity: number|undefined;
   private _constructible = false;
   private _hasChanges = false;
+  private _thisConstraints?: TypeConstraints;
 
   constructor(
       private checker: ts.TypeChecker,
@@ -45,8 +47,19 @@ export class CallConstraints {
     if (!decl) {
       return;
     }
-    const params = decl.parameters;
-    const paramTypes = params.map(p => this.checker.getTypeAtLocation(p));
+    
+    const params: ts.ParameterDeclaration[] = [];
+    const paramTypes: ts.Type[] = [];
+
+    decl.parameters.forEach((param, i) => {
+      const paramType = this.checker.getTypeAtLocation(param);
+      if (i == 0 && nodes.isIdentifier(param.name) && param.name.text == 'this') {//} nodes.isThisType(param)) {
+        this.getThisType().isType(paramType);
+      } else {
+        params.push(param);
+        paramTypes.push(paramType);
+      }
+    });
 
     this.returnType.isType(sig.getReturnType(), opts);
 
@@ -88,6 +101,18 @@ export class CallConstraints {
       this.updateOptionalArgs(opts);
     }
   }
+
+  hasThisType(): boolean {
+    return this._thisConstraints != null;
+  }
+
+  getThisType(): TypeConstraints {
+    if (!this._thisConstraints) {
+      this._thisConstraints = this.createConstraints('this');
+    }
+    return this._thisConstraints;
+  }
+
   getArgType(index: number, opts?: TypeOpts) {
     this.ensureArity(index + 1, opts);
     return this.argTypes[index];

@@ -346,15 +346,21 @@ export class TypeConstraints {
   }
 
   resolveCallableArgListAndReturnType(): [string, string]|undefined {
-    return this._callConstraints && [
-      this._callConstraints.argTypes
-          .map((t, i) => {
-            const name = t.bestName || `arg${i + 1}`;
-            return this.resolveKeyValueDecl(name, t, {isMember: false});
-          })
-          .join(', '),
-      this._callConstraints.returnType.resolve() || 'any'
-    ];
+    const callConstraints = this._callConstraints;
+    if (callConstraints) {
+      let args = callConstraints.argTypes.map((t, i) => {
+        const name = t.bestName || `arg${i + 1}`;
+        return this.resolveKeyValueDecl(name, t, {isMember: false});
+      });
+      if (callConstraints.hasThisType()) {
+        args = [this.resolveKeyValueDecl('this', callConstraints.getThisType()), ...args];
+      }
+      return [
+        args.join(', '),
+        callConstraints.returnType.resolve() || 'any'
+      ];
+    }
+    return undefined;
   }
 
   normalize() {
