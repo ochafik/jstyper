@@ -13,14 +13,15 @@ JsTyper adds {TypeScript, Flow, Closure} types to JavaScript programs using iter
 
 # Features
 
+(take a look at [our tests](https://github.com/ochafik/jstyper/tree/master/test/specs))
+
 - Assumes your JS code is correct, and propagates inferred types globally (across different files):
   - From call sites: if you call `f(1)`, it will assume `function f` can take a `number` argument. If you call `f()` somewhere else, it will assume that argument is optional.
   - From function bodies: in `function f(x) { return x * 2 }` it's obvious `x` must be a `number`. Similar constraints appear when you test arguments for nullity or for equality with other values, etc.
   - From call shapes: from `x.y() * x.n;` it infers `x: {y(): void, readonly n: number}`
-- Rewrites `require` calls to ES2016 (ES6) imports.
-- Rewrites `module.exports` to ES2016 (ES6) exports.
+- Rewrites `require` & `module.exports` to ES2015 (ES6) imports & exports
 - Supports writing declarations (`*.d.ts`) files only with the `--declarations` flag.
-- Writes a summary of imported / required module interfaces in `dependencies.d.ts` (e.g. if you `var foo = require('foo'); foo.bar()` it will infer `declare module "foo" { export function bar(): void }`)
+- Writes definitions for imported / required module interfaces (e.g. if you `var foo = require('foo'); foo.bar()` it will infer `declare module "foo" { export function bar(): void }`)
 - Rewrites `var` to `let`
 
 # Example
