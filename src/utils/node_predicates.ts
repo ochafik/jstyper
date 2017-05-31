@@ -24,6 +24,22 @@ export function isFunctionLikeDeclaration(decl?: ts.Node):
   }
 }
 
+export function getParamIndex(param: ts.ParameterDeclaration, fun: ts.FunctionLikeDeclaration): number {
+  let offset = 0;
+  while (offset < fun.parameters.length && isThisParam(fun.parameters[offset])) {
+    offset++;
+  }
+  return fun.parameters.indexOf(param, offset);
+}
+
+export function getNthParam(fun: ts.FunctionLikeDeclaration, index: number): ts.ParameterDeclaration {
+  return fun.parameters.filter(p => !isThisParam(p))[index];
+}
+
+export function isThisParam(param: ts.ParameterDeclaration): boolean {
+  return isIdentifier(param.name) && param.name.text == 'this';
+}
+
 export function isEndOfFileToken(node?: ts.Node):
     node is ts.Token<ts.SyntaxKind.EndOfFileToken> {
   return node != null && node.kind === ts.SyntaxKind.EndOfFileToken;
@@ -789,6 +805,9 @@ export function isJSDocTypeLiteral(node?: ts.Node): node is ts.JSDocTypeLiteral 
 }
 export function isJSDocLiteralType(node?: ts.Node): node is ts.JSDocLiteralType {
   return node != null && node.kind === ts.SyntaxKind.JSDocLiteralType;
+}
+export function isThisKeyword(node?: ts.Node): node is ts.Token<ts.SyntaxKind.ThisKeyword> {
+  return node != null && node.kind === ts.SyntaxKind.ThisKeyword;
 }
 // export function isJSDocNullKeyword(node: ts.Node): node is
 // ts.JSDocNullKeyword {
